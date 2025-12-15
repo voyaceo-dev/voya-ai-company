@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOYA - AI Travel Planner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #667eea; margin-bottom: 10px; text-align: center; }
+        p { color: #666; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .status { text-align: center; margin-top: 20px; color: #667eea; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 VOYA AI Travel Planner</h1>
+        <p>Plan your perfect trip with AI assistance</p>
+        
+        <form id="travelForm">
+            <div class="form-group">
+                <label for="destination">Destination</label>
+                <input type="text" id="destination" placeholder="e.g., Paris, Tokyo, New York" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration">Duration (days)</label>
+                <input type="number" id="duration" min="1" max="30" placeholder="e.g., 5" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="preferences">Preferences</label>
+                <textarea id="preferences" rows="3" placeholder="e.g., museums, food, adventure, beaches"></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn">Generate Itinerary</button>
+        </form>
+        
+        <div id="result"></div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://f4327654-c678-4ba4-b0b4-e27cb06c3d90-00-356ncoeaticb.pike.replit.dev';
+        
+        document.getElementById('travelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            const destination = document.getElementById('destination').value;
+            const duration = document.getElementById('duration').value;
+            const preferences = document.getElementById('preferences').value;
+            
+            submitBtn.disabled = true;
+            status.textContent = 'Generating your itinerary...';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/itinerary/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ destination, duration, preferences })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.textContent = data.itinerary;
+                    result.style.display = 'block';
+                    status.textContent = '✅ Itinerary generated successfully!';
+                } else {
+                    status.textContent = '❌ Error: ' + (data.error || 'Failed to generate itinerary');
+                }
+            } catch (error) {
+                status.textContent = '❌ Error connecting to server: ' + error.message;
+            }
+            
+            submitBtn.disabled = false;
+        });
+        
+        // Test health endpoint on load
+        fetch(`${API_URL}/api/health`)
+            .then(r => r.json())
+            .then(d => console.log('Backend status:', d))
+            .catch(e => console.error('Backend error:', e));
+    </script>
+</body>
+</html>
