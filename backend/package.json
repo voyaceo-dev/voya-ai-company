@@ -1,0 +1,21 @@
+{
+  "name": "voya-backend",
+  "version": "1.0.0",
+  "description": "VOYA AI Travel Planner Backend API",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@supabase/supabase-js": "^2.39.0",
+    "@google/generative-ai": "^0.1.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
