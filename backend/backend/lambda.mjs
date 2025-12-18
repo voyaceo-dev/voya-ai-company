@@ -31,7 +31,7 @@ async function generateItinerary({ destination, duration, preferences }) {
     '\n\nPlease provide:\n- Day-by-day breakdown\n- Must-visit attractions\n- Local food recommendations\n- Transportation tips\n- Estimated costs';
 
   const response = await fetch(
-    'https://api.bytez.com/models/v2/meta-llama/Llama-3.3-70B-Instruct',
+    'https://api.bytez.com/models/v2/google/gemma-2-2b-it
     {
       method: 'POST',
       headers: {
