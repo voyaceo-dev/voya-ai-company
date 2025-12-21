@@ -4,7 +4,8 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': corsOrigin,
-  const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+  
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
 };
