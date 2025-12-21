@@ -128,21 +128,37 @@ result.textContent      padding-bottom: 10px;
             
             const submitBtn = document.getElementById('submitBtn');
 
-            function formatItinerary(text) {
-      // Convert markdown-style headings and format text
-      let html = text
-        .replace(/### \*\*(.+?)\*\*/g, '<h3>$1</h3>')
-        .replace(/#### \*\*(.+?)\*\*/g, '<h4>$1</h4>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/- (.+)/g, '<li>$1</li>')
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/^(.+)$/gm, '<p>$1</p>');
+            // Split into lines for processing
+      const lines = text.split('\n');
+      let html = '';
+      let inList = false;
       
-      // Wrap lists
-      html = html.replace(/(<li>.*?<\/li>)+/gs, '<ul>$&</ul>');
+      for (let line of lines) {
+        line = line.trim();
+        
+        // Handle headings with ###
+        if (line.startsWith('####')) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<h4>' + line.replace(/^####\s*\*\*(.+?)\*\*/, '$1').replace(/^####\s*/, '') + '</h4>';
+        }
+        else if (line.startsWith('###')) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<h3>' + line.replace(/^###\s*\*\*(.+?)\*\*/, '$1').replace(/^###\s*/, '') + '</h3>';
+        }
+        // Handle list items starting with dash
+        else if (line.startsWith('-')) {
+          if (!inList) { html += '<ul>'; inList = true; }
+          html += '<li>' + line.substring(1).trim().replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') + '</li>';
+        }
+        // Handle regular paragraphs
+        else if (line.length > 0) {
+          if (inList) { html += '</ul>'; inList = false; }
+          html += '<p>' + line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') + '</p>';
+        }
+      }
       
+      if (inList) html += '</ul>';
       return html;
-    }
             const status = document.getElementById('status');
             const result = document.getElementById('result');
             
