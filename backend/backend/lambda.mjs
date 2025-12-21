@@ -31,7 +31,7 @@ async function generateItinerary({ destination, duration, preferences }) {
     '\n\nPlease provide:\n- Day-by-day breakdown\n- Must-visit attractions\n- Local food recommendations\n- Transportation tips\n- Estimated costs';
 
   const response = await fetch(
-    'https://openrouter.ai/api/v1/chat/completions'    {
+    'https://openrouter.ai/api/v1/chat/completions',    {
       method: 'POST',
       headers: {
         Authorization: `Key ${openRouterApiKey}`,
@@ -39,7 +39,6 @@ async function generateItinerary({ destination, duration, preferences }) {
       },
       body: JSON.stringify({
         messages: [
-                  model: 'mistralai/devstral-2512:free',
           {
             role: 'system',
             content:
@@ -47,6 +46,8 @@ async function generateItinerary({ destination, duration, preferences }) {
           },
           { role: 'user', content: prompt },
         ],
+                          model: 'mistralai/devstral-2512:free',
+
         max_tokens: 2000,
         temperature: 0.7,
       }),
