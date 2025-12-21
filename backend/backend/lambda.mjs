@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const bytezApiKey = process.env.BYTEZ_API_KEY;
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
 const corsOrigin = process.env.CORS_ORIGIN || '*';
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -31,15 +31,15 @@ async function generateItinerary({ destination, duration, preferences }) {
     '\n\nPlease provide:\n- Day-by-day breakdown\n- Must-visit attractions\n- Local food recommendations\n- Transportation tips\n- Estimated costs';
 
   const response = await fetch(
-    'https://api.bytez.com/models/v2/google/gemma-2-2b-it/chat
-    {
+    'https://openrouter.ai/api/v1/chat/completions'    {
       method: 'POST',
       headers: {
-        Authorization: `Key ${bytezApiKey}`,
+        Authorization: `Key ${openRouterApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         messages: [
+                  model: 'mistralai/devstral-2512:free',
           {
             role: 'system',
             content:
