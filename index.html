@@ -53,41 +53,14 @@
         }
         button:hover { transform: translateY(-2px); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-        #result {margin-top: 30px;
-      padding: 0;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      display: none;
-    }
-    #result h3 {
-      color: #667eea;
-result.textContent      padding-bottom: 10px;
-      border-bottom: 2px solid #667eea;
-      font-size: 20px;
-    }
-    #result h4 {
-      color: #764ba2;
-      margin: 15px 20px 8px;
-      font-size: 16px;
-    }
-    #result p {
-      margin: 8px 20px;
-      line-height: 1.6;
-      color: #333;
-    }
-    #result ul {
-      margin: 10px 20px;
-      padding-left: 20px;
-    }
-    #result li {
-      margin: 5px 0;
-      line-height: 1.6;
-      color: #555;
-    }
-    #result strong {
-      color: #667eea;
-      font-weight: 600;
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            display: none;
+        }
         .status { text-align: center; margin-top: 20px; color: #667eea; font-weight: 600; }
     </style>
 </head>
@@ -120,67 +93,11 @@ result.textContent      padding-bottom: 10px;
     </div>
 
     <script>
-        const API_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
-
-        function formatItinerary(text) {                                // Simple markdown to HTML conversion
-                                let html = text
-                                    // Convert headings
-                .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-                .replace(/^## (.+)$/gm, '<h4>$1</h4>')
-                // Convert bold text
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                // Convert list items
-                .replace(/^- (.+)$/gm, '<li>$1</li>')
-                // Convert double line breaks to paragraphs
-                .replace(/\n\n/g, '</p><p>')
-                // Convert single line breaks to br
-                .replace(/\n/g, '<br>');
-            
-            // Wrap list items in ul
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-            // Wrap in paragraph if not already wrapped
-            if (!html.startsWith('<')) html = '<p>' + html + '</p>';
-            
-            return html;
-        }
-    126
+        const API_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';        
         document.getElementById('travelForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
-
-            // Split into lines for processing
-      const lines = text.split('\n');
-      let html = '';
-      let inList = false;
-      
-      for (let line of lines) {
-        line = line.trim();
-        
-        // Handle headings with ###
-        if (line.startsWith('####')) {
-          if (inList) { html += '</ul>'; inList = false; }
-          html += '<h4>' + line.replace(/^####\s*\*\*(.+?)\*\*/, '$1').replace(/^####\s*/, '') + '</h4>';
-        }
-        else if (line.startsWith('###')) {
-          if (inList) { html += '</ul>'; inList = false; }
-          html += '<h3>' + line.replace(/^###\s*\*\*(.+?)\*\*/, '$1').replace(/^###\s*/, '') + '</h3>';
-        }
-        // Handle list items starting with dash
-        else if (line.startsWith('-')) {
-          if (!inList) { html += '<ul>'; inList = true; }
-          html += '<li>' + line.substring(1).trim().replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') + '</li>';
-        }
-        // Handle regular paragraphs
-        else if (line.length > 0) {
-          if (inList) { html += '</ul>'; inList = false; }
-          html += '<p>' + line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') + '</p>';
-        }
-      }
-      
-      if (inList) html += '</ul>';
-      return html;
             const status = document.getElementById('status');
             const result = document.getElementById('result');
             
@@ -202,9 +119,9 @@ result.textContent      padding-bottom: 10px;
                 const data = await response.json();
                 
                 if (response.ok) {
-                    result.innerHTML = formatItinerary(data.itinerary);
-                                        result.style.display = 'block';
-                                        status.textContent = '✅ Itinerary generated successfully!';
+                    result.textContent = data.itinerary;
+                    result.style.display = 'block';
+                    status.textContent = '✅ Itinerary generated successfully!';
                 } else {
                     status.textContent = '❌ Error: ' + (data.error || 'Failed to generate itinerary');
                 }
