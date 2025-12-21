@@ -53,14 +53,43 @@
         }
         button:hover { transform: translateY(-2px); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            display: none;
-        }
+        #result {margin-top: 30px;
+      padding: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: none;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    #result h3 {
+      color: #667eea;
+result.textContent      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      font-size: 20px;
+    }
+    #result h4 {
+      color: #764ba2;
+      margin: 15px 20px 8px;
+      font-size: 16px;
+    }
+    #result p {
+      margin: 8px 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    #result ul {
+      margin: 10px 20px;
+      padding-left: 20px;
+    }
+    #result li {
+      margin: 5px 0;
+      line-height: 1.6;
+      color: #555;
+    }
+    #result strong {
+      color: #667eea;
+      font-weight: 600;
         .status { text-align: center; margin-top: 20px; color: #667eea; font-weight: 600; }
     </style>
 </head>
@@ -98,6 +127,22 @@
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
+
+            function formatItinerary(text) {
+      // Convert markdown-style headings and format text
+      let html = text
+        .replace(/### \*\*(.+?)\*\*/g, '<h3>$1</h3>')
+        .replace(/#### \*\*(.+?)\*\*/g, '<h4>$1</h4>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/- (.+)/g, '<li>$1</li>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(.+)$/gm, '<p>$1</p>');
+      
+      // Wrap lists
+      html = html.replace(/(<li>.*?<\/li>)+/gs, '<ul>$&</ul>');
+      
+      return html;
+    }
             const status = document.getElementById('status');
             const result = document.getElementById('result');
             
@@ -119,7 +164,7 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    result.textContent = data.itinerary;
+result.innerHTML = formatItinerary(data.itinerary);
                     result.style.display = 'block';
                     status.textContent = '✅ Itinerary generated successfully!';
                 } else {
