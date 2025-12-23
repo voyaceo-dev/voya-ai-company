@@ -50,6 +50,7 @@ async function callOllamaGemini(prompt) {
             content: prompt
           }
         ],
+                options: { num_predict: 1200, temperature: 0.8 },
         stream: false
       }),
     }
@@ -101,10 +102,7 @@ async function callOpenRouter(prompt) {
 }
 
 async function generateItinerary({ destination, duration, preferences }) {
-  const prompt =
-    `Create a detailed ${duration}-day travel itinerary for ${destination}. ` +
-    (preferences ? `Focus on: ${preferences}. ` : '') +
-    '\n\nPlease provide:\n- Day-by-day breakdown\n- Must-visit attractions\n- Local food recommendations\n- Transportation tips\n- Estimated costs';
+  const prompt =    const prompt = `${duration}-day ${destination} itinerary` + (preferences ? ` focusing on: ${preferences}` : '') + '. Brief format with times, places, costs, transport.';
 
   let itinerary = '';
   let aiProvider = 'unknown';
@@ -167,7 +165,8 @@ async function handleGenerate(event) {
   }
 
   try {
-    const result = await generateItinerary({ destination, duration, preferences });
+    const result = await 104
+      ({ destination, duration, preferences });
     return {
       statusCode: 200,
       headers: corsHeaders,
