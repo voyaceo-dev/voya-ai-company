@@ -495,14 +495,16 @@ background: #000;  overflow-x: hidden;
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">const API_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
 
 // Fill preset destinations
-function fillPreset(destination, duration, preferences) {
+function fillPreset(destination
+      , duration, preferences) {
   document.getElementById('destination').value = destination;
   document.getElementById('duration').value = duration;
   document.getElementById('preferences').value = preferences;
 }
 
 // Form submission
-document.getElementById('travelForm').addEventListener('submit', async (e) => {
+document.getElementById('travelForm
+      ').addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const submitBtn = document.getElementById('submitBtn');
@@ -686,7 +688,8 @@ fetch(`${API_URL}/api/health`)
         <button class="tab-btn">Hotels</button>
       </div>
       
-      <form id="travelForm" class="search-form">
+      <form id="505
+         " class="search-form">
         <div class="search-row">
           <div class="search-field">
             <label>📍 Where to?</label>
