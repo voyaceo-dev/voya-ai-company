@@ -607,6 +607,7 @@ fetch(`${API_URL}/api/health`)
                    align-items: center;
                    z-index: 9999;
                    transition: opacity 0.5s;
+              animation: hideLoader 2s ease-in-out forwards;
                  }
 
           .loader.hidden {
@@ -626,6 +627,10 @@ fetch(`${API_URL}/api/health`)
           @keyframes spin {
                    to { transform: rotate(360deg); }
                  }
+      @keyframes hideLoader {
+ 0% { opacity: 1; }
+ 100% { opacity: 0; }
+}
   </style>
    <body>
 
