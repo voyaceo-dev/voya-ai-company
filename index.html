@@ -112,6 +112,35 @@ background: #000;  overflow-x: hidden;
   position: relative;
 }
 
+       /* 3D Travel Images */
+          .travel-images {
+                   position: absolute;
+                   top: 0;
+                   left: 0;
+                   width: 100%;
+                   height: 100%;
+                   pointer-events: none;
+                   overflow: hidden;
+                 }
+
+          .travel-icon {
+                   position: absolute;
+                   font-size: 60px;
+                   opacity: 0.6;
+                   animation: float 6s ease-in-out infinite;
+                   filter: drop-shadow(0 10px 20px rgba(102, 126, 234, 0.3));
+                 }
+
+          .travel-icon:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+          .travel-icon:nth-child(2) { top: 60%; left: 15%; animation-delay: 1s; }
+          .travel-icon:nth-child(3) { top: 30%; right: 10%; animation-delay: 2s; }
+          .travel-icon:nth-child(4) { top: 70%; right: 15%; animation-delay: 3s; }
+
+          @keyframes float {
+                   0%, 100% { transform: translateY(0px) rotate(0deg); }
+                   50% { transform: translateY(-30px) rotate(5deg); }
+                 }
+
 .globe::before {
   content: '';
   position: absolute;
@@ -629,7 +658,15 @@ fetch(`${API_URL}/api/health`)
       <div class="globe"></div>
       <div class="plane plane-1">✈️</div>
       <div class="plane plane-2">🛫</div>
-    </div>
+    </di
+       
+           <!-- 3D Travel Images -->
+           <div class="travel-images">
+                    <div class="travel-icon">🏖️</div>
+                    <div class="travel-icon">⛰️</div>
+                    <div class="travel-icon">🏝️</div>
+                    <div class="travel-icon">🏔️</div>
+                  </div>v>
   </div>
   
   <div class="hero-content">
