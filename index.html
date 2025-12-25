@@ -1,167 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOYA - AI Travel Planner</title>
-    <!-- Marked.js for Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 800px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        h1 { color: #667eea; margin-bottom: 10px; text-align: center; }
-        p { color: #666; text-align: center; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        input:focus, textarea:focus { outline: none; border-color: #667eea; }
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        button:hover { transform: translateY(-2px); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        #result {
-            margin-top: 30px;
-            padding: 30px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 15px;
-            display: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        #result h1, #result h2, #result h3 {
-            color: #667eea;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        #result h1 { font-size: 28px; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
-        #result h2 { font-size: 24px; color: #764ba2; }
-        #result h3 { font-size: 20px; color: #667eea; }
-        #result h4 { font-size: 18px; color: #666; margin-top: 15px; }
-        #result p { text-align: left; line-height: 1.8; color: #333; margin-bottom: 15px; }
-        #result ul, #result ol { margin-left: 20px; margin-bottom: 15px; }
-        #result li { margin-bottom: 8px; line-height: 1.6; color: #444; }
-        #result strong { color: #764ba2; font-weight: 700; }
-        #result em { color: #667eea; font-style: italic; }
-        #result code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-        #result hr { border: none; border-top: 2px solid #667eea; margin: 20px 0; }
-        #result table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        #result th, #result td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        #result th { background: #667eea; color: white; font-weight: 600; }
-        .status {
-            text-align: center;
-            margin-top: 20px;
-            color: #667eea;
-            font-weight: 600;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VOYA - AI Travel Planner</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>🌍 VOYA AI Travel Planner</h1>
-        <p>Plan your perfect trip with AI assistance</p>
-        
-        <form id="travelForm">
-            <div class="form-group">
-                <label for="destination">Destination</label>
-                <input type="text" id="destination" placeholder="e.g., Paris, Tokyo, New York" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="duration">Duration (days)</label>
-                <input type="number" id="duration" min="1" max="30" placeholder="e.g., 5" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="preferences">Preferences</label>
-                <textarea id="preferences" rows="3" placeholder="e.g., museums, food, adventure, beaches"></textarea>
-            </div>
-            
-            <button type="submit" id="submitBtn">Generate Itinerary</button>
-        </form>
-        
-        <div class="status" id="status"></div>
-        <div id="result"></div>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="logo">
+      <span class="logo-icon">✈️</span>
+      <span class="logo-text">VOYA</span>
     </div>
+    <div class="nav-links">
+      <a href="#">Destinations</a>
+      <a href="#">My Trips</a>
+      <a href="#" class="btn-primary-small">Start Planning</a>
+    </div>
+  </div>
+</nav>
 
-    <script>
-        const API_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
+<!-- Hero Section with 3D Search -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="globe-container">
+      <div class="globe"></div>
+      <div class="plane plane-1">✈️</div>
+      <div class="plane plane-2">🛫</div>
+    </div>
+  </div>
+  
+  <div class="hero-content">
+    <h1 class="hero-title">Plan Your Perfect Trip with AI</h1>
+    <p class="hero-subtitle">Smart itineraries in minutes • Personalized recommendations • Offline access</p>
+    
+    <!-- Kayak-style Search Card -->
+    <div class="search-card">
+      <div class="search-tabs">
+        <button class="tab-btn active">AI Planner</button>
+        <button class="tab-btn">Flights</button>
+        <button class="tab-btn">Hotels</button>
+      </div>
+      
+      <form id="travelForm" class="search-form">
+        <div class="search-row">
+          <div class="search-field">
+            <label>📍 Where to?</label>
+            <input type="text" id="destination" placeholder="Tokyo, Paris, New York..." required>
+          </div>
+          
+          <div class="search-field">
+            <label>📅 Duration</label>
+            <input type="number" id="duration" min="1" max="30" placeholder="5 days" required>
+          </div>
+          
+          <button type="submit" class="search-btn" id="submitBtn">
+            <span>Generate Trip</span>
+            <span class="search-icon">🚀</span>
+          </button>
+        </div>
+        
+        <div class="advanced-options">
+          <details>
+            <summary>✨ Advanced Preferences</summary>
+            <textarea id="preferences" rows="2" placeholder="Museums, food tours, beaches, adventure..." class="prefs-input"></textarea>
+          </details>
+        </div>
+      </form>
+      
+      <!-- Quick Presets -->
+      <div class="quick-presets">
+        <span class="preset-label">Popular:</span>
+        <button class="preset-btn" onclick="fillPreset('Paris', 5, 'Eiffel Tower, Louvre, French cuisine')">🗼 Weekend in Paris</button>
+        <button class="preset-btn" onclick="fillPreset('Tokyo', 7, 'Temples, sushi, anime culture')">🗾 7 Days Tokyo</button>
+        <button class="preset-btn" onclick="fillPreset('Bali', 10, 'Beaches, temples, yoga')">🏝️ Bali Retreat</button>
+      </div>
+    </div>
+  </div>
+</section>
 
-        document.getElementById('travelForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const status = document.getElementById('status');
-            const result = document.getElementById('result');
-            
-            const destination = document.getElementById('destination').value;
-            const duration = document.getElementById('duration').value;
-            const preferences = document.getElementById('preferences').value;
-            
-            submitBtn.disabled = true;
-            status.textContent = 'Generating your itinerary...';
-            result.style.display = 'none';
-            
-            try {
-                const response = await fetch(`${API_URL}/api/itinerary/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ destination, duration, preferences })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Render Markdown to HTML
-                    result.innerHTML = marked.parse(data.itinerary);
-                    result.style.display = 'block';
-                    status.textContent = '✅ Itinerary generated successfully!';
-                } else {
-                    status.textContent = '❌ Error: ' + (data.error || 'Failed to generate itinerary');
-                }
-            } catch (error) {
-                status.textContent = '❌ Error connecting to server: ' + error.message;
-            }
-            
-            submitBtn.disabled = false;
-        });
+<div id="status" class="status"></div>
 
-        // Test health endpoint on load
-        fetch(`${API_URL}/api/health`)
-            .then(r => r.json())
-            .then(d => console.log('Backend status:', d))
-            .catch(e => console.error('Backend error:', e));
-    </script>
+<!-- Results Section -->
+<div id="result" class="result-container"></div>
+
+<!-- Features Section -->
+<section class="features">
+  <div class="features-container">
+    <h2 class="section-title">Why Choose VOYA?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>AI-Powered</h3>
+        <p>Smart algorithms create personalized itineraries based on your interests and travel style</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Planning</h3>
+        <p>Get complete day-by-day plans in seconds, not hours of manual research</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Optimized Routes</h3>
+        <p>Time and cost optimized schedules that maximize your travel experience</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>Offline Access</h3>
+        <p>Download itineraries as PDF and access them anywhere, even without internet</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 </body>
 </html>
