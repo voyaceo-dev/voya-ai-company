@@ -802,27 +802,7 @@ fetch(`${API_URL}/api/health`)
                                  }, 1000);
                       });
 
-               // Fix button clicks - add proper event handlers
-               document.querySelectorAll('.tab-btn').forEach(btn => {
-                        btn.style.cursor = 'pointer';
-                        btn.style.pointerEvents = 'auto';
-                      });
       
-// Add preset button event handlers
-document.querySelectorAll('.preset-btn').forEach((btn, index) => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const text = btn.textContent.trim();
-    console.log('Preset clicked:', text);
-    if (text.includes('Weekend in Paris')) {
-      fillPreset('Paris, France', '3', 'Eiffel Tower, Louvre, French cuisine');
-    } else if (text.includes('7 Days Tokyo')) {
-      fillPreset('Tokyo, Japan', '7', 'Temples, sushi, anime culture');
-    } else if (text.includes('Bali Retreat')) {
-      fillPreset('Bali, Indonesia', '10', 'Beaches, temples, yoga');
-    }
-  });
-});
-             </script>
+
 </body>
 </html>
