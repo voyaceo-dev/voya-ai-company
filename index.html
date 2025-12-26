@@ -1,540 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VOYA - Smart Travel Planner</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400,500,600,700&display=swap" rel="stylesheet">
-  
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Arial',sans-serif; }
+    body { background:#f5f5f5; color:#333; }
+    nav { background:white; height:70px; display:flex; align-items:center; justify-content:space-between; padding:0 40px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+    .logo { font-size:24px; font-weight:bold; }
+    .hero { background:linear-gradient(135deg,#1a1a1a,#2d2d2d); color:white; padding:60px 40px; text-align:center; }
+    .hero h1 { font-size:48px; margin-bottom:10px; }
+    .tabs-nav { display:flex; background:white; padding:15px 40px; border-bottom:2px solid #e0e0e8; }
+    .tab-btn { background:none; border:none; padding:10px 20px; font-size:14px; cursor:pointer; color:#666; }
+    .tab-btn.active { color:#1a1a1a; border-bottom:3px solid #1a1a1a; margin-bottom:-2px; }
+    .main { display:grid; grid-template-columns:250px 1fr; gap:25px; padding:25px 40px; max-width:1400px; margin:0 auto; }
+    .content { flex:1; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .search-card { background:white; border-radius:8px; padding:20px; margin-bottom:25px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .search-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:15px; }
+    .input-group { display:flex; flex-direction:column; margin-bottom:10px; }
+    .input-group label { font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:6px; color:#666; }
+    .input-group input, .input-group select { padding:10px 12px; border:1px solid #e0e0e8; border-radius:6px; font-size:13px; }
+    .btn-search { background:#1a1a1a; color:white; padding:10px 25px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
+    .btn-generate { background:#1a1a1a; color:white; padding:12px 25px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px; }
+    .results-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:15px; }
+    .card { background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); padding:15px; }
+    .card-header { font-weight:bold; margin-bottom:10px; }
+    .itinerary-form-section { background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:25px; }
+    .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; }
+    .itinerary-day { background:white; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #1a1a1a; margin-bottom:15px; }
+    .itinerary-day-header { font-weight:bold; font-size:15px; margin-bottom:10px; }
+    .itinerary-summary { background:#f5f5f5; padding:20px; border-radius:8px; margin-bottom:20px; }
+    .summary-item { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e0e0e8; }
+    .sidebar { background:white; border-radius:8px; padding:20px; height:fit-content; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+    .filter-group { margin-bottom:20px; }
+    .filter-title { font-weight:bold; font-size:12px; text-transform:uppercase; margin-bottom:10px; }
+    .checkbox { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    @media(max-width:768px) { .main { grid-template-columns:1fr; } .sidebar { display:none; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">VOYA</div>
+    <div>
+      <a href="#explore" style="margin-right:20px; text-decoration:none; color:#333;">Explore</a>
+      <a href="#trips" style="margin-right:20px; text-decoration:none; color:#333;">Trips</a>
+      <a href="#support" style="text-decoration:none; color:#333;">Support</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Travel Smarter</h1>
+    <p>Simple planning, premium experiences</p>
+  </div>
+
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('flights')">✈️ Flights</button>
+    <button class="tab-btn" onclick="switchTab('hotels')">🏨 Hotels</button>
+    <button class="tab-btn" onclick="switchTab('itinerary')">🗺️ Itinerary</button>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="filter-group">
+        <div class="filter-title">Stops</div>
+        <label class="checkbox"><input type="checkbox" checked> Non-stop</label>
+        <label class="checkbox"><input type="checkbox"> 1 Stop</label>
+        <label class="checkbox"><input type="checkbox"> 2+ Stops</label>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="flights" class="tab-content active">
+        <div class="search-card">
+          <div class="search-grid">
+            <div class="input-group"><label>FROM</label><input type="text" id="from" placeholder="Origin"></div>
+            <div class="input-group"><label>TO</label><input type="text" id="to" placeholder="Destination"></div>
+            <div class="input-group"><label>DEPART</label><input type="date" id="depart"></div>
+            <div class="input-group"><label>RETURN</label><input type="date" id="return"></div>
+          </div>
+          <button class="btn-search" onclick="searchFlights()">Find Flights</button>
+        </div>
+        <div id="flights-results" class="results-grid"></div>
+      </div>
+
+      <div id="hotels" class="tab-content">
+        <div class="search-card">
+          <div class="search-grid">
+            <div class="input-group"><label>CITY</label><input type="text" id="hotel-city" placeholder="Location"></div>
+            <div class="input-group"><label>CHECK-IN</label><input type="date" id="hotel-checkin"></div>
+            <div class="input-group"><label>CHECK-OUT</label><input type="date" id="hotel-checkout"></div>
+          </div>
+          <button class="btn-search" onclick="searchHotels()">Find Hotels</button>
+        </div>
+        <div id="hotels-results" class="results-grid"></div>
+      </div>
+
+      <div id="itinerary" class="tab-content">
+        <div class="itinerary-form-section">
+          <h3>Plan Your Itinerary</h3>
+          <div class="form-row">
+            <div class="input-group"><label>Destination</label><input type="text" id="itinerary-destination" placeholder="e.g., Goa"></div>
+            <div class="input-group"><label>Start Date</label><input type="date" id="itinerary-start-date"></div>
+            <div class="input-group"><label>Duration (Days)</label><input type="number" id="itinerary-duration" min="1" max="30" placeholder="7"></div>
+          </div>
+          <div class="form-row">
+            <div class="input-group"><label>Budget (₹)</label><input type="number" id="itinerary-budget" placeholder="Total budget"></div>
+            <div class="input-group"><label>Trip Type</label><select id="itinerary-type"><option value="">Select type</option><option value="adventure">Adventure</option><option value="relaxation">Relaxation</option><option value="cultural">Cultural</option><option value="food">Food</option><option value="mixed">Mixed</option></select></div>
+            <div class="input-group"><label>People</label><input type="number" id="itinerary-people" min="1" max="20" placeholder="2"></div>
+          </div>
+          <button class="btn-generate" onclick="generateItinerary()">Generate Itinerary</button>
+        </div>
+        <div id="itinerary-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
     }
 
-    :root {
-      --primary: #1a1a1a;
-      --accent: #333;
-      --bg: #f5f5f5;
-      --white: #fff;
-      --border: #e0e0e8;
-      --text: #1a1a1a;
-      --muted: #666;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    function searchFlights() {
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
+      if (!from || !to) { alert('Enter origin and destination'); return; }
+      const flights = [{airline:'IndiGo',depart:'08:00',arrive:'10:30',duration:'2h 30m',stops:'Non-stop',price:'₹4,500'},{airline:'Air India',depart:'09:15',arrive:'12:00',duration:'2h 45m',stops:'1 Stop',price:'₹3,800'},{airline:'SpiceJet',depart:'14:00',arrive:'16:45',duration:'2h 45m',stops:'Non-stop',price:'₹4,200'}];
+      document.getElementById('flights-results').innerHTML = flights.map(f => `<div class="card"><div class="card-header">${f.airline}</div><div>${f.depart} → ${f.arrive}</div><div>${f.duration} | ${f.stops}</div><div style="margin-top:10px; font-weight:bold;">${f.price}</div></div>`).join('');
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
+    function searchHotels() {
+      const city = document.getElementById('hotel-city').value;
+      if (!city) { alert('Enter city'); return; }
+      const hotels = [{name:'Luxury Resort',rating:'★★★★★',price:'₹8,500'},{name:'Budget Inn',rating:'★★★★',price:'₹2,500'},{name:'Premium Hotel',rating:'★★★★★',price:'₹6,200'}];
+      document.getElementById('hotels-results').innerHTML = hotels.map(h => `<div class="card"><div class="card-header">${h.name}</div><div>${h.rating}</div><div style="margin-top:10px; font-weight:bold;">${h.price}/night</div></div>`).join('');
     }
 
-    nav {
-      background: var(--white);
-      height: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 40px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .logo {
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 30px;
-      align-items: center;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 500;
-      font-size: 14px;
-    }
-
-    .btn-signin {
-      background: var(--primary);
-      color: var(--white);
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-      color: var(--white);
-      padding: 60px 40px;
-      text-align: center;
-    }
-
-    .hero h1 {
-      font-size: 48px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .hero p {
-      font-size: 16px;
-      color: #b0b0b0;
-    }
-
-    .tabs-nav {
-      display: flex;
-      background: var(--white);
-      padding: 15px 40px;
-      border-bottom: 2px solid var(--border);
-      position: sticky;
-      top: 70px;
-      z-index: 999;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      color: var(--muted);
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-    }
-
-    .tab-btn.active {
-      color: var(--text);
-      border-bottom-color: var(--primary);
-    }
-
-    .main {
-      display: grid;
-      grid-template-columns: 250px 1fr;
-      gap: 25px;
-      padding: 25px 40px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .sidebar {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 20px;
-      height: fit-content;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .filter-group {
-      margin-bottom: 20px;
-    }
-
-    .filter-title {
-      font-weight: 700;
-      font-size: 12px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .checkbox {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .content {
-      flex: 1;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.3s;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
+    function generateItinerary() {
+      const dest = document.getElementById('itinerary-destination').value;
+      const days = parseInt(document.getElementById('itinerary-duration').value);
+      const budget = parseInt(document.getElementById('itinerary-budget').value);
+      const type = document.getElementById('itinerary-type').value;
+      if (!dest || !days || !budget || !type) { alert('Fill all fields'); return; }
+      const dailyBudget = Math.floor(budget / days);
+      let html = `<div class="itinerary-summary"><div class="summary-item"><span>📍 Destination:</span><span>${dest}</span></div><div class="summary-item"><span>📅 Duration:</span><span>${days} days</span></div><div class="summary-item"><span>💰 Daily Budget:</span><span>₹${dailyBudget}</span></div></div>`;
+      const activities = {adventure:['Trek','Water sports','Rock climbing','Market','Sunset'],relaxation:['Spa','Beach','Yoga','Shopping','Dinner'],cultural:['Temple tour','Museum','Craft','Cooking','Show'],food:['Street food','Cooking class','Fine dining','Market','Wine tasting'],mixed:['Sightseeing','Adventure','Relaxation','Shopping','Culture']};
+      const acts = activities[type] || activities.mixed;
+      for (let i = 0; i < days; i++) {
+        html += `<div class="itinerary-day"><div class="itinerary-day-header">Day ${i+1}</div><div><strong>Activity:</strong> ${acts[i % acts.length]}</div><div><strong>Budget:</strong> ₹${dailyBudget}</div></div>`;
       }
-      to {
-        opacity: 1;
-      }
+      document.getElementById('itinerary-results').innerHTML = html;
     }
-
-    .search-card {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 25px;
-      box-shadow: var(--shadow);
-    }
-
-    .search-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-bottom: 15px;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .input-group label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      color: var(--muted);
-    }
-
-    .input-group input,
-    .input-group select {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
-    }
-
-    .btn-search {
-      background: var(--primary);
-      color: var(--white);
-      padding: 10px 25px;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      align-self: flex-end;
-    }
-
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 15px;
-    }
-
-    .card {
-      background: var(--white);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s;
-    }
-
-    .card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      transform: translateY(-4px);
-    }
-
-    .card-header {
-      padding: 15px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .flight-times {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .time {
-      font-size: 16px;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .divider {
-      height: 2px;
-      background: var(--border);
-    }
-
-    .info-row {
-      display: flex;
-      gap: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 8px;
-    }
-
-    .card-footer {
-      padding: 12px 15px;
-      background: var(--bg);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .price {
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    .btn-book {
-      background: var(--primary);
-      color: var(--white);
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    .hotel-img {
-      width: 100%;
-      height: 150px;
-      background: linear-gradient(135deg, #ddd, #eee);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-    }
-
-    .card-body {
-      padding: 15px;
-      flex-grow: 1;
-    }
-
-    .title {
-      font-weight: 700;
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-
-    .itinerary {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 25px;
-      box-shadow: var(--shadow);
-    }
-
-    .itinerary h2 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-
-    .day {
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .day:last-child {
-      border-bottom: none;
-    }
-
-    .day-title {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 10px;
-    }
-
-    .day-content {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 40px;
-      color: var(--muted);
-    }
-
-    /* Itinerary Form Styling */
-    .itinerary-container {
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
-      animation: fadeIn 0.3s ease-in;
-    }
-
-    .itinerary-form-section {
-      background: white;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .itinerary-form-section h3 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: #1a1a1a;
-    }
-
-    .itinerary-form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-group label {
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: #666;
-      margin-bottom: 6px;
-    }
-
-    .form-group input,
-    .form-group select {
-      padding: 10px 12px;
-      border: 1px solid #e0e0e8;
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: border-color 0.3s;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #1a1a1a;
-      box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
-    }
-
-    .btn-generate {
-      padding: 12px 25px;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      max-width: 200px;
-    }
-
-    .btn-generate:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(26, 26, 26, 0.2);
-    }
-
-    .btn-generate:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-
-    .btn-text {
-      display: inline;
-    }
-
-    .btn-loader {
-      display: none;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .itinerary-results {
-      display: grid;
-      gap: 20px;
-    }
-
-    .itinerary-day {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border-left: 4px solid #1a1a1a;
-      animation: slideIn 0.4s ease-out;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .itinerary-day-header {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: #1a1a1a;
-    }
-
-    .itinerary-day-content {
-      font-size: 13px;
-      color: #666;
-      line-height: 1.6;
-    }
-
-    .itinerary-day-content p {
-      margin-bottom: 8px;
-    }
-
-    .itinerary-summary {
-      background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    .summary-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #e0e0e8;
-    }
-
-    .summary-item:last-child {
-      border-bottom: none;
-    }
-
-    .summary-label {
-      font-weight: 600;
-      color: #1a1
+  </script>
+</body>
+</html>
