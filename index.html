@@ -3,69 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VOYA - Smart Travel Planner</title>
+  <title>VOYA - AI Travel Planner</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Arial',sans-serif; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     body { background:#f5f5f5; color:#333; }
-    nav { background:white; height:70px; display:flex; align-items:center; justify-content:space-between; padding:0 40px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
-    .logo { font-size:24px; font-weight:bold; }
+    nav { background:white; height:70px; display:flex; align-items:center; justify-content:space-between; padding:0 40px; box-shadow:0 2px 10px rgba(0,0,0,0.1); position:sticky; top:0; z-index:100; }
+    .logo { font-size:24px; font-weight:bold; color:#1a1a1a; }
+    .nav-right { display:flex; gap:20px; align-items:center; }
+    .api-toggle { display:flex; gap:8px; align-items:center; font-size:12px; background:#f0f0f0; padding:8px 12px; border-radius:6px; }
+    .api-toggle select { padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-weight:600; cursor:pointer; }
+    .api-indicator { display:inline-block; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:bold; }
+    .api-indicator.lambda { background:#667eea; color:white; }
+    .api-indicator.ollama-local { background:#ed8936; color:white; }
+    .api-indicator.ollama-cloud { background:#9f7aea; color:white; }
+    .api-indicator.openrouter { background:#48bb78; color:white; }
     .hero { background:linear-gradient(135deg,#1a1a1a,#2d2d2d); color:white; padding:60px 40px; text-align:center; }
-    .hero h1 { font-size:48px; margin-bottom:10px; }
-    .tabs-nav { display:flex; background:white; padding:15px 40px; border-bottom:2px solid #e0e0e8; }
-    .tab-btn { background:none; border:none; padding:10px 20px; font-size:14px; cursor:pointer; color:#666; }
-    .tab-btn.active { color:#1a1a1a; border-bottom:3px solid #1a1a1a; margin-bottom:-2px; }
+    .hero h1 { font-size:48px; margin-bottom:10px; font-weight:700; }
+    .hero p { color:#ccc; font-size:16px; }
+    .tabs-nav { display:flex; background:white; padding:15px 40px; border-bottom:2px solid #e0e0e8; gap:5px; }
+    .tab-btn { background:none; border:none; padding:12px 24px; font-size:14px; cursor:pointer; color:#666; font-weight:600; transition:all 0.3s; border-bottom:3px solid transparent; }
+    .tab-btn:hover { color:#1a1a1a; }
+    .tab-btn.active { color:#1a1a1a; border-bottom-color:#1a1a1a; }
     .main { display:grid; grid-template-columns:250px 1fr; gap:25px; padding:25px 40px; max-width:1400px; margin:0 auto; }
     .content { flex:1; }
-    .tab-content { display:none; }
+    .tab-content { display:none; animation:fadeIn 0.3s; }
     .tab-content.active { display:block; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
     .search-card { background:white; border-radius:8px; padding:20px; margin-bottom:25px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-    .search-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:15px; }
-    .input-group { display:flex; flex-direction:column; margin-bottom:10px; }
-    .input-group label { font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:6px; color:#666; }
-    .input-group input, .input-group select { padding:10px 12px; border:1px solid #e0e0e8; border-radius:6px; font-size:13px; }
-    .btn-search { background:#1a1a1a; color:white; padding:10px 25px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }
-    .btn-generate { background:#1a1a1a; color:white; padding:12px 25px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px; }
-    .results-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:15px; }
-    .card { background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); padding:15px; }
-    .card-header { font-weight:bold; margin-bottom:10px; }
-    .itinerary-form-section { background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:25px; }
-    .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; }
-    .itinerary-day { background:white; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #1a1a1a; margin-bottom:15px; }
-    .itinerary-day-header { font-weight:bold; font-size:15px; margin-bottom:10px; }
-    .itinerary-summary { background:#f5f5f5; padding:20px; border-radius:8px; margin-bottom:20px; }
-    .summary-item { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e0e0e8; }
-    .sidebar { background:white; border-radius:8px; padding:20px; height:fit-content; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+    .search-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:15px; }
+    .input-group { display:flex; flex-direction:column; }
+    .input-group label { font-size:11px; font-weight:700; text-transform:uppercase; margin-bottom:6px; color:#666; letter-spacing:0.5px; }
+    .input-group input, .input-group select { padding:10px 12px; border:1px solid #e0e0e8; border-radius:6px; font-size:13px; transition:border 0.3s; }
+    .input-group input:focus, .input-group select:focus { outline:none; border-color:#1a1a1a; box-shadow:0 0 0 3px rgba(26,26,26,0.1); }
+    .btn-search, .btn-generate { background:#1a1a1a; color:white; padding:10px 25px; border:none; border-radius:6px; font-weight:600; cursor:pointer; transition:all 0.3s; }
+    .btn-search:hover, .btn-generate:hover { background:#333; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    .btn-search:active, .btn-generate:active { transform:translateY(0); }
+    .results-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:15px; }
+    .card { background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); padding:15px; transition:all 0.3s; border:1px solid #f0f0f0; }
+    .card:hover { box-shadow:0 8px 16px rgba(0,0,0,0.12); transform:translateY(-4px); }
+    .card-header { font-weight:700; margin-bottom:10px; font-size:15px; color:#1a1a1a; }
+    .card-detail { font-size:13px; color:#666; margin-bottom:6px; line-height:1.5; }
+    .itinerary-form-section { background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:25px; border-left:4px solid #1a1a1a; }
+    .itinerary-form-section h3 { margin-bottom:10px; font-size:18px; }
+    .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px; }
+    .itinerary-day { background:white; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #667eea; margin-bottom:15px; transition:all 0.3s; }
+    .itinerary-day:hover { box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+    .itinerary-day-header { font-weight:700; font-size:16px; margin-bottom:10px; color:#1a1a1a; }
+    .itinerary-summary { background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:20px; border-left:4px solid #667eea; }
+    .summary-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e0e0e8; }
+    .summary-item:last-child { border-bottom:none; }
+    .sidebar { background:white; border-radius:8px; padding:20px; height:fit-content; box-shadow:0 2px 8px rgba(0,0,0,0.05); position:sticky; top:100px; }
     .filter-group { margin-bottom:20px; }
-    .filter-title { font-weight:bold; font-size:12px; text-transform:uppercase; margin-bottom:10px; }
-    .checkbox { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-    @media(max-width:768px) { .main { grid-template-columns:1fr; } .sidebar { display:none; } }
+    .filter-title { font-weight:700; font-size:12px; text-transform:uppercase; margin-bottom:10px; color:#1a1a1a; letter-spacing:0.5px; }
+    .checkbox { display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer; }
+    .checkbox input { cursor:pointer; }
+    .loading { text-align:center; padding:40px 20px; }
+    .spinner { border:3px solid #e0e0e8; border-top-color:#1a1a1a; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto 15px; }
+    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+    .status-message { padding:12px 15px; border-radius:6px; margin-bottom:15px; font-size:13px; }
+    .error { background:#fee; color:#c33; border-left:4px solid #c33; }
+    .success { background:#efe; color:#3c3; border-left:4px solid #3c3; }
+    .warning { background:#ffeaa7; color:#856404; border-left:4px solid #ffc107; }
+    .info { background:#d1ecf1; color:#0c5460; border-left:4px solid #17a2b8; }
+    @media(max-width:768px) { .main { grid-template-columns:1fr; } .sidebar { display:none; } .search-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <nav>
-    <div class="logo">VOYA</div>
-    <div>
-      <a href="#explore" style="margin-right:20px; text-decoration:none; color:#333;">Explore</a>
-      <a href="#trips" style="margin-right:20px; text-decoration:none; color:#333;">Trips</a>
-      <a href="#support" style="text-decoration:none; color:#333;">Support</a>
+    <div class="logo">VOYA ✈️ AI</div>
+    <div class="nav-right">
+      <div class="api-toggle">
+        <label style="font-weight:600;">AI Engine:</label>
+        <select id="ai-engine" onchange="updateAIEngine()">
+          <option value="lambda">🔵 Lambda (Backend)</option>
+          <option value="ollama-local">🟠 Ollama (Local)</option>
+          <option value="ollama-cloud">🟣 Ollama (Cloud)</option>
+          <option value="openrouter">🟢 OpenRouter</option>
+        </select>
+        <span id="api-status" class="api-indicator lambda">Ready</span>
+      </div>
     </div>
   </nav>
 
   <div class="hero">
-    <h1>Travel Smarter</h1>
-    <p>Simple planning, premium experiences</p>
+    <h1>Travel Smarter with AI 🌍</h1>
+    <p>Powered by Lambda, Ollama (Local & Cloud) & OpenRouter</p>
   </div>
 
   <div class="tabs-nav">
     <button class="tab-btn active" onclick="switchTab('flights')">✈️ Flights</button>
     <button class="tab-btn" onclick="switchTab('hotels')">🏨 Hotels</button>
-    <button class="tab-btn" onclick="switchTab('itinerary')">🗺️ Itinerary</button>
+    <button class="tab-btn" onclick="switchTab('itinerary')">🤖 AI Itinerary</button>
   </div>
 
   <div class="main">
     <div class="sidebar">
       <div class="filter-group">
-        <div class="filter-title">Stops</div>
+        <div class="filter-title">✈️ Stops</div>
         <label class="checkbox"><input type="checkbox" checked> Non-stop</label>
         <label class="checkbox"><input type="checkbox"> 1 Stop</label>
         <label class="checkbox"><input type="checkbox"> 2+ Stops</label>
@@ -73,89 +107,95 @@
     </div>
 
     <div class="content">
+      <!-- FLIGHTS TAB -->
       <div id="flights" class="tab-content active">
         <div class="search-card">
           <div class="search-grid">
-            <div class="input-group"><label>FROM</label><input type="text" id="from" placeholder="Origin"></div>
-            <div class="input-group"><label>TO</label><input type="text" id="to" placeholder="Destination"></div>
-            <div class="input-group"><label>DEPART</label><input type="date" id="depart"></div>
-            <div class="input-group"><label>RETURN</label><input type="date" id="return"></div>
+            <div class="input-group">
+              <label>From</label>
+              <input type="text" id="from" placeholder="Origin" value="Delhi">
+            </div>
+            <div class="input-group">
+              <label>To</label>
+              <input type="text" id="to" placeholder="Destination" value="Mumbai">
+            </div>
+            <div class="input-group">
+              <label>Depart</label>
+              <input type="date" id="depart">
+            </div>
+            <div class="input-group">
+              <label>Return</label>
+              <input type="date" id="return">
+            </div>
           </div>
-          <button class="btn-search" onclick="searchFlights()">Find Flights</button>
+          <button class="btn-search" onclick="searchFlights()">🔍 Find Flights</button>
         </div>
         <div id="flights-results" class="results-grid"></div>
       </div>
 
+      <!-- HOTELS TAB -->
       <div id="hotels" class="tab-content">
         <div class="search-card">
           <div class="search-grid">
-            <div class="input-group"><label>CITY</label><input type="text" id="hotel-city" placeholder="Location"></div>
-            <div class="input-group"><label>CHECK-IN</label><input type="date" id="hotel-checkin"></div>
-            <div class="input-group"><label>CHECK-OUT</label><input type="date" id="hotel-checkout"></div>
+            <div class="input-group">
+              <label>City</label>
+              <input type="text" id="hotel-city" placeholder="Location" value="Mumbai">
+            </div>
+            <div class="input-group">
+              <label>Check-in</label>
+              <input type="date" id="hotel-checkin">
+            </div>
+            <div class="input-group">
+              <label>Check-out</label>
+              <input type="date" id="hotel-checkout">
+            </div>
+            <div class="input-group">
+              <label>Guests</label>
+              <input type="number" id="guests" min="1" value="2">
+            </div>
           </div>
-          <button class="btn-search" onclick="searchHotels()">Find Hotels</button>
+          <button class="btn-search" onclick="searchHotels()">🔍 Find Hotels</button>
         </div>
         <div id="hotels-results" class="results-grid"></div>
       </div>
 
+      <!-- AI ITINERARY TAB -->
       <div id="itinerary" class="tab-content">
         <div class="itinerary-form-section">
-          <h3>Plan Your Itinerary</h3>
+          <h3>🤖 AI-Powered Itinerary Generator</h3>
+          <p style="color:#666; font-size:13px; margin-bottom:15px;">Select your AI engine and generate a personalized itinerary</p>
+          <div id="status-message"></div>
+          
           <div class="form-row">
-            <div class="input-group"><label>Destination</label><input type="text" id="itinerary-destination" placeholder="e.g., Goa"></div>
-            <div class="input-group"><label>Start Date</label><input type="date" id="itinerary-start-date"></div>
-            <div class="input-group"><label>Duration (Days)</label><input type="number" id="itinerary-duration" min="1" max="30" placeholder="7"></div>
+            <div class="input-group">
+              <label>Destination</label>
+              <input type="text" id="itinerary-destination" placeholder="e.g., Goa" value="Goa">
+            </div>
+            <div class="input-group">
+              <label>Start Date</label>
+              <input type="date" id="itinerary-start-date">
+            </div>
+            <div class="input-group">
+              <label>Duration</label>
+              <input type="number" id="itinerary-duration" min="1" max="30" value="7">
+            </div>
           </div>
+          
           <div class="form-row">
-            <div class="input-group"><label>Budget (₹)</label><input type="number" id="itinerary-budget" placeholder="Total budget"></div>
-            <div class="input-group"><label>Trip Type</label><select id="itinerary-type"><option value="">Select type</option><option value="adventure">Adventure</option><option value="relaxation">Relaxation</option><option value="cultural">Cultural</option><option value="food">Food</option><option value="mixed">Mixed</option></select></div>
-            <div class="input-group"><label>People</label><input type="number" id="itinerary-people" min="1" max="20" placeholder="2"></div>
-          </div>
-          <button class="btn-generate" onclick="generateItinerary()">Generate Itinerary</button>
-        </div>
-        <div id="itinerary-results"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    function searchFlights() {
-      const from = document.getElementById('from').value;
-      const to = document.getElementById('to').value;
-      if (!from || !to) { alert('Enter origin and destination'); return; }
-      const flights = [{airline:'IndiGo',depart:'08:00',arrive:'10:30',duration:'2h 30m',stops:'Non-stop',price:'₹4,500'},{airline:'Air India',depart:'09:15',arrive:'12:00',duration:'2h 45m',stops:'1 Stop',price:'₹3,800'},{airline:'SpiceJet',depart:'14:00',arrive:'16:45',duration:'2h 45m',stops:'Non-stop',price:'₹4,200'}];
-      document.getElementById('flights-results').innerHTML = flights.map(f => `<div class="card"><div class="card-header">${f.airline}</div><div>${f.depart} → ${f.arrive}</div><div>${f.duration} | ${f.stops}</div><div style="margin-top:10px; font-weight:bold;">${f.price}</div></div>`).join('');
-    }
-
-    function searchHotels() {
-      const city = document.getElementById('hotel-city').value;
-      if (!city) { alert('Enter city'); return; }
-      const hotels = [{name:'Luxury Resort',rating:'★★★★★',price:'₹8,500'},{name:'Budget Inn',rating:'★★★★',price:'₹2,500'},{name:'Premium Hotel',rating:'★★★★★',price:'₹6,200'}];
-      document.getElementById('hotels-results').innerHTML = hotels.map(h => `<div class="card"><div class="card-header">${h.name}</div><div>${h.rating}</div><div style="margin-top:10px; font-weight:bold;">${h.price}/night</div></div>`).join('');
-    }
-
-    function generateItinerary() {
-      const dest = document.getElementById('itinerary-destination').value;
-      const days = parseInt(document.getElementById('itinerary-duration').value);
-      const budget = parseInt(document.getElementById('itinerary-budget').value);
-      const type = document.getElementById('itinerary-type').value;
-      if (!dest || !days || !budget || !type) { alert('Fill all fields'); return; }
-      const dailyBudget = Math.floor(budget / days);
-      let html = `<div class="itinerary-summary"><div class="summary-item"><span>📍 Destination:</span><span>${dest}</span></div><div class="summary-item"><span>📅 Duration:</span><span>${days} days</span></div><div class="summary-item"><span>💰 Daily Budget:</span><span>₹${dailyBudget}</span></div></div>`;
-      const activities = {adventure:['Trek','Water sports','Rock climbing','Market','Sunset'],relaxation:['Spa','Beach','Yoga','Shopping','Dinner'],cultural:['Temple tour','Museum','Craft','Cooking','Show'],food:['Street food','Cooking class','Fine dining','Market','Wine tasting'],mixed:['Sightseeing','Adventure','Relaxation','Shopping','Culture']};
-      const acts = activities[type] || activities.mixed;
-      for (let i = 0; i < days; i++) {
-        html += `<div class="itinerary-day"><div class="itinerary-day-header">Day ${i+1}</div><div><strong>Activity:</strong> ${acts[i % acts.length]}</div><div><strong>Budget:</strong> ₹${dailyBudget}</div></div>`;
-      }
-      document.getElementById('itinerary-results').innerHTML = html;
-    }
-  </script>
-</body>
-</html>
+            <div class="input-group">
+              <label>Budget (₹)</label>
+              <input type="number" id="itinerary-budget" value="35000">
+            </div>
+            <div class="input-group">
+              <label>Trip Type</label>
+              <select id="itinerary-type">
+                <option value="adventure" selected>Adventure</option>
+                <option value="relaxation">Relaxation</option>
+                <option value="cultural">Cultural</option>
+                <option value="food">Food & Dining</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>People</label>
+              <input type="number" id="it
