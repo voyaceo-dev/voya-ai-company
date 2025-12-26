@@ -4,194 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOYA | Premium Travel Planner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-black: #1a1a1a;
-            --pure-black: #000000;
-            --accent-gray: #333333;
-            --text-main: #1a1a1a;
-            --text-muted: #666666;
-            --bg-light: #f5f5f5;
-            --white: #ffffff;
-            --border: #e0e0e0;
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-main); line-height: 1.6; }
-        nav { background: var(--white); height: 80px; display: flex; align-items: center; justify-content: space-between; padding: 0 10%; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--pure-black); letter-spacing: -1.5px; }
-        .nav-links { display: flex; align-items: center; gap: 30px; }
-        .nav-links a { text-decoration: none; color: var(--text-main); font-weight: 500; font-size: 14px; transition: var(--transition); }
-        .nav-links a:hover { color: var(--text-muted); }
-        .nav-links .btn-login { background: var(--pure-black); color: white; padding: 10px 20px; border-radius: 4px; }
-        .hero { background: var(--primary-black); padding: 80px 10% 140px; text-align: center; color: var(--white); }
-        .hero h1 { font-size: 42px; font-weight: 700; margin-bottom: 10px; }
-        .hero p { color: #888; font-size: 18px; }
-        .search-container { max-width: 1200px; margin: -80px auto 40px; padding: 0 20px; }
-        .search-card { background: var(--white); padding: 40px; border-radius: 12px; box-shadow: var(--shadow); }
-        .trip-toggles { display: flex; gap: 25px; margin-bottom: 25px; }
-        .trip-toggles label { font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        input[type="radio"] { accent-color: var(--pure-black); width: 18px; height: 18px; }
-        .search-grid { display: grid; grid-template-columns: 1.5fr 1.5fr 1.2fr 0.8fr; gap: 20px; align-items: end; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        .input-group label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .input-group input, .input-group select { padding: 15px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; outline: none; transition: var(--transition); }
-        .input-group input:focus { border-color: var(--pure-black); }
-        .btn-search { background: var(--pure-black); color: white; border: none; padding: 16px; border-radius: 6px; font-weight: 700; font-size: 16px; cursor: pointer; transition: var(--transition); }
-        .btn-search:hover { background: #333; transform: translateY(-2px); }
-        .main-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 280px 1fr; gap: 40px; padding: 20px; }
-        .filters { background: var(--white); padding: 25px; border-radius: 10px; height: fit-content; border: 1px solid var(--border); }
-        .filter-section { margin-bottom: 30px; }
-        .filter-section h4 { margin-bottom: 15px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-        .filter-section label { display: block; margin-bottom: 10px; font-size: 14px; color: var(--text-muted); cursor: pointer; }
-        .flight-card { background: var(--white); border-radius: 10px; padding: 25px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; border: 1px solid var(--border); transition: var(--transition); animation: slideUp 0.6s ease forwards; }
-        .flight-card:hover { border-color: var(--pure-black); box-shadow: var(--shadow); }
-        .airline-meta { display: flex; align-items: center; gap: 15px; }
-        .logo-placeholder { width: 45px; height: 45px; background: #000; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
-        .flight-path { display: flex; align-items: center; justify-content: space-between; text-align: center; padding: 0 30px; }
-        .time { font-size: 20px; font-weight: 700; color: var(--pure-black); }
-        .airport-code { font-size: 12px; color: var(--text-muted); }
-        .route-visual { flex: 1; margin: 0 20px; position: relative; border-bottom: 2px solid #eee; height: 2px; }
-        .route-visual::after { content: '✈'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #ddd; }
-        .price-tag { text-align: right; border-left: 1px solid #eee; padding-left: 30px; }
-        .amount { font-size: 26px; font-weight: 800; display: block; margin-bottom: 5px; }
-        .btn-select { background: var(--pure-black); color: white; border: none; padding: 10px 25px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status { text-align: center; padding: 20px; font-weight: 600; display: none; }
-        @media (max-width: 1024px) {
-            .search-grid { grid-template-columns: 1fr 1fr; }
-            .main-content { grid-template-columns: 1fr; }
-            .filters { display: none; }
-        }
-        @media (max-width: 600px) {
-            .search-grid { grid-template-columns: 1fr; }
-            .flight-card { grid-template-columns: 1fr; gap: 20px; text-align: center; }
-            .flight-path { padding: 0; }
-            .price-tag { border: none; padding: 0; }
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}:root{--primary:#1a1a1a;--accent:#333;--bg:#f5f5f5;--white:#fff;--border:#e0e0e8;--text:#1a1a1a;--muted:#666;--shadow:0 10px 30px rgba(0,0,0,0.1)}body{background:var(--bg);color:var(--text)}nav{background:var(--white);height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;box-shadow:0 2px 10px rgba(0,0,0,0.05);position:sticky;top:0;z-index:1000}.logo{font-size:24px;font-weight:700}.nav-links{display:flex;gap:30px;align-items:center}.nav-links a{text-decoration:none;color:var(--text);font-weight:500;font-size:14px}.btn-signin{background:var(--primary);color:var(--white);padding:10px 20px;border:none;border-radius:4px;font-weight:600;cursor:pointer}.hero{background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);color:var(--white);padding:60px 40px;text-align:center}.hero h1{font-size:48px;font-weight:700;margin-bottom:10px}.hero p{font-size:16px;color:#b0b0b0}.tabs-nav{display:flex;background:var(--white);padding:15px 40px;border-bottom:2px solid var(--border);position:sticky;top:70px;z-index:999}.tab-btn{background:none;border:none;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}.tab-btn.active{color:var(--text);border-bottom-color:var(--primary)}.main{display:grid;grid-template-columns:250px 1fr;gap:25px;padding:25px 40px;max-width:1400px;margin:0 auto}.sidebar{background:var(--white);border-radius:8px;padding:20px;height:fit-content;box-shadow:0 2px 8px rgba(0,0,0,0.05)}.filter-group{margin-bottom:20px}.filter-title{font-weight:700;font-size:12px;text-transform:uppercase;margin-bottom:10px}.checkbox{display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer}.content{flex:1}.tab-content{display:none}.tab-content.active{display:block;animation:fadeIn 0.3s}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.search-card{background:var(--white);border-radius:8px;padding:20px;margin-bottom:25px;box-shadow:var(--shadow)}.search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:15px}.input-group{display:flex;flex-direction:column}.input-group label{font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:6px;color:var(--muted)}.input-group input,.input-group select{padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px}.btn-search{background:var(--primary);color:var(--white);padding:10px 25px;border:none;border-radius:6px;font-weight:600;cursor:pointer;align-self:flex-end}.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:15px}.card{background:var(--white);border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.3s}.card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.12);transform:translateY(-4px)}.card-header{padding:15px;border-bottom:1px solid var(--border)}.flight-times{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-bottom:10px}.time{font-size:16px;font-weight:700;text-align:center}.divider{height:2px;background:var(--border)}.info-row{display:flex;gap:10px;font-size:12px;color:var(--muted);margin-top:8px}.card-footer{padding:12px 15px;background:var(--bg);display:flex;justify-content:space-between;align-items:center}.price{font-size:18px;font-weight:700}.btn-book{background:var(--primary);color:var(--white);padding:8px 16px;border:none;border-radius:4px;font-weight:600;cursor:pointer;font-size:12px}.hotel-img{width:100%;height:150px;background:linear-gradient(135deg,#ddd,#eee);display:flex;align-items:center;justify-content:center;font-size:40px}.card-body{padding:15px;flex-grow:1}.title{font-weight:700;font-size:14px;margin-bottom:6px}.itinerary{background:var(--white);border-radius:8px;padding:25px;box-shadow:var(--shadow)}.itinerary h2{font-size:22px;font-weight:700;margin-bottom:20px}.day{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}.day:last-child{border-bottom:none}.day-title{font-weight:700;font-size:15px;margin-bottom:10px}.day-content{font-size:13px;color:var(--muted);line-height:1.8}.empty{text-align:center;padding:40px;color:var(--muted)}@media(max-width:768px){.main{grid-template-columns:1fr}.sidebar{display:none}.hero h1{font-size:32px}.search-grid{grid-template-columns:1fr}.results-grid{grid-template-columns:1fr}}</style>
 </head>
 <body>
-    <nav>
-        <div class="logo">VOYA</div>
-        <div class="nav-links">
-            <a href="#">Explore</a>
-            <a href="#">Trips</a>
-            <a href="#">Support</a>
-            <a href="#" class="btn-login">Sign In</a>
-        </div>
-    </nav>
-
-    <div class="hero">
-        <h1>Travel Smarter.</h1>
-        <p>Simple planning, premium experiences.</p>
-    </div>
-
-    <div class="search-container">
-        <div class="search-card">
-            <form id="searchForm">
-                <div class="trip-toggles">
-                    <label><input type="radio" name="t" value="round" checked> Round-trip</label>
-                    <label><input type="radio" name="t" value="one"> One-way</label>
-                </div>
-                <div class="search-grid">
-                    <div class="input-group">
-                        <label>From</label>
-                        <input type="text" id="origin" placeholder="Origin City" required>
-                    </div>
-                    <div class="input-group">
-                        <label>To</label>
-                        <input type="text" id="destination" placeholder="Destination" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Departure Date</label>
-                        <input type="date" id="date" required>
-                    </div>
-                    <button type="submit" class="btn-search" id="submitBtn">Find Flights</button>
-                </div>
-            </form>
+    <nav><div class="logo">VOYA</div><div class="nav-links"><a href="#explore">Explore</a><a href="#trips">Trips</a><a href="#support">Support</a><button class="btn-signin">Sign In</button></div></nav>
+    <div class="hero"><h1>Travel Smarter.</h1><p>Simple planning, premium experiences.</p></div>
+    <div class="tabs-nav"><button class="tab-btn active" onclick="switchTab('flights')">✈️ Flights</button><button class="tab-btn" onclick="switchTab('hotels')">🏨 Hotels</button><button class="tab-btn" onclick="switchTab('itinerary')">🗺️ Itinerary</button></div>
+    <div class="main">
+        <div class="sidebar"><div class="filter-group"><div class="filter-title">Stops</div><div class="checkbox"><input type="checkbox" checked><label>Non-stop</label></div><div class="checkbox"><input type="checkbox"><label>1 Stop</label></div><div class="checkbox"><input type="checkbox"><label>2+ Stops</label></div></div><div class="filter-group"><div class="filter-title">Airlines</div><div class="checkbox"><input type="checkbox" checked><label>Premium</label></div><div class="checkbox"><input type="checkbox" checked><label>Budget</label></div></div><div class="filter-group"><div class="filter-title">Amenities</div><div class="checkbox"><input type="checkbox"><label>Wi-Fi</label></div><div class="checkbox"><input type="checkbox"><label>Extra Legroom</label></div></div></div>
+        <div class="content">
+            <div id="flights" class="tab-content active"><div class="search-card"><div class="search-grid"><div class="input-group"><label>FROM</label><input type="text" placeholder="Origin" id="from"></div><div class="input-group"><label>TO</label><input type="text" placeholder="Destination" id="to"></div><div class="input-group"><label>DEPART</label><input type="date" id="depart"></div><div class="input-group"><label>RETURN</label><input type="date" id="return"></div><div class="input-group"><label>PASSENGERS</label><select><option>1</option><option>2</option><option>3</option><option>4</option></select></div></div><button class="btn-search" onclick="searchFlights()">Find Flights</button></div><div id="flights-results" class="results-grid"></div></div>
+            <div id="hotels" class="tab-content"><div class="search-card"><div class="search-grid"><div class="input-group"><label>CITY</label><input type="text" placeholder="Location" id="hotel-city"></div><div class="input-group"><label>CHECK-IN</label><input type="date" id="hotel-checkin"></div><div class="input-group"><label>CHECK-OUT</label><input type="date" id="hotel-checkout"></div><div class="input-group"><label>GUESTS</label><select><option>1</option><option>2</option><option>3</option><option>4</option></select></div></div><button class="btn-search" onclick="searchHotels()">Find Hotels</button></div><div id="hotels-results" class="results-grid"></div></div>
+            <div id="itinerary" class="tab-content"><div class="itinerary"><h2>Your Itinerary</h2><div id="itinerary-content"><div class="empty">Search flights to generate your AI itinerary.</div></div></div></div>
         </div>
     </div>
-
-    <div class="main-content">
-        <aside class="filters">
-            <div class="filter-section">
-                <h4>Stops</h4>
-                <label><input type="checkbox" checked> Non-stop</label>
-                <label><input type="checkbox"> 1 Stop</label>
-                <label><input type="checkbox"> 2+ Stops</label>
-            </div>
-            <div class="filter-section">
-                <h4>Airlines</h4>
-                <label><input type="checkbox" checked> Premium Airlines</label>
-                <label><input type="checkbox" checked> Budget Carriers</label>
-            </div>
-            <div class="filter-section">
-                <h4>Amenities</h4>
-                <label><input type="checkbox"> Wi-Fi</label>
-                <label><input type="checkbox"> Extra Legroom</label>
-            </div>
-        </aside>
-
-        <section id="result-container">
-            <div id="status"></div>
-            <div style="text-align: center; padding: 60px; border: 2px dashed #ddd; border-radius: 10px; color: #999;">
-                Start your search to view available flights.
-            </div>
-        </section>
-    </div>
-
     <script>
-        const API_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
-        
-        const searchForm = document.getElementById('searchForm');
-        const resultContainer = document.getElementById('result-container');
-        const statusDiv = document.getElementById('status');
-        const submitBtn = document.getElementById('submitBtn');
-
-        searchForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const origin = document.getElementById('origin').value;
-            const destination = document.getElementById('destination').value;
-            const date = document.getElementById('date').value;
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Searching...';
-            statusDiv.style.display = 'block';
-            statusDiv.textContent = '✨ Finding best prices...';
-            resultContainer.innerHTML = '<div style="text-align:center; padding: 50px;"><div style="width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #000; border-radius:50%; animation: spin 1s linear infinite; margin: 0 auto;"></div><p style="margin-top:20px; font-weight:600">Searching flights...</p></div>';
-
-            try {
-                const response = await fetch(`${API_URL}/api/itinerary/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ destination, duration: date, preferences: `From ${origin}` })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    statusDiv.textContent = '✅ Flights found!';
-                    resultContainer.innerHTML = `<div style="background: white; padding: 30px; border-radius: 10px; border: 1px solid #e0e0e0;">${data.itinerary || 'Trip itinerary generated successfully'}</div>`;
-                } else {
-                    throw new Error('Failed to fetch flights');
-                }
-            } catch (error) {
-                statusDiv.textContent = '❌ Error: ' + error.message;
-                resultContainer.innerHTML = '<div style="color: red; padding: 20px; border: 1px solid red; border-radius: 8px;">Unable to fetch flights. Please try again.</div>';
-            }
-
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Find Flights';
-        });
-
-        // Health check
-        fetch(`${API_URL}/api/health`)
-            .then(r => r.json())
-            .then(d => console.log('✅ Backend connected:', d))
-            .catch(e => console.error('❌ Backend error:', e));
+        function switchTab(tabName){document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));document.getElementById(tabName).classList.add('active');event.target.classList.add('active')}
+        function searchFlights(){const from=document.getElementById('from').value;const to=document.getElementById('to').value;if(!from||!to){alert('Please enter origin and destination');return}document.getElementById('flights-results').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px"><div style="border:3px solid #e0e0e8;border-top:3px solid #1a1a1a;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 15px"></div>Searching...</div>';setTimeout(()=>{const flights=[{airline:'IndiGo',depart:'08:00',arrive:'10:30',duration:'2h 30m',stops:'Non-stop',price:'₹4,500'},{airline:'Air India',depart:'09:15',arrive:'12:00',duration:'2h 45m',stops:'1 Stop',price:'₹3,800'},{airline:'SpiceJet',depart:'14:00',arrive:'16:45',duration:'2h 45m',stops:'Non-stop',price:'₹4,200'}];document.getElementById('flights-results').innerHTML=flights.map(f=>`<div class="card"><div class="card-header"><div class="flight-times"><div class="time">${f.depart}</div><div class="divider"></div><div class="time">${f.arrive}</div></div><div style="font-weight:700;margin-bottom:8px">${f.airline}</div><div class="info-row"><span>${f.duration}</span><span>${f.stops}</span></div></div><div class="card-footer"><div class="price">${f.price}</div><button class="btn-book">Book</button></div></div>`).join('')},500)}
+        function searchHotels(){const city=document.getElementById('hotel-city').value;if(!city){alert('Enter city');return}document.getElementById('hotels-results').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px">Searching...</div>';setTimeout(()=>{const hotels=[{name:'Luxury Resort',rating:'★★★★★',price:'₹8,500'},{name:'Budget Inn',rating:'★★★★',price:'₹2,500'},{name:'Premium Hotel',rating:'★★★★★',price:'₹6,200'}];document.getElementById('hotels-results').innerHTML=hotels.map(h=>`<div class="card"><div class="hotel-img">🏨</div><div class="card-body"><div class="title">${h.name}</div><div style="font-size:12px;color:#666;margin-bottom:10px">${h.rating}</div></div><div class="card-footer"><div style="display:flex;flex-direction:column"><span style="font-size:11px;color:#666">per night</span><div class="price">${h.price}</div></div><button class="btn-book">Book</button></div></div>`).join('')},500)}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
     </script>
 </body>
 </html>
