@@ -40,6 +40,16 @@
 
         .header-actions { display: flex; align-items: center; gap: 15px; }
 
+        .engine-status {
+            background: #222;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
         .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; }
 
@@ -155,6 +165,10 @@
             <a href="#">Start Planning</a>
         </nav>
         <div class="header-actions">
+            <div class="engine-status">
+                <div class="status-dot"></div>
+                <span>Lambda (Backend) <b>Ready</b></span>
+            </div>
             <button class="btn-signin">Sign In</button>
         </div>
     </header>
