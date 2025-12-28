@@ -309,8 +309,6 @@
             const content = data.itinerary || data.message || JSON.stringify(data);
             
             let html = `
-                <div style="margin-bottom:20px; padding:10px; background:#eef; border-radius:5px; font-size:0.8rem;">
-                    <strong>Provider:</strong> Lambda Engine | <strong>Status:</strong> Success
                 </div>
                 <div class="itinerary-content">
                     ${content.replace(/\n/g, '<br>')}
