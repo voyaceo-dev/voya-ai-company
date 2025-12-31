@@ -1,151 +1,259 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VOYA AI — Travel App</title>
-  <meta name="description" content="VOYA AI travel app UI — itinerary side panel, tabs, and skeleton loading." />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOYA AI - Travel Planner</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0a0e1a;
+            --card-bg: #161b2d;
+            --accent-blue: #3b82f6;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --shimmer: linear-gradient(90deg, #161b2d 25%, #1e293b 50%, #161b2d 75%);
+        }
 
-  <style>
-    :root{
-      --bg: #071427;
-      --panel-grad-1: #003580;
-      --panel-grad-2: #002152;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 
-      --card: #ffffff;
-      --text: #0b1220;
-      --muted: rgba(11,18,32,.65);
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
 
-      --stroke: rgba(255,255,255,.10);
-      --shadow: 0 10px 28px rgba(0,0,0,.28);
-      --shadow-soft: 0 10px 22px rgba(15, 23, 42, 0.10);
+        /* --- Navbar --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background: rgba(10, 14, 26, 0.95);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #1e293b;
+        }
 
-      --radius: 16px;
-      --radius-sm: 12px;
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; color: var(--accent-blue); }
 
-      --ease: cubic-bezier(0.25, 1, 0.5, 1);
-      --t-fast: 160ms;
-      --t: 280ms;
+        .nav-btns .btn-signin {
+            background: var(--accent-blue);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
 
-      --panelW: 400px;
+        /* --- Hero Section --- */
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+            background: radial-gradient(circle at top, #1e293b 0%, #0a0e1a 70%);
+        }
 
-      --focus: 2px solid rgba(56, 189, 248, .95);
-    }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .hero p { color: var(--text-dim); margin-bottom: 2rem; }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1200px 700px at 10% 10%, rgba(56,189,248,.10), transparent 60%),
-                  radial-gradient(900px 600px at 85% 20%, rgba(99,102,241,.10), transparent 55%),
-                  var(--bg);
-      color: rgba(255,255,255,.92);
-      overflow-x:hidden;
-    }
+        /* --- Tabs --- */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
 
-    a{ color: inherit; }
-    button, input{
-      font: inherit;
-    }
-    :focus-visible{
-      outline: var(--focus);
-      outline-offset: 2px;
-      border-radius: 10px;
-    }
+        .tab {
+            padding: 10px 20px;
+            background: var(--card-bg);
+            border: 1px solid #1e293b;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
 
-    /* Navbar */
-    .nav{
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 14px 18px;
-      backdrop-filter: blur(10px);
-      background: linear-gradient(to bottom, rgba(7,20,39,.70), rgba(7,20,39,.40));
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width: 120px;
-    }
-    .logoMark{
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.30), transparent 45%),
-                  linear-gradient(135deg, #38bdf8, #4f46e5 60%, #0ea5e9);
-      box-shadow: 0 10px 30px rgba(79,70,229,.35);
-      display:grid;
-      place-items:center;
-      border: 1px solid rgba(255,255,255,.18);
-    }
-    .logoMark svg{ display:block; }
-    .brandName{
-      font-weight: 700;
-      letter-spacing: .2px;
-      line-height: 1;
-    }
-    .brandName small{
-      display:block;
-      font-weight: 600;
-      opacity: .75;
-      letter-spacing: .4px;
-      margin-top: 3px;
-      font-size: 12px;
-    }
+        .tab.active { background: var(--accent-blue); border-color: var(--accent-blue); }
 
-    .navActions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .btn{
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.95);
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: transform var(--t) var(--ease), background var(--t) var(--ease), border-color var(--t) var(--ease);
-      user-select:none;
-    }
-    .btn:hover{
-      background: rgba(255,255,255,.12);
-      border-color: rgba(255,255,255,.22);
-      transform: translateY(-1px);
-    }
-    .btnPrimary{
-      background: linear-gradient(135deg, rgba(56,189,248,.95), rgba(79,70,229,.95));
-      border-color: rgba(255,255,255,.22);
-      color: #051021;
-      font-weight: 800;
-    }
-    .btnPrimary:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-    }
+        /* --- Main Layout --- */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            padding: 0 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-    /* Layout */
-    .app{
-      min-height: calc(100vh - 60px);
-      display:flex;
-      position:relative;
-    }
-    .main{
-      flex: 1 1 auto;
-      padding: 18px;
-      padding-right: 18px;
-      transition: padding-right var(--t) var(--ease);
-    }
-    .hero{
-      max-width: 1100px;
-      margin: 10px auto 0 auto;
-      padding: 22px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,255
+        /* --- Search & Filters --- */
+        .search-box {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0a0e1a;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 8px;
+        }
+
+        /* --- Itinerary Side Panel --- */
+        .itinerary-panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .day-card {
+            background: #1e293b;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .day-header {
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2d3748;
+        }
+
+        .day-content {
+            padding: 1rem;
+            display: none; /* Collapsible */
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* --- Shimmer Effect --- */
+        .shimmer {
+            height: 200px;
+            width: 100%;
+            background: var(--shimmer);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">VOYA AI</div>
+        <div class="nav-btns">
+            <button class="btn-signin">Sign In</button>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Explore the World with AI</h1>
+        <p>Your personalized travel companion for flights, hotels, and smart itineraries.</p>
+        
+        <div class="tabs-container">
+            <div class="tab active" onclick="switchTab('ai')"><i class="fas fa-robot"></i> AI Itinerary</div>
+            <div class="tab" onclick="switchTab('flights')"><i class="fas fa-plane"></i> Flights</div>
+            <div class="tab" onclick="switchTab('hotels')"><i class="fas fa-hotel"></i> Hotels</div>
+        </div>
+    </section>
+
+    <main class="main-layout">
+        <div id="content-area">
+            <div class="search-box">
+                <input type="text" placeholder="Where to next? (e.g. Tokyo, Japan)">
+            </div>
+
+            <div id="loading-state">
+                <div class="shimmer"></div>
+                <div class="shimmer"></div>
+            </div>
+
+            <div id="main-results" class="hidden">
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 12px;">
+                    <h3>Recommended for you</h3>
+                    <p style="color: var(--text-dim); margin-top: 10px;">Based on your recent searches for Japan.</p>
+                </div>
+            </div>
+        </div>
+
+        <aside class="itinerary-panel">
+            <h3>Your Trip Itinerary</h3>
+            <div style="margin: 1rem 0; border-bottom: 1px solid #334155;"></div>
+
+            <div class="day-card">
+                <div class="day-header" onclick="toggleDay('day1')">
+                    <span>Day 1: Arrival & Shibuya</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div id="day1" class="day-content">
+                    • Transfer from Narita Airport<br>
+                    • Check-in at Hotel Gracery<br>
+                    • Evening at Shibuya Crossing
+                </div>
+            </div>
+
+            <div class="day-card">
+                <div class="day-header" onclick="toggleDay('day2')">
+                    <span>Day 2: Temples & Culture</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div id="day2" class="day-content">
+                    • Morning visit to Senso-ji Temple<br>
+                    • Tea ceremony in Asakusa<br>
+                    • Tokyo Skytree View
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // Simulate Loading Finish
+        setTimeout(() => {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('main-results').classList.remove('hidden');
+        }, 2000);
+
+        // Toggle Collapsible Sections
+        function toggleDay(id) {
+            const content = document.getElementById(id);
+            const isVisible = content.style.display === 'block';
+            
+            // Close all others (optional)
+            document.querySelectorAll('.day-content').forEach(el => el.style.display = 'none');
+            
+            content.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // Tab Switching Logic
+        function switchTab(type) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            console.log("Switching view to: " + type);
+            // Here you would normally filter content based on type
+        }
+    </script>
+</body>
+</html>
