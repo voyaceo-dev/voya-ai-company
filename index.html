@@ -112,6 +112,26 @@
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Typing Animation */
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+        
+        .loader p {
+            display: inline-block;
+            overflow: hidden;
+            border-right: 2px solid var(--accent-blue);
+            white-space: nowrap;
+            animation: typing 2s steps(40) 1s infinite, blink 0.75s step-end infinite;
+            max-width: fit-content;
+            margin: 10px auto;
+        }
+
         /* Itinerary Styling */
         .itinerary-container {
             background: #ffffff;
@@ -141,10 +161,6 @@
         <div class="header-actions"><button class="btn-signin">Sign In</button></div>
     </header>
 
-    <section class="hero">
-        <h1>Travel Smarter with AI 🌍</h1>
-        <p>Your Intelligent Journey Architect</p>
-    </section>
 
     <div class="container">
         <div class="tabs-nav">
