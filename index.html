@@ -192,11 +192,7 @@
 
     <header>
         <a href="#" class="logo">VOYA 🌍 AI</a>
-        <nav>
-            <a href="#">Destinations</a>
-            <a href="#">My Trips</a>
-            <a href="#">Start Planning</a>
-        </nav>
+
         <div class="header-actions">
             <div class="engine-status">
                 <div class="status-dot"></div> AI Engine Online
@@ -386,6 +382,35 @@
                 }
             }, 800);
         }
+        
+// Markdown to HTML converter
+function convertMarkdownToHTML(markdown) {
+  let html = markdown;
+  
+  // Convert h3 (###)
+  html = html.replace(/###\s+(.+?)$/gm, '<h3>$1</h3>');
+  // Convert h2 (##)
+  html = html.replace(/##\s+(.+?)$/gm, '<h2>$1</h2>');
+  // Convert h1 (#)
+  html = html.replace(/#\s+(.+?)$/gm, '<h1>$1</h1>');
+  // Convert bold (**text**)
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Convert bullet points (* item)
+  html = html.replace(/^\s*-\s+(.+?)$/gm, '<li>$1</li>');
+  // Wrap consecutive li elements in ul
+  html = html.replace(/(<li>.+?<\/li>)(\n<li>.+?<\/li>)*/g, (match) => '<ul>' + match + '</ul>');
+  // Convert line breaks
+  html = html.replace(/---\n/g, '<hr>');
+  html = html.replace(/\n/g, '<br>');
+  
+  return html;
+}
+
+// Apply markdown conversion to itinerary content
+const itineraryContent = document.querySelector('.itinerary-content');
+if (itineraryContent && itineraryContent.textContent) {
+  itineraryContent.innerHTML = convertMarkdownToHTML(itineraryContent.textContent);
+}
     </script>
 </body>
 </html>
