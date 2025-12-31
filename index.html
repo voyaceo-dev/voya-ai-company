@@ -3,408 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOYA AI | Premium Travel Planner</title>
+    <title>VOYA AI | Advanced Travel Engine</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --bg-deep: #050810;
             --bg-navy: #0a0f1e;
-            --bg-card: #161e31;
+            --bg-card: rgba(22, 30, 49, 0.8);
             --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.5);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
 
         body {
             background-color: var(--bg-deep);
-            color: var(--text-primary);
-            line-height: 1.6;
+            color: var(--text-main);
             overflow-x: hidden;
+            min-height: 100vh;
         }
 
-        /* --- Custom Scrollbar --- */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-deep); }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-
-        /* --- Navbar --- */
+        /* --- Full Navbar --- */
         nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 5%;
-            background: rgba(5, 8, 16, 0.8);
-            backdrop-filter: blur(12px);
+            padding: 1rem 5%;
+            background: rgba(5, 8, 16, 0.9);
+            backdrop-filter: blur(15px);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid var(--glass-border);
         }
 
-        .logo {
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            background: linear-gradient(90deg, #fff, var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .nav-left { display: flex; align-items: center; gap: 2.5rem; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+        
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links a { 
+            text-decoration: none; color: var(--text-dim); font-size: 0.9rem; 
+            transition: var(--transition); font-weight: 500;
         }
+        .nav-links a:hover { color: var(--accent); }
+
+        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+        .ai-status { font-size: 0.8rem; color: #10b981; display: flex; align-items: center; gap: 6px; }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
 
         .btn-signin {
             background: var(--accent);
-            color: white;
-            padding: 0.6rem 1.5rem;
-            border-radius: 50px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 4px 15px var(--accent-glow);
+            color: white; padding: 0.5rem 1.2rem; border-radius: 8px;
+            border: none; font-weight: 600; cursor: pointer; transition: var(--transition);
         }
+        .btn-signin:hover { transform: translateY(-1px); box-shadow: 0 4px 15px var(--accent-glow); }
 
-        .btn-signin:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px var(--accent-glow);
-        }
+        /* --- Hero Section --- */
+        .hero { padding: 8rem 5% 4rem; text-align: center; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; letter-spacing: -2px; }
+        .hero p { color: var(--text-dim); font-size: 1.2rem; max-width: 600px; margin: 0 auto 3rem; }
 
-        /* --- Layout --- */
-        .container {
-            display: flex;
-            margin-top: 80px;
-            padding: 0 2% 2% 5%;
-            gap: 2rem;
-            min-height: calc(100vh - 80px);
-        }
-
-        main {
-            flex: 1;
-            max-width: 900px;
-        }
-
-        /* --- Hero & Search --- */
-        .hero {
-            padding: 3rem 0;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero h1 { font-size: 2.8rem; margin-bottom: 1rem; }
-        
-        .search-container {
+        /* --- Tab System --- */
+        .tabs-wrapper {
+            max-width: 900px; margin: 0 auto;
             background: var(--bg-card);
-            padding: 8px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            margin-top: 2rem;
+            padding: 2rem; border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
         }
 
-        .search-container input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 1rem;
-            color: white;
-            font-size: 1.1rem;
-            outline: none;
+        .tabs-header { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; }
+        .tab-btn {
+            background: none; border: none; color: var(--text-dim);
+            padding: 0.5rem 1rem; cursor: pointer; font-size: 1rem;
+            font-weight: 600; transition: var(--transition); border-radius: 8px;
+        }
+        .tab-btn.active { color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .input-group { display: flex; flex-direction: column; text-align: left; gap: 0.5rem; }
+        .input-group label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        input { 
+            background: #050810; border: 1px solid var(--glass-border); 
+            padding: 0.8rem; border-radius: 10px; color: white; outline: none;
+        }
+        input:focus { border-color: var(--accent); }
+
+        .btn-search {
+            grid-column: 1 / -1; background: var(--accent); color: white;
+            padding: 1rem; border-radius: 12px; border: none; font-weight: 700;
+            margin-top: 1rem; cursor: pointer; transition: var(--transition);
         }
 
-        /* --- Pulse Loading Animation --- */
-        .skeleton-loader {
-            margin-top: 2rem;
+        /* --- Layout Container --- */
+        .main-container {
+            display: grid; grid-template-columns: 1fr 380px;
+            padding: 2rem 5%; gap: 3rem; max-width: 1400px; margin: 0 auto;
         }
 
-        .pulse-card {
-            background: var(--bg-card);
-            height: 180px;
-            border-radius: 16px;
-            margin-bottom: 1.5rem;
-            position: relative;
-            overflow: hidden;
+        /* --- Pulse Loading --- */
+        .loader-card {
+            background: var(--bg-card); height: 120px; border-radius: 16px;
+            margin-bottom: 1rem; position: relative; overflow: hidden;
         }
-
-        .pulse-card::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+        .loader-card::after {
+            content: ""; position: absolute; inset: 0;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
             animation: pulse 1.5s infinite;
         }
+        @keyframes pulse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-        @keyframes pulse {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        /* --- Itinerary Panel --- */
+        .itinerary-panel {
+            background: var(--bg-navy); border-radius: 24px;
+            padding: 1.5rem; height: fit-content; position: sticky; top: 100px;
+            border: 1px solid var(--glass-border);
         }
 
-        /* --- Itinerary Panel (Side Panel) --- */
-        .itinerary-aside {
-            width: 380px;
-            position: sticky;
-            top: 100px;
-            height: calc(100vh - 120px);
-            background: var(--bg-navy);
-            border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
-        }
-
-        .panel-header {
-            padding: 1.5rem;
-            background: rgba(255,255,255,0.02);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .panel-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-
-        /* --- Day Card Styling --- */
         .day-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            margin-bottom: 1rem;
-            border: 1px solid transparent;
+            background: rgba(255,255,255,0.03); border-radius: 12px;
+            margin-bottom: 0.8rem; border: 1px solid transparent; overflow: hidden;
+        }
+        .day-header {
+            padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 1rem;
             transition: var(--transition);
         }
-
-        .day-card:hover {
-            border-color: var(--accent);
-            transform: translateX(-4px);
+        .day-header:hover { background: rgba(255,255,255,0.05); }
+        .day-icon { 
+            width: 35px; height: 35px; background: var(--accent); 
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
         }
-
-        .day-trigger {
-            padding: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        
+        .day-meta { font-size: 0.7rem; color: var(--text-dim); display: flex; gap: 8px; margin-top: 4px; }
+        
+        .day-body { 
+            max-height: 0; overflow: hidden; transition: max-height 0.4s ease; 
+            padding: 0 1rem; font-size: 0.85rem; color: var(--text-dim);
         }
+        .day-body.open { max-height: 200px; padding-bottom: 1rem; }
 
-        .day-num {
-            width: 40px;
-            height: 40px;
-            background: var(--accent);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .day-info { flex: 1; }
-        .day-info h4 { font-size: 0.95rem; }
-        .day-meta { font-size: 0.75rem; color: var(--text-secondary); display: flex; gap: 10px; }
-
-        .day-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(0,0,0,0.2);
-        }
-
-        .day-body.active {
-            max-height: 500px; /* Large enough for content */
-            padding: 0 1.2rem 1.2rem 1.2rem;
-        }
-
-        .activity {
-            display: flex;
-            gap: 12px;
-            margin-top: 1rem;
-            padding-left: 10px;
-            border-left: 2px solid var(--accent);
-        }
-
-        .activity i { color: var(--accent); margin-top: 4px; font-size: 0.9rem; }
-        .activity p { font-size: 0.85rem; color: var(--text-secondary); }
-
-        .hidden { display: none; }
-
-        @media (max-width: 1024px) {
-            .container { flex-direction: column; padding: 0 5%; }
-            .itinerary-aside { width: 100%; position: static; height: auto; }
+        @media (max-width: 1000px) {
+            .main-container { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
 <body>
 
     <nav>
-        <div class="logo">VOYA AI</div>
-        <button class="btn-signin">Sign In</button>
+        <div class="nav-left">
+            <div class="logo">VOYA AI</div>
+            <div class="nav-links">
+                <a href="#">Destinations</a>
+                <a href="#">My Trips</a>
+                <a href="#">Start Planning</a>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="ai-status">
+                <div class="status-dot"></div>
+                AI Engine Online
+            </div>
+            <button class="btn-signin">Sign In</button>
+        </div>
     </nav>
 
-    <div class="container">
-        <main>
-            <section class="hero">
-                <h1>Where will AI take <br><span style="color: var(--accent);">you next?</span></h1>
-                
-                <div class="search-container">
-                    <i class="fas fa-search" style="margin-left: 15px; color: var(--text-secondary);"></i>
-                    <input type="text" placeholder="Search destinations, hotels, or flights..." id="mainSearch">
-                    <button class="btn-signin" style="margin-right: 8px;">Explore</button>
-                </div>
+    <header class="hero">
+        <h1>Intelligent Travel. <br><span style="color: var(--accent);">Effortless Discovery.</span></h1>
+        <p>Combine real-time global travel data with generative AI to craft your perfect journey.</p>
+        
+        <div class="tabs-wrapper">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="showTab('flights')"><i class="fas fa-plane"></i> Flights</button>
+                <button class="tab-btn" onclick="showTab('hotels')"><i class="fas fa-hotel"></i> Hotels</button>
+                <button class="tab-btn" onclick="showTab('ai')"><i class="fas fa-magic"></i> AI Itinerary</button>
+            </div>
 
-                <div class="skeleton-loader" id="loader">
-                    <div class="pulse-card"></div>
-                    <div class="pulse-card"></div>
-                    <div class="pulse-card"></div>
+            <div id="flights" class="tab-content active">
+                <div class="form-grid">
+                    <div class="input-group"><label>From</label><input type="text" placeholder="NYC - All Airports"></div>
+                    <div class="input-group"><label>To</label><input type="text" placeholder="London, UK"></div>
+                    <div class="input-group"><label>Depart</label><input type="date"></div>
+                    <div class="input-group"><label>Return</label><input type="date"></div>
+                    <button class="btn-search">Find Best Flights</button>
                 </div>
+            </div>
 
-                <div id="real-content" class="hidden" style="margin-top: 2rem;">
-                    <div style="background: var(--bg-card); padding: 2rem; border-radius: 20px;">
-                        <h2 style="margin-bottom: 1rem;">Trending Itineraries</h2>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div style="background: #1e293b; height: 100px; border-radius: 12px; padding: 15px;">Tokyo Cherry Blossoms</div>
-                            <div style="background: #1e293b; height: 100px; border-radius: 12px; padding: 15px;">Paris Romance Tour</div>
-                        </div>
+            <div id="hotels" class="tab-content">
+                <div class="form-grid">
+                    <div class="input-group"><label>City</label><input type="text" placeholder="Where are you staying?"></div>
+                    <div class="input-group"><label>Check-in</label><input type="date"></div>
+                    <div class="input-group"><label>Check-out</label><input type="date"></div>
+                    <div class="input-group"><label>Guests</label><input type="number" value="2"></div>
+                    <button class="btn-search">Search Properties</button>
+                </div>
+            </div>
+
+            <div id="ai" class="tab-content">
+                <div class="form-grid">
+                    <div class="input-group" style="grid-column: 1 / -1;"><label>Describe your dream trip</label>
+                        <input type="text" placeholder="A 7-day food tour in Tokyo and Kyoto with luxury hotels...">
                     </div>
+                    <button class="btn-search">Generate Smart Itinerary</button>
                 </div>
-            </section>
-        </main>
+            </div>
+        </div>
+    </header>
 
-        <aside class="itinerary-aside">
-            <div class="panel-header">
-                <h3>Your Trip Plan</h3>
-                <p style="font-size: 0.8rem; color: var(--text-secondary);">Tokyo, Japan • 5 Days</p>
+    <div class="main-container">
+        <div id="results-area">
+            <h3 style="margin-bottom: 1.5rem;">Recommended for You</h3>
+            <div id="loader-group">
+                <div class="loader-card"></div>
+                <div class="loader-card"></div>
+                <div class="loader-card"></div>
             </div>
             
-            <div class="panel-content">
-                <div class="day-card">
-                    <div class="day-trigger" onclick="toggleDay(this)">
-                        <div class="day-num">01</div>
-                        <div class="day-info">
-                            <h4>Arrival & Shibuya</h4>
-                            <div class="day-meta">
-                                <span><i class="fas fa-temperature-high"></i> 22°C</span>
-                                <span><i class="fas fa-map-marker-alt"></i> Tokyo Central</span>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-down chevron"></i>
-                    </div>
-                    <div class="day-body">
-                        <div class="activity">
-                            <i class="fas fa-plane-arrival"></i>
-                            <div>
-                                <strong>Narita Express</strong>
-                                <p>Transfer to Shinjuku Station via NEX high-speed rail.</p>
-                            </div>
-                        </div>
-                        <div class="activity">
-                            <i class="fas fa-camera"></i>
-                            <div>
-                                <strong>Shibuya Crossing</strong>
-                                <p>Experience the world's busiest intersection at sunset.</p>
-                            </div>
-                        </div>
+            <div id="main-feed" style="display: none;">
+                <div class="loader-card" style="background: rgba(59,130,246,0.1); border: 1px dashed var(--accent);">
+                    <div style="padding: 20px;">
+                        <h4>Ready to start?</h4>
+                        <p style="color: var(--text-dim); font-size: 0.9rem;">Fill in the details above to see personalized travel options.</p>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="day-card">
-                    <div class="day-trigger" onclick="toggleDay(this)">
-                        <div class="day-num">02</div>
-                        <div class="day-info">
-                            <h4>Cultural Heritage</h4>
-                            <div class="day-meta">
-                                <span><i class="fas fa-cloud-sun"></i> 20°C</span>
-                                <span><i class="fas fa-map-marker-alt"></i> Asakusa</span>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-down chevron"></i>
-                    </div>
-                    <div class="day-body">
-                        <div class="activity">
-                            <i class="fas fa-torii-gate"></i>
-                            <div>
-                                <strong>Senso-ji Temple</strong>
-                                <p>Visit Tokyo's oldest temple and Nakamise market street.</p>
-                            </div>
+        <aside class="itinerary-panel">
+            <h3 style="margin-bottom: 1rem;">Live Itinerary</h3>
+            
+            <div class="day-card">
+                <div class="day-header" onclick="toggleDay(this)">
+                    <div class="day-icon">01</div>
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.9rem;">Arrival & Check-in</h4>
+                        <div class="day-meta">
+                            <span><i class="fas fa-temperature-low"></i> 18°C</span>
+                            <span><i class="fas fa-map-marker-alt"></i> Narita, JP</span>
                         </div>
                     </div>
+                    <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
                 </div>
-
-                <div class="day-card">
-                    <div class="day-trigger" onclick="toggleDay(this)">
-                        <div class="day-num">03</div>
-                        <div class="day-info">
-                            <h4>Modern Tech</h4>
-                            <div class="day-meta">
-                                <span><i class="fas fa-sun"></i> 24°C</span>
-                                <span><i class="fas fa-map-marker-alt"></i> Akihabara</span>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-down chevron"></i>
-                    </div>
-                    <div class="day-body">
-                        <div class="activity">
-                            <i class="fas fa-robot"></i>
-                            <div>
-                                <strong>Akihabara Electric Town</strong>
-                                <p>Explore electronics, gaming centers, and anime culture.</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="day-body">
+                    Private transfer to Shinjuku. Afternoon rest at Park Hyatt. Evening walk to Omoide Yokocho for dinner.
                 </div>
+            </div>
 
+            <div class="day-card">
+                <div class="day-header" onclick="toggleDay(this)">
+                    <div class="day-icon">02</div>
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.9rem;">Harajuku & Shibuya</h4>
+                        <div class="day-meta">
+                            <span><i class="fas fa-sun"></i> 21°C</span>
+                            <span><i class="fas fa-map-marker-alt"></i> Shibuya</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                </div>
+                <div class="day-body">
+                    Visit Meiji Shrine early morning. Shopping on Takeshita Street. Sunset at Shibuya Sky observation deck.
+                </div>
             </div>
         </aside>
     </div>
 
     <script>
-        // Simulate Loading State transition
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('real-content').classList.remove('hidden');
-            }, 2000); // 2 second pulse animation
-        });
-
-        // Animated Accordion Logic
-        function toggleDay(element) {
-            const body = element.nextElementSibling;
-            const chevron = element.querySelector('.chevron');
-            const isActive = body.classList.contains('active');
-
-            // Close all other open cards for a clean accordion effect
-            document.querySelectorAll('.day-body').forEach(el => {
-                el.classList.remove('active');
-                el.previousElementSibling.querySelector('.chevron').style.transform = 'rotate(0deg)';
-            });
-
-            if (!isActive) {
-                body.classList.add('active');
-                chevron.style.transform = 'rotate(180deg)';
-            }
+        // Tab Switching Logic
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
 
-        // Add smooth hover to the logo
-        const logo = document.querySelector('.logo');
-        logo.addEventListener('mouseover', () => {
-            logo.style.transition = '0.5s';
-            logo.style.filter = 'drop-shadow(0 0 8px var(--accent))';
-        });
-        logo.addEventListener('mouseout', () => {
-            logo.style.filter = 'none';
+        // Itinerary Accordion
+        function toggleDay(element) {
+            const body = element.nextElementSibling;
+            const icon = element.querySelector('.fa-chevron-down');
+            
+            // Toggle current
+            body.classList.toggle('open');
+            icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        // Simulate Content Loading
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader-group').style.display = 'none';
+                document.getElementById('main-feed').style.display = 'block';
+                document.getElementById('main-feed').style.animation = 'fadeIn 0.6s ease';
+            }, 2500);
         });
     </script>
 </body>
