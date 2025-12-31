@@ -40,19 +40,6 @@
 
         .header-actions { display: flex; align-items: center; gap: 15px; }
 
-        .engine-status {
-            background: #222;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border: 1px solid #444;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; }
-
         .btn-signin { background: var(--accent-blue); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
 
         /* Hero Section */
@@ -128,13 +115,16 @@
         /* Results Area */
         .results-area { margin-top: 30px; color: var(--text-dark); }
         .card { border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Itinerary Styling */
-        .itinerary-day { background: #fdfdfd; border-left: 4px solid var(--accent-blue); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        .itinerary-day h3 { margin-bottom: 10px; color: var(--accent-blue); }
 
-        /* Loader & Animations */
-        .loader { display: none; text-align: center; padding: 40px; }
+        /* Loader - Now inline in results area */
+        .loader { 
+            display: none; 
+            text-align: center; 
+            padding: 40px; 
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
         .spinner {
             width: 40px;
             height: 40px;
@@ -146,44 +136,90 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Loading Overlay Styles */
-        #loading-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+        /* Itinerary Styling */
+        .itinerary-container {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .ai-pulse {
-            width: 80px;
-            height: 80px;
-            background: var(--accent-blue);
-            border-radius: 50%;
-            animation: pulse 1.5s infinite ease-in-out;
-            margin-bottom: 20px;
+        .itinerary-container h1 {
+            color: #003580;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 3px solid #003580;
+            padding-bottom: 10px;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 53, 128, 0.7); }
-            70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 20px rgba(0, 53, 128, 0); }
-            100% { transform: scale(0.8); opacity: 0.5; }
+        .itinerary-container h2 {
+            color: #1a73e8;
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            border-left: 4px solid #1a73e8;
+            padding-left: 12px;
         }
 
-        .itinerary-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-outline { background: none; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .itinerary-container h3 {
+            color: #2c5aa0;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .itinerary-container p {
+            color: #3c4043;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .itinerary-container ul {
+            margin: 1rem 0 1rem 1.5rem;
+            color: #3c4043;
+        }
+
+        .itinerary-container li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .itinerary-container strong {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .itinerary-container hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 1.5rem 0;
+        }
+
+        .itinerary-actions { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 20px; 
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
         
-        /* Updated typography for AI results */
-        .itinerary-day-header { color: #1a73e8; font-size: 1.4rem; margin-top: 2rem; margin-bottom: 0.5rem; border-bottom: 2px solid #f1f3f4; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; } 
-        .itinerary-text { color: #3c4043; line-height: 1.6; margin-bottom: 1rem; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; } 
-        #itinerary-container { max-width: 800px; margin: 0 auto; padding: 20px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); } 
+        .btn-outline { 
+            background: none; 
+            border: 1px solid var(--accent-blue); 
+            color: var(--accent-blue); 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .btn-outline:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
 
         @media (max-width: 768px) {
-            .header-actions .engine-status { display: none; }
             .hero h1 { font-size: 2rem; }
         }
     </style>
@@ -192,20 +228,10 @@
 
     <header>
         <a href="#" class="logo">VOYA 🌍 AI</a>
-
         <div class="header-actions">
-            <div class="engine-status">
-                <div class="status-dot"></div> AI Engine Online
-            </div>
             <button class="btn-signin">Sign In</button>
         </div>
     </header>
-
-    <div id="loading-overlay">
-        <div class="ai-pulse"></div>
-        <h2 style="color: white;">AI is crafting your journey...</h2>
-        <p style="color: #ccc;">Analyzing travel patterns & local favorites</p>
-    </div>
 
     <section class="hero">
         <h1>Travel Smarter with AI 🌍</h1>
@@ -274,7 +300,7 @@
 
             <div id="ai-loader" class="loader">
                 <div class="spinner"></div>
-                <p>AI is crafting your perfect journey...</p>
+                <p style="color: #666;">AI is crafting your perfect journey...</p>
             </div>
 
             <div id="ai-results" class="results-area"></div>
@@ -297,12 +323,12 @@
             const days = document.getElementById('ai-days').value;
             const prefs = document.getElementById('ai-prefs').value;
             const resultsDiv = document.getElementById('ai-results');
-            const overlay = document.getElementById('loading-overlay');
+            const loader = document.getElementById('ai-loader');
 
             if(!dest) { alert("Please enter a destination"); return; }
 
-            // Show full overlay, clear previous
-            overlay.style.display = 'flex';
+            // Show loader in results area, clear previous
+            loader.style.display = 'block';
             resultsDiv.innerHTML = '';
             document.getElementById('generate-btn').disabled = true;
 
@@ -320,44 +346,64 @@
                 const data = await response.json();
                 const content = data.itinerary || data.message || "Failed to generate plan.";
                 
-                // Hide loader and start typing animation
-                overlay.style.display = 'none';
-                typeWriterEffect(content, resultsDiv);
+                // Hide loader and display formatted content
+                loader.style.display = 'none';
+                displayFormattedItinerary(content, resultsDiv);
                 
             } catch (error) {
-                overlay.style.display = 'none';
+                loader.style.display = 'none';
                 resultsDiv.innerHTML = `<p style="color:red">Error connecting to Lambda: ${error.message}</p>`;
             } finally {
                 document.getElementById('generate-btn').disabled = false;
             }
         }
 
-        function typeWriterEffect(text, container) {
-            container.innerHTML = `<div id="typing-text" class="itinerary-text"></div>`;
-            const textElement = document.getElementById('typing-text');
-            let i = 0;
-            const speed = 15; // adjust for typing speed
-
-            // Convert newlines to breaks for proper rendering
-            const formattedText = text.replace(/\n/g, '<br>');
+        function convertMarkdownToHTML(markdown) {
+            let html = markdown;
             
-            function type() {
-                if (i < text.length) {
-                    // This is a simple version; for complex HTML tags we'd need a more robust parser
-                    textElement.innerHTML = text.substring(0, i + 1).replace(/\n/g, '<br>');
-                    i++;
-                    setTimeout(type, speed);
-                } else {
-                    // Add action buttons after typing finishes
-                    container.innerHTML += `
-                        <div class="itinerary-actions">
-                            <button class="btn-outline" onclick="window.print()"><i class="fas fa-save"></i> Save PDF</button>
-                            <button class="btn-outline"><i class="fas fa-share"></i> Share Trip</button>
-                        </div>
-                    `;
-                }
+            // Convert headers
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            
+            // Convert bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert bullet points and wrap in ul
+            html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\s*)+/g, match => '<ul>' + match + '</ul>');
+            
+            // Convert horizontal rules
+            html = html.replace(/^---+$/gm, '<hr>');
+            
+            // Convert line breaks
+            html = html.replace(/\n\n/g, '</p><p>');
+            html = html.replace(/\n/g, '<br>');
+            
+            // Wrap in paragraphs if not already in a tag
+            if (!html.startsWith('<')) {
+                html = '<p>' + html + '</p>';
             }
-            type();
+            
+            return html;
+        }
+
+        function displayFormattedItinerary(content, container) {
+            const formattedHTML = convertMarkdownToHTML(content);
+            
+            container.innerHTML = `
+                <div class="itinerary-container">
+                    ${formattedHTML}
+                    <div class="itinerary-actions">
+                        <button class="btn-outline" onclick="window.print()">
+                            <i class="fas fa-save"></i> Save PDF
+                        </button>
+                        <button class="btn-outline">
+                            <i class="fas fa-share"></i> Share Trip
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
         function handleSearch(type) {
@@ -382,35 +428,6 @@
                 }
             }, 800);
         }
-        
-// Markdown to HTML converter
-function convertMarkdownToHTML(markdown) {
-  let html = markdown;
-  
-  // Convert h3 (###)
-  html = html.replace(/###\s+(.+?)$/gm, '<h3>$1</h3>');
-  // Convert h2 (##)
-  html = html.replace(/##\s+(.+?)$/gm, '<h2>$1</h2>');
-  // Convert h1 (#)
-  html = html.replace(/#\s+(.+?)$/gm, '<h1>$1</h1>');
-  // Convert bold (**text**)
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Convert bullet points (* item)
-  html = html.replace(/^\s*-\s+(.+?)$/gm, '<li>$1</li>');
-  // Wrap consecutive li elements in ul
-  html = html.replace(/(<li>.+?<\/li>)(\n<li>.+?<\/li>)*/g, (match) => '<ul>' + match + '</ul>');
-  // Convert line breaks
-  html = html.replace(/---\n/g, '<hr>');
-  html = html.replace(/\n/g, '<br>');
-  
-  return html;
-}
-
-// Apply markdown conversion to itinerary content
-const itineraryContent = document.querySelector('.itinerary-content');
-if (itineraryContent && itineraryContent.textContent) {
-  itineraryContent.innerHTML = convertMarkdownToHTML(itineraryContent.textContent);
-}
     </script>
 </body>
 </html>
