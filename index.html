@@ -20,7 +20,6 @@
 
         body { background-color: var(--primary-bg); color: var(--text-light); line-height: 1.6; }
 
-        /* Header & Navigation */
         header {
             background: rgba(0, 0, 0, 0.8);
             padding: 1rem 5%;
@@ -34,20 +33,14 @@
         }
 
         .logo { font-size: 1.5rem; font-weight: bold; color: #fff; text-decoration: none; }
-
         nav a { color: #ccc; text-decoration: none; margin: 0 15px; font-size: 0.9rem; transition: 0.3s; }
-        nav a:hover { color: white; }
-
         .header-actions { display: flex; align-items: center; gap: 15px; }
-
         .btn-signin { background: var(--accent-blue); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
 
-        /* Hero Section */
         .hero { text-align: center; padding: 60px 20px; background: linear-gradient(to bottom, #1a1a1a, #2c3e50); }
         .hero h1 { font-size: 3rem; margin-bottom: 10px; }
         .hero p { color: #bbb; font-size: 1.1rem; }
 
-        /* Main Container & Tabs */
         .container { max-width: 1000px; margin: -40px auto 50px; padding: 0 20px; }
 
         .tabs-nav {
@@ -84,7 +77,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* Form Elements */
         .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 0.85rem; font-weight: bold; color: var(--gray); }
@@ -94,9 +86,6 @@
             border-radius: 6px;
             font-size: 1rem;
         }
-
-        .filters { display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; }
-        .filter-item { display: flex; align-items: center; gap: 8px; }
 
         .btn-main {
             background: var(--accent-blue);
@@ -110,30 +99,17 @@
             width: 100%;
             transition: 0.2s;
         }
-        .btn-main:hover { background: #002a66; }
 
-        /* Results Area */
-        .results-area { margin-top: 30px; color: var(--text-dark); }
-        .card { border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        /* Results Area - ISSUE 3: UNLIMITED HEIGHT */
+        .results-area { 
+            margin-top: 30px; 
+            color: var(--text-dark); 
+            height: auto; 
+            overflow: visible; 
+        }
 
-        /* Loader - Now inline in results area */
-        .loader { 
-            display: none; 
-            text-align: center; 
-            padding: 40px; 
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--accent-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
+        .loader { display: none; text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px; margin-top: 20px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Itinerary Styling */
@@ -143,140 +119,41 @@
             padding: 25px;
             margin-top: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            height: auto; /* Ensure no height restriction */
         }
 
-        .itinerary-container h1 {
-            color: #003580;
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-            border-bottom: 3px solid #003580;
-            padding-bottom: 10px;
-        }
+        .itinerary-container h1 { color: #003580; font-size: 1.8rem; margin: 1.5rem 0 1rem; border-bottom: 3px solid #003580; padding-bottom: 10px; }
+        .itinerary-container h2 { color: #1a73e8; font-size: 1.4rem; margin: 1.5rem 0 0.8rem; border-left: 4px solid #1a73e8; padding-left: 12px; }
+        .itinerary-container h3 { color: #2c5aa0; font-size: 1.2rem; margin: 1.2rem 0 0.5rem; }
+        .itinerary-container h4 { color: #444; font-size: 1.1rem; margin: 1rem 0 0.5rem; font-weight: bold; }
+        .itinerary-container p { color: #3c4043; line-height: 1.8; margin-bottom: 1rem; }
+        .itinerary-container ul { margin: 1rem 0 1rem 1.5rem; color: #3c4043; }
+        .itinerary-container li { margin-bottom: 0.5rem; }
 
-        .itinerary-container h2 {
-            color: #1a73e8;
-            font-size: 1.4rem;
-            margin-top: 2rem;
-            margin-bottom: 0.8rem;
-            border-left: 4px solid #1a73e8;
-            padding-left: 12px;
-        }
-
-        .itinerary-container h3 {
-            color: #2c5aa0;
-            font-size: 1.1rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .itinerary-container p {
-            color: #3c4043;
-            line-height: 1.8;
-            margin-bottom: 1rem;
-        }
-
-        .itinerary-container ul {
-            margin: 1rem 0 1rem 1.5rem;
-            color: #3c4043;
-        }
-
-        .itinerary-container li {
-            margin-bottom: 0.5rem;
-            line-height: 1.6;
-        }
-
-        .itinerary-container strong {
-            color: #1a1a1a;
-            font-weight: 600;
-        }
-
-        .itinerary-container hr {
-            border: none;
-            border-top: 1px solid #e0e0e0;
-            margin: 1.5rem 0;
-        }
-
-        .itinerary-actions { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 20px; 
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
-        .btn-outline { 
-            background: none; 
-            border: 1px solid var(--accent-blue); 
-            color: var(--accent-blue); 
-            padding: 10px 20px; 
-            border-radius: 4px; 
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        
-        .btn-outline:hover {
-            background: var(--accent-blue);
-            color: white;
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2rem; }
-        }
+        .itinerary-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .btn-outline { background: none; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 10px 20px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <a href="#" class="logo">VOYA 🌍 AI</a>
-        <div class="header-actions">
-            <button class="btn-signin">Sign In</button>
-        </div>
+        <div class="header-actions"><button class="btn-signin">Sign In</button></div>
     </header>
 
     <section class="hero">
         <h1>Travel Smarter with AI 🌍</h1>
-        <p>Your Intelligent Journey Architect for smarter, seamless journeys</p>
+        <p>Your Intelligent Journey Architect</p>
     </section>
 
     <div class="container">
         <div class="tabs-nav">
-            <button class="tab-btn active" onclick="switchTab('flights')"><i class="fas fa-plane"></i> Flights</button>
+            <button class="tab-btn" onclick="switchTab('flights')"><i class="fas fa-plane"></i> Flights</button>
             <button class="tab-btn" onclick="switchTab('hotels')"><i class="fas fa-hotel"></i> Hotels</button>
-            <button class="tab-btn" onclick="switchTab('ai-itinerary')"><i class="fas fa-robot"></i> AI Itinerary</button>
+            <button class="tab-btn active" onclick="switchTab('ai-itinerary')"><i class="fas fa-robot"></i> AI Itinerary</button>
         </div>
 
-        <div id="flights" class="tab-content" style="display: block;">
-            <div class="search-grid">
-                <div class="input-group"><label>From</label><input type="text" placeholder="Origin City" id="f-from"></div>
-                <div class="input-group"><label>To</label><input type="text" placeholder="Destination City" id="f-to"></div>
-                <div class="input-group"><label>Depart</label><input type="date"></div>
-                <div class="input-group"><label>Return</label><input type="date"></div>
-            </div>
-            <div class="filters">
-                <div class="filter-item"><input type="checkbox" checked> Non-stop</div>
-                <div class="filter-item"><input type="checkbox" checked> Premium</div>
-                <div class="filter-item"><input type="checkbox" checked> Budget</div>
-            </div>
-            <div class="trip-type-selector" style="margin-bottom: 15px;"><label>Trip Type: </label><input type="radio" name="trip-type" value="one-way"> One-way <input type="radio" name="trip-type" value="round-trip" checked> Round-trip <input type="radio" name="trip-type" value="multi-city"> Multi-city</div>
-            <button class="btn-main" onclick="handleSearch('flights')">Find Flights</button>
-            <div id="flight-results" class="results-area"></div>
-        </div>
-
-        <div id="hotels" class="tab-content">
-            <div class="search-grid">
-                <div class="input-group"><label>City</label><input type="text" placeholder="Where are you going?" id="h-city"></div>
-                <div class="input-group"><label>Check-in</label><input type="date"></div>
-                <div class="input-group"><label>Check-out</label><input type="date"></div>
-                <div class="input-group"><label>Guests</label><div style="display:flex; gap:10px;"><div class="input-group"><label>Adults</label><select id="h-adults"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div><div class="input-group"><label>Children</label><select id="h-children"><option selected>0</option><option>1</option><option>2</option></select></div></div></div>            </div>
-            <div class="filters">
-                <div class="filter-item">Price: <select><option>Any</option><option>Budget</option></select></div>
-                <div class="filter-item">Rating: <select><option>4+ Stars</option></select></div>
-            </div>
-            <button class="btn-main" onclick="handleSearch('hotels')">Find Hotels</button>
-            <div id="hotel-results" class="results-area"></div>
-        </div>
-
-        <div id="ai-itinerary" class="tab-content">
+        <div id="ai-itinerary" class="tab-content" style="display: block;">
             <div class="search-grid">
                 <div class="input-group" style="grid-column: span 2;">
                     <label>Destination</label>
@@ -284,23 +161,18 @@
                 </div>
                 <div class="input-group">
                     <label>Duration</label>
-                    <select id="ai-days">
-                        <option value="1">1 Day</option>
-                        <option value="3">3 Days</option>
-                        <option value="5" selected>5 Days</option>
-                        <option value="7">7 Days</option>
-                    </select>
+                    <input type="text" id="ai-days" placeholder="e.g. 5 days or 1 week">
                 </div>
             </div>
             <div class="input-group" style="margin-bottom: 20px;">
                 <label>Preferences</label>
-                <textarea id="ai-prefs" rows="3" placeholder="e.g. 5 days in Japan in February from Mumbai under ₹60K. Focus on food and culture."></textarea>
+                <textarea id="ai-prefs" rows="3" placeholder="Focus on food and culture..."></textarea>
             </div>
             <button class="btn-main" id="generate-btn" onclick="generateAITrip()">Generate Trip</button>
 
             <div id="ai-loader" class="loader">
                 <div class="spinner"></div>
-                <p style="color: #666;">AI is crafting your perfect journey...</p>
+                <p>AI is crafting your perfect journey...</p>
             </div>
 
             <div id="ai-results" class="results-area"></div>
@@ -308,14 +180,11 @@
     </div>
 
     <script>
-        const API_URL = "https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws/api/itinerary/generate";
-
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            const tab = document.getElementById(tabName);
-            if(tab) tab.style.display = 'block';
+            document.getElementById(tabName).style.display = 'block';
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            if(event) event.currentTarget.classList.add('active');
+            event.currentTarget.classList.add('active');
         }
 
         async function generateAITrip() {
@@ -327,106 +196,68 @@
 
             if(!dest) { alert("Please enter a destination"); return; }
 
-            // Show loader in results area, clear previous
             loader.style.display = 'block';
             resultsDiv.innerHTML = '';
             document.getElementById('generate-btn').disabled = true;
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch("https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws/api/itinerary/generate", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        destination: dest,
-                        duration: days,
-                        preferences: prefs
-                    })
+                    body: JSON.stringify({ destination: dest, duration: days, preferences: prefs })
                 });
 
                 const data = await response.json();
-                const content = data.itinerary || data.message || "Failed to generate plan.";
+                const content = data.itinerary || data.message || "No content received.";
                 
-                // Hide loader and display formatted content
                 loader.style.display = 'none';
                 displayFormattedItinerary(content, resultsDiv);
                 
             } catch (error) {
                 loader.style.display = 'none';
-                resultsDiv.innerHTML = `<p style="color:red">Error connecting to Lambda: ${error.message}</p>`;
+                resultsDiv.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
             } finally {
                 document.getElementById('generate-btn').disabled = false;
             }
         }
 
+        // ISSUE 2: FIXED MARKDOWN PARSING
         function convertMarkdownToHTML(markdown) {
             let html = markdown;
             
-            // Convert headers
-            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            // 1. Headers (Ordered from longest to shortest to prevent partial matching)
+            html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
+            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
             
-            // Convert bold
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // 2. Bold
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
-            // Convert bullet points and wrap in ul
-            html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>\s*)+/g, match => '<ul>' + match + '</ul>');
+            // 3. Bullet Points (li tags)
+            html = html.replace(/^\s*[\*|-]\s+(.*)$/gm, '<li>$1</li>');
             
-            // Convert horizontal rules
-            html = html.replace(/^---+$/gm, '<hr>');
-            
-            // Convert line breaks
+            // 4. Wrap adjacent <li> tags in <ul>
+            html = html.replace(/(<li>(?:.|\n)*?<\/li>)/g, '<ul>$1</ul>');
+            html = html.replace(/<\/ul>\s*<ul>/g, ''); 
+
+            // 5. Line Breaks / Paragraphs
             html = html.replace(/\n\n/g, '</p><p>');
             html = html.replace(/\n/g, '<br>');
-            
-            // Wrap in paragraphs if not already in a tag
-            if (!html.startsWith('<')) {
-                html = '<p>' + html + '</p>';
-            }
             
             return html;
         }
 
         function displayFormattedItinerary(content, container) {
             const formattedHTML = convertMarkdownToHTML(content);
-            
             container.innerHTML = `
                 <div class="itinerary-container">
                     ${formattedHTML}
                     <div class="itinerary-actions">
-                        <button class="btn-outline" onclick="window.print()">
-                            <i class="fas fa-save"></i> Save PDF
-                        </button>
-                        <button class="btn-outline">
-                            <i class="fas fa-share"></i> Share Trip
-                        </button>
+                        <button class="btn-outline" onclick="window.print()"><i class="fas fa-save"></i> Save PDF</button>
                     </div>
                 </div>
             `;
-        }
-
-        function handleSearch(type) {
-            const resultsDiv = document.getElementById(`${type === 'flights' ? 'flight-results' : 'hotel-results'}`);
-            resultsDiv.innerHTML = '<p>Searching live database...</p>';
-            
-            setTimeout(() => {
-                if(type === 'flights') {
-                    resultsDiv.innerHTML = `
-                        <div class="card">
-                            <div><strong>IndiGo 6E-2104</strong><br><small>Non-stop • 2h 15m</small></div>
-                            <div style="text-align:right"><strong>₹5,400</strong><br><button class="btn-signin" style="padding:4px 10px; font-size:0.7rem">Select</button></div>
-                        </div>
-                    `;
-                } else {
-                    resultsDiv.innerHTML = `
-                        <div class="card">
-                            <div><strong>Grand Palace Hotel</strong><br><small>⭐⭐⭐⭐ • City Center</small></div>
-                            <div style="text-align:right"><strong>₹8,200/night</strong><br><button class="btn-signin" style="padding:4px 10px; font-size:0.7rem">Book Now</button></div>
-                        </div>
-                    `;
-                }
-            }, 800);
         }
     </script>
 </body>
