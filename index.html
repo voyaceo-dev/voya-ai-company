@@ -940,17 +940,31 @@
                     const lastLeg = flightGroup.flights[flightGroup.flights.length - 1];
                     const price = flightGroup.price || 0;
 
+                    // Get layover info
+                    const layovers = flightGroup.layovers || [];
+                    const layoverInfo = layovers.length > 0
+                        ? layovers.map(l => `${l.name} (${Math.floor(l.duration / 60)}h ${l.duration % 60}m)`).join(', ')
+                        : null;
+
                     flights.push({
                         airline: firstLeg.airline || 'Unknown Airline',
+                        airlineLogo: firstLeg.airline_logo || flightGroup.airline_logo || null,
                         from: firstLeg.departure_airport?.id || from,
+                        fromName: firstLeg.departure_airport?.name || from,
                         to: lastLeg.arrival_airport?.id || to,
-                        departure: `${firstLeg.departure_airport?.time || 'N/A'}`,
-                        arrival: `${lastLeg.arrival_airport?.time || 'N/A'}`,
+                        toName: lastLeg.arrival_airport?.name || to,
+                        departure: firstLeg.departure_airport?.time || 'N/A',
+                        arrival: lastLeg.arrival_airport?.time || 'N/A',
                         duration: flightGroup.total_duration ? `${Math.floor(flightGroup.total_duration / 60)}h ${flightGroup.total_duration % 60}m` : 'N/A',
                         durationMins: flightGroup.total_duration || 999,
                         price: price ? `₹${price.toLocaleString('en-IN')}` : 'Price N/A',
                         priceNum: price,
-                        stops: flightGroup.flights.length === 1 ? 'Non-stop' : `${flightGroup.flights.length - 1} stop(s)`
+                        stops: flightGroup.flights.length === 1 ? 'Non-stop' : `${flightGroup.flights.length - 1} stop(s)`,
+                        stopsCount: flightGroup.flights.length - 1,
+                        layoverInfo: layoverInfo,
+                        flightNumber: firstLeg.flight_number || null,
+                        travelClass: firstLeg.travel_class || null,
+                        bookingToken: flightGroup.booking_token || null
                     });
                 }
             }
@@ -1095,12 +1109,22 @@
                 return;
             }
 
-            const html = flights.map(flight => `
+            const html = flights.map(flight => {
+                const airlineDisplay = flight.airlineLogo
+                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:24px;margin-right:8px;vertical-align:middle;">`
+                    : '<i class="fas fa-plane" style="margin-right:8px;"></i>';
+
+                const layoverDisplay = flight.layoverInfo
+                    ? `<p style="margin:5px 0 0 0; color: #ff9800; font-size:0.8rem;"><i class="fas fa-clock"></i> Via: ${flight.layoverInfo}</p>`
+                    : '';
+
+                return `
                 <div class="flight-card">
                     <div class="flight-header">
                         <div>
-                            <h3 style="margin:0; color: var(--accent-blue);"><i class="fas fa-plane"></i> ${flight.airline}</h3>
-                            <p style="margin:5px 0 0 0; color: var(--gray); font-size:0.9rem;">${flight.stops}</p>
+                            <h3 style="margin:0; color: var(--accent-blue);">${airlineDisplay}${flight.airline}</h3>
+                            <p style="margin:5px 0 0 0; color: var(--gray); font-size:0.9rem;">${flight.stops}${flight.flightNumber ? ` • ${flight.flightNumber}` : ''}</p>
+                            ${layoverDisplay}
                         </div>
                         <div class="price-tag">${flight.price}</div>
                     </div>
@@ -1123,8 +1147,8 @@
                         </div>
                     </div>
                     <button class="btn-book" onclick="alert('🎉 Redirecting to booking page...')">Book Now</button>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
             container.innerHTML = html;
         }
@@ -1168,9 +1192,11 @@
 
             for (const hotel of properties.slice(0, 15)) { // Limit to 15 results
                 const amenitiesList = hotel.amenities ? hotel.amenities.slice(0, 4).join(', ') : 'WiFi, AC';
-                const priceStr = hotel.rate_per_night?.lowest || hotel.rate_per_night?.extracted_lowest || '';
-                const priceNum = priceStr ? parseInt(priceStr.toString().replace(/[^0-9]/g, '')) || 5000 : 5000;
+                // Use extracted_lowest (numeric) for sorting, fall back to parsing lowest string
+                const priceNum = hotel.rate_per_night?.extracted_lowest ||
+                    (hotel.rate_per_night?.lowest ? parseInt(hotel.rate_per_night.lowest.toString().replace(/[^0-9]/g, '')) : 5000) || 5000;
                 const ratingNum = hotel.overall_rating || 4.0;
+                const thumbnail = hotel.thumbnail || (hotel.images?.[0]?.thumbnail) || null;
 
                 hotels.push({
                     name: hotel.name || 'Hotel',
@@ -1180,7 +1206,9 @@
                     amenities: amenitiesList,
                     price: `₹${priceNum.toLocaleString('en-IN')}/night`,
                     priceNum: priceNum,
-                    image: '🏨'
+                    image: thumbnail ? `<img src="${thumbnail}" alt="${hotel.name}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : '🏨',
+                    hotelClass: hotel.extracted_hotel_class || hotel.hotel_class || null,
+                    link: hotel.link || null
                 });
             }
 
