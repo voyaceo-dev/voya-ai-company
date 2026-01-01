@@ -1,4 +1,3 @@
-23
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,9 +20,8 @@
 
         body { background-color: var(--primary-bg); color: var(--text-light); line-height: 1.6; }
 
-            ;  /* FIXED: explicit height for flexbox centering */
-        23
-        
+        header {
+            height: 70px;
             background: rgba(0, 0, 0, 0.8);
             padding: 1rem 5%;
             display: flex;
@@ -47,17 +45,16 @@
         .container { max-width: 1000px; margin: -40px auto 50px; padding: 0 20px; }
 
         .tabs-nav {
-                align-items: center;  /* ADD THIS - vertically centers children */
-                min-height: 60px;  /* ADD THIS - ensures consistent height */
             display: flex;
+            align-items: center;
+            min-height: 60px;
             background: #fff;
             border-radius: 12px 12px 0 0;
             overflow: hidden;
             border-bottom: 2px solid #eee;
         }
 
-        58
-        
+        .tab-btn {
             flex: 1;
             padding: 18px 15px;
             border: none;
@@ -70,7 +67,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            height: 100%;  /* ADD THIS - makes buttons fill parent height */
+            height: 100%;
         }
 
         .tab-btn.active { color: var(--accent-blue); border-bottom: 3px solid var(--accent-blue); background: #f8f9fa; }
@@ -107,7 +104,6 @@
             transition: 0.2s;
         }
 
-        /* Results Area - ISSUE 3: UNLIMITED HEIGHT */
         .results-area { 
             margin-top: 30px; 
             color: var(--text-dark); 
@@ -119,7 +115,6 @@
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Typing Animation */
         @keyframes typing {
             from { width: 0; }
             to { width: 100%; }
@@ -139,14 +134,13 @@
             margin: 10px auto;
         }
 
-        /* Itinerary Styling */
         .itinerary-container {
             background: #ffffff;
             border-radius: 8px;
             padding: 25px;
             margin-top: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            height: auto; /* Ensure no height restriction */
+            height: auto;
         }
 
         .itinerary-container h1 { color: #003580; font-size: 1.8rem; margin: 1.5rem 0 1rem; border-bottom: 3px solid #003580; padding-bottom: 10px; }
@@ -167,7 +161,6 @@
         <a href="#" class="logo">VOYA 🌍 AI</a>
         <div class="header-actions"><button class="btn-signin">Sign In</button></div>
     </header>
-
 
     <div class="container">
         <div class="tabs-nav">
@@ -244,27 +237,21 @@
             }
         }
 
-        // ISSUE 2: FIXED MARKDOWN PARSING
         function convertMarkdownToHTML(markdown) {
             let html = markdown;
             
-            // 1. Headers (Ordered from longest to shortest to prevent partial matching)
             html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
             html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
             
-            // 2. Bold
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
-            // 3. Bullet Points (li tags)
             html = html.replace(/^\s*[\*|-]\s+(.*)$/gm, '<li>$1</li>');
             
-            // 4. Wrap adjacent <li> tags in <ul>
             html = html.replace(/(<li>(?:.|\n)*?<\/li>)/g, '<ul>$1</ul>');
             html = html.replace(/<\/ul>\s*<ul>/g, ''); 
 
-            // 5. Line Breaks / Paragraphs
             html = html.replace(/\n\n/g, '</p><p>');
             html = html.replace(/\n/g, '<br>');
             
@@ -285,4 +272,3 @@
     </script>
 </body>
 </html>
-60
