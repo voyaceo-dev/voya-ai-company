@@ -724,7 +724,7 @@
                 <div class="input-group">
                     <label>Stops</label>
                     <select id="flight-stops">
-                        <option value="">Any</option>
+                        <option value="0">Any number of stops</option>
                         <option value="1">Non-stop only</option>
                         <option value="2">1 stop or fewer</option>
                         <option value="3">2 stops or fewer</option>
@@ -742,9 +742,11 @@
                 <div class="input-group">
                     <label>Sort By</label>
                     <select id="flight-sort">
-                        <option value="price">Price (Low to High)</option>
-                        <option value="duration">Duration (Shortest)</option>
-                        <option value="departure">Departure Time</option>
+                        <option value="1">Top Flights</option>
+                        <option value="2">Price (Low to High)</option>
+                        <option value="3">Departure Time</option>
+                        <option value="4">Arrival Time</option>
+                        <option value="5">Duration (Shortest)</option>
                     </select>
                 </div>
             </div>
@@ -804,17 +806,18 @@
                     <label>Min Rating</label>
                     <select id="hotel-rating">
                         <option value="">Any Rating</option>
-                        <option value="3">3+ Stars</option>
-                        <option value="4">4+ Stars</option>
-                        <option value="4.5">4.5+ Stars</option>
+                        <option value="7">3.5+ Stars</option>
+                        <option value="8">4.0+ Stars</option>
+                        <option value="9">4.5+ Stars</option>
                     </select>
                 </div>
                 <div class="input-group">
                     <label>Sort By</label>
                     <select id="hotel-sort">
-                        <option value="relevance">Relevance</option>
-                        <option value="lowest_price">Price (Low to High)</option>
-                        <option value="highest_rating">Rating (High to Low)</option>
+                        <option value="">Relevance</option>
+                        <option value="3">Price (Low to High)</option>
+                        <option value="8">Rating (High to Low)</option>
+                        <option value="13">Most Reviewed</option>
                     </select>
                 </div>
             </div>
@@ -997,8 +1000,9 @@
                         return_date: returnDate || undefined,
                         currency: 'INR',
                         travel_class: travelClass,
-                        stops: stops || undefined,
-                        adults: passengers
+                        stops: stops,
+                        adults: passengers,
+                        sort_by: sortBy
                     })
                 });
 
@@ -1032,8 +1036,11 @@
                         outbound_date: depart,
                         currency: 'INR',
                         hl: 'en',
+                        gl: 'in',
                         adults: passengers,
                         travel_class: travelClass,
+                        stops: stops,
+                        sort_by: sortBy,
                         api_key: SERPAPI_KEY
                     });
 
@@ -1042,10 +1049,6 @@
                         params.append('type', '1'); // Round trip
                     } else {
                         params.append('type', '2'); // One way
-                    }
-
-                    if (stops) {
-                        params.append('stops', stops);
                     }
 
                     const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
@@ -1073,19 +1076,6 @@
                 console.log('Using mock flight data');
                 flights = getMockFlights(from, to, depart);
                 usedFallback = true;
-            }
-
-            // Apply sorting
-            if (sortBy === 'price') {
-                flights.sort((a, b) => (a.priceNum || 0) - (b.priceNum || 0));
-            } else if (sortBy === 'duration') {
-                flights.sort((a, b) => {
-                    const getDuration = (d) => {
-                        const match = d.match(/(\d+)h\s*(\d+)?m?/);
-                        return match ? parseInt(match[1]) * 60 + (parseInt(match[2]) || 0) : 999;
-                    };
-                    return getDuration(a.duration) - getDuration(b.duration);
-                });
             }
 
             loader.style.display = 'none';
@@ -1236,7 +1226,8 @@
                         check_out_date: checkout,
                         currency: 'INR',
                         adults: parseInt(guests),
-                        sort_by: sortBy
+                        sort_by: sortBy || undefined,
+                        rating: minRating || undefined
                     })
                 });
 
@@ -1274,8 +1265,14 @@
                         api_key: SERPAPI_KEY
                     });
 
-                    if (sortBy && sortBy !== 'relevance') {
-                        params.append('sort_by', sortBy === 'lowest_price' ? '3' : '4');
+                    // Add sort_by if not relevance (empty = relevance)
+                    if (sortBy) {
+                        params.append('sort_by', sortBy);
+                    }
+
+                    // Add rating filter if specified
+                    if (minRating) {
+                        params.append('rating', minRating);
                     }
 
                     const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
@@ -1303,22 +1300,6 @@
                 console.log('Using mock hotel data');
                 hotels = getMockHotels(destination);
                 usedFallback = true;
-            }
-
-            // Apply rating filter
-            if (minRating) {
-                const minRatingNum = parseFloat(minRating);
-                hotels = hotels.filter(h => {
-                    const rating = parseFloat(h.rating) || h.ratingNum || 0;
-                    return rating >= minRatingNum;
-                });
-            }
-
-            // Apply sorting
-            if (sortBy === 'lowest_price') {
-                hotels.sort((a, b) => (a.priceNum || 0) - (b.priceNum || 0));
-            } else if (sortBy === 'highest_rating') {
-                hotels.sort((a, b) => (b.ratingNum || 0) - (a.ratingNum || 0));
             }
 
             loader.style.display = 'none';
