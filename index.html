@@ -317,20 +317,20 @@
         .loader {
             display: none;
             text-align: center;
-            padding: 40px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
             margin-top: 20px;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
             border-top: 4px solid var(--accent-blue);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin {
@@ -343,109 +343,297 @@
             }
         }
 
-        @keyframes typing {
-            from {
-                width: 0;
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
             }
 
-            to {
-                width: 100%;
-            }
-        }
-
-        @keyframes blink {
             50% {
-                border-color: transparent;
+                opacity: 0.5;
             }
         }
 
         .loader p {
-            display: inline-block;
-            overflow: hidden;
-            border-right: 2px solid var(--accent-blue);
-            white-space: nowrap;
-            animation: typing 2s steps(40) 1s infinite, blink 0.75s step-end infinite;
-            max-width: fit-content;
-            margin: 10px auto;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 1rem;
+            animation: pulse 1.5s ease-in-out infinite;
         }
 
+        .loader-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .loader-dots span {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loader-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loader-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        .loader-dots span:nth-child(3) {
+            animation-delay: 0;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Itinerary Premium Card Styling */
         .itinerary-container {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 25px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            padding: 30px;
             margin-top: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            height: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        .itinerary-container h1 {
-            color: #003580;
+        .itinerary-header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #003580 0%, #1a73e8 100%);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            color: white;
+        }
+
+        .itinerary-header h1 {
+            margin: 0;
             font-size: 1.8rem;
-            margin: 1.5rem 0 1rem;
-            border-bottom: 3px solid #003580;
+            font-weight: 700;
+        }
+
+        .itinerary-header p {
+            margin: 8px 0 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #003580;
+            transition: all 0.3s ease;
+        }
+
+        .day-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .day-card h2 {
+            color: #003580;
+            font-size: 1.3rem;
+            margin: 0 0 15px 0;
             padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .itinerary-container h2 {
-            color: #1a73e8;
-            font-size: 1.4rem;
-            margin: 1.5rem 0 0.8rem;
-            border-left: 4px solid #1a73e8;
-            padding-left: 12px;
-        }
-
-        .itinerary-container h3 {
-            color: #2c5aa0;
+        .day-card h2::before {
+            content: '📅';
             font-size: 1.2rem;
-            margin: 1.2rem 0 0.5rem;
         }
 
-        .itinerary-container h4 {
-            color: #444;
+        .day-card h3 {
+            color: #1a73e8;
             font-size: 1.1rem;
-            margin: 1rem 0 0.5rem;
-            font-weight: bold;
+            margin: 15px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .itinerary-container p {
-            color: #3c4043;
-            line-height: 1.8;
-            margin-bottom: 1rem;
+        .activity-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-left: 3px solid #28a745;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .activity-item::before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .activity-item p {
+            margin: 0;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .tip-card::before {
+            content: '💡 Pro Tip: ';
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .budget-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .budget-table thead {
+            background: linear-gradient(135deg, #003580 0%, #1a73e8 100%);
+            color: white;
+        }
+
+        .budget-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .budget-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+        }
+
+        .budget-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .budget-table tr:hover td {
+            background: #f8f9fa;
+        }
+
+        .budget-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .budget-badge.budget {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .budget-badge.midrange {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .budget-badge.luxury {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .itinerary-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .itinerary-section h2 {
+            color: #003580;
+            margin: 0 0 15px 0;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .itinerary-container ul {
-            margin: 1rem 0 1rem 1.5rem;
-            color: #3c4043;
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
         .itinerary-container li {
-            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid #1a73e8;
+            color: #333;
+        }
+
+        .itinerary-container p {
+            color: #555;
+            line-height: 1.7;
+            margin: 10px 0;
         }
 
         .itinerary-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            gap: 12px;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #e0e0e0;
+            flex-wrap: wrap;
         }
 
         .btn-outline {
-            background: none;
+            background: white;
             border: 2px solid var(--accent-blue);
             color: var(--accent-blue);
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 12px 24px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-outline:hover {
             background: var(--accent-blue);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 53, 128, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 53, 128, 0.3);
         }
 
         @media (max-width: 768px) {
@@ -526,6 +714,9 @@
             <div id="flight-loader" class="loader">
                 <div class="spinner"></div>
                 <p>Searching for best flight deals...</p>
+                <div class="loader-dots">
+                    <span></span><span></span><span></span>
+                </div>
             </div>
 
             <div id="flight-results" class="results-area"></div>
@@ -552,6 +743,9 @@
             <div id="hotel-loader" class="loader">
                 <div class="spinner"></div>
                 <p>Finding best hotel deals...</p>
+                <div class="loader-dots">
+                    <span></span><span></span><span></span>
+                </div>
             </div>
 
             <div id="hotel-results" class="results-area"></div>
@@ -578,6 +772,9 @@
             <div id="ai-loader" class="loader">
                 <div class="spinner"></div>
                 <p>AI is crafting your perfect journey...</p>
+                <div class="loader-dots">
+                    <span></span><span></span><span></span>
+                </div>
             </div>
 
             <div id="ai-results" class="results-area"></div>
@@ -585,7 +782,10 @@
     </div>
 
     <script>
-        // SerpAPI Configuration
+        // API Configuration - Use your deployed Lambda URL
+        const API_BASE_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
+
+        // Fallback: Direct SerpAPI (for local testing only)
         const SERPAPI_KEY = '55a96d68eb1e118f81487695426ae43ea8f0c2f265a6aaec560aaac392b46b6b';
         const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
@@ -685,56 +885,86 @@
             loader.style.display = 'block';
             resultsDiv.innerHTML = '';
 
+            let flights = [];
+            let usedFallback = false;
+
             try {
-                // Build SerpAPI URL for Google Flights
-                const params = new URLSearchParams({
-                    engine: 'google_flights',
-                    departure_id: from.toUpperCase(),
-                    arrival_id: to.toUpperCase(),
-                    outbound_date: depart,
-                    currency: 'INR',
-                    hl: 'en',
-                    api_key: SERPAPI_KEY
+                // Try 1: Backend API (preferred - handles CORS properly)
+                console.log('Trying backend API for flights...');
+                const response = await fetch(`${API_BASE_URL}/api/flights/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        departure_id: from.toUpperCase(),
+                        arrival_id: to.toUpperCase(),
+                        outbound_date: depart,
+                        return_date: returnDate || undefined,
+                        currency: 'INR'
+                    })
                 });
 
-                if (returnDate) {
-                    params.append('return_date', returnDate);
-                    params.append('type', '1'); // Round trip
-                } else {
-                    params.append('type', '2'); // One way
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.flights && data.flights.length > 0) {
+                        flights = data.flights.map(f => ({
+                            airline: f.airline,
+                            from: f.from,
+                            to: f.to,
+                            departure: f.departure_time,
+                            arrival: f.arrival_time,
+                            duration: f.duration,
+                            price: f.price_formatted,
+                            stops: f.stops
+                        }));
+                    }
                 }
+            } catch (err) {
+                console.log('Backend API failed, trying direct SerpAPI...', err.message);
+            }
 
-                const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
+            // Try 2: Direct SerpAPI via CORS proxy (fallback)
+            if (flights.length === 0) {
+                try {
+                    const params = new URLSearchParams({
+                        engine: 'google_flights',
+                        departure_id: from.toUpperCase(),
+                        arrival_id: to.toUpperCase(),
+                        outbound_date: depart,
+                        currency: 'INR',
+                        hl: 'en',
+                        api_key: SERPAPI_KEY
+                    });
 
-                // Use CORS proxy to fetch data
-                const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
+                    if (returnDate) {
+                        params.append('return_date', returnDate);
+                        params.append('type', '1');
+                    } else {
+                        params.append('type', '2');
+                    }
 
-                if (!response.ok) {
-                    throw new Error('API request failed');
+                    const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
+                    const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        flights = parseFlightResults(data, from, to);
+                    }
+                } catch (err) {
+                    console.log('Direct SerpAPI also failed:', err.message);
                 }
+            }
 
-                const data = await response.json();
+            // Try 3: Mock data (last resort)
+            if (flights.length === 0) {
+                console.log('Using mock flight data');
+                flights = getMockFlights(from, to, depart);
+                usedFallback = true;
+            }
 
-                // Parse the results
-                let flights = parseFlightResults(data, from, to);
+            loader.style.display = 'none';
+            displayFlights(flights, resultsDiv);
 
-                // If no results from API, use mock data
-                if (flights.length === 0) {
-                    console.log('No API results, using mock data');
-                    flights = getMockFlights(from, to, depart);
-                }
-
-                loader.style.display = 'none';
-                displayFlights(flights, resultsDiv);
-
-            } catch (error) {
-                console.error('SerpAPI Error:', error);
-                // Fallback to mock data on error
-                const mockFlights = getMockFlights(from, to, depart);
-                loader.style.display = 'none';
-                displayFlights(mockFlights, resultsDiv);
-
-                // Show a subtle notice that we're using demo data
+            if (usedFallback) {
                 resultsDiv.insertAdjacentHTML('afterbegin',
                     '<div style="background:#e3f2fd;padding:10px;border-radius:6px;margin-bottom:15px;color:#1565c0;font-size:0.9rem;">' +
                     '<i class="fas fa-info-circle"></i> Showing demo results. Live data temporarily unavailable.</div>'
@@ -855,50 +1085,78 @@
             loader.style.display = 'block';
             resultsDiv.innerHTML = '';
 
+            let hotels = [];
+            let usedFallback = false;
+
             try {
-                // Build SerpAPI URL for Google Hotels
-                const params = new URLSearchParams({
-                    engine: 'google_hotels',
-                    q: destination + ' hotels',
-                    check_in_date: checkin,
-                    check_out_date: checkout,
-                    currency: 'INR',
-                    hl: 'en',
-                    gl: 'in',
-                    api_key: SERPAPI_KEY
+                // Try 1: Backend API (preferred - handles CORS properly)
+                console.log('Trying backend API for hotels...');
+                const response = await fetch(`${API_BASE_URL}/api/hotels/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        destination,
+                        check_in_date: checkin,
+                        check_out_date: checkout,
+                        currency: 'INR',
+                        adults: 2
+                    })
                 });
 
-                const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
-
-                // Use CORS proxy to fetch data
-                const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
-
-                if (!response.ok) {
-                    throw new Error('API request failed');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.hotels && data.hotels.length > 0) {
+                        hotels = data.hotels.map(h => ({
+                            name: h.name,
+                            location: h.location,
+                            rating: h.rating_formatted,
+                            amenities: h.amenities_formatted,
+                            price: h.price_formatted,
+                            image: '🏨'
+                        }));
+                    }
                 }
+            } catch (err) {
+                console.log('Backend API failed, trying direct SerpAPI...', err.message);
+            }
 
-                const data = await response.json();
+            // Try 2: Direct SerpAPI via CORS proxy (fallback)
+            if (hotels.length === 0) {
+                try {
+                    const params = new URLSearchParams({
+                        engine: 'google_hotels',
+                        q: destination + ' hotels',
+                        check_in_date: checkin,
+                        check_out_date: checkout,
+                        currency: 'INR',
+                        hl: 'en',
+                        gl: 'in',
+                        api_key: SERPAPI_KEY
+                    });
 
-                // Parse the results
-                let hotels = parseHotelResults(data, destination);
+                    const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
+                    const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
 
-                // If no results from API, use mock data
-                if (hotels.length === 0) {
-                    console.log('No API results, using mock data');
-                    hotels = getMockHotels(destination);
+                    if (response.ok) {
+                        const data = await response.json();
+                        hotels = parseHotelResults(data, destination);
+                    }
+                } catch (err) {
+                    console.log('Direct SerpAPI also failed:', err.message);
                 }
+            }
 
-                loader.style.display = 'none';
-                displayHotels(hotels, resultsDiv, checkin, checkout);
+            // Try 3: Mock data (last resort)
+            if (hotels.length === 0) {
+                console.log('Using mock hotel data');
+                hotels = getMockHotels(destination);
+                usedFallback = true;
+            }
 
-            } catch (error) {
-                console.error('SerpAPI Error:', error);
-                // Fallback to mock data on error
-                const mockHotels = getMockHotels(destination);
-                loader.style.display = 'none';
-                displayHotels(mockHotels, resultsDiv, checkin, checkout);
+            loader.style.display = 'none';
+            displayHotels(hotels, resultsDiv, checkin, checkout);
 
-                // Show a subtle notice that we're using demo data
+            if (usedFallback) {
                 resultsDiv.insertAdjacentHTML('afterbegin',
                     '<div style="background:#e3f2fd;padding:10px;border-radius:6px;margin-bottom:15px;color:#1565c0;font-size:0.9rem;">' +
                     '<i class="fas fa-info-circle"></i> Showing demo results. Live data temporarily unavailable.</div>'
@@ -1000,37 +1258,101 @@
 
             let html = markdown;
 
+            // Remove horizontal rules
             html = html.replace(/^[\-\*\_]{3,}$/gm, '');
-            html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
+
+            // Convert markdown tables to HTML tables with budget styling
+            html = html.replace(/\|(.+)\|/g, function (match) {
+                const cells = match.split('|').filter(cell => cell.trim());
+                if (cells.some(cell => cell.includes('---'))) {
+                    return ''; // Skip separator rows
+                }
+                const isHeader = cells.some(cell =>
+                    cell.toLowerCase().includes('category') ||
+                    cell.toLowerCase().includes('budget') ||
+                    cell.toLowerCase().includes('₹')
+                );
+                const cellTag = isHeader && cells[0].toLowerCase().includes('category') ? 'th' : 'td';
+                const row = cells.map(cell => `<${cellTag}>${cell.trim()}</${cellTag}>`).join('');
+                return `<tr>${row}</tr>`;
+            });
+
+            // Wrap table rows in table structure
+            html = html.replace(/(<tr>.*?<\/tr>(?:\s*<tr>.*?<\/tr>)*)/gs, function (match) {
+                if (match.includes('<th>')) {
+                    return `<table class="budget-table"><thead>${match.split('</tr>')[0]}</tr></thead><tbody>${match.split('</tr>').slice(1).join('</tr>')}</tbody></table>`;
+                }
+                return `<table class="budget-table"><tbody>${match}</tbody></table>`;
+            });
+
+            // Convert headings - detect Day patterns for card wrapping
+            html = html.replace(/^## (Day \d+.*$)/gm, '</div><div class="day-card"><h2>$1</h2>');
+            html = html.replace(/^## (.*$)/gm, '<div class="itinerary-section"><h2>$1</h2>');
             html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+            html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
+            html = html.replace(/^# (.*$)/gm, '<div class="itinerary-header"><h1>$1</h1></div>');
+
+            // Bold text
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Convert list items
             html = html.replace(/^\s*[\*\-]\s+(.*)$/gm, '<li>$1</li>');
             html = html.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs, '<ul>$1</ul>');
 
+            // Process remaining lines
             const lines = html.split('\n');
             let result = [];
+            let inDayCard = false;
 
             for (let line of lines) {
                 line = line.trim();
                 if (!line) continue;
 
-                if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<li')) {
+                // Check if entering a day card
+                if (line.includes('class="day-card"')) {
+                    inDayCard = true;
+                }
+
+                // Detect tip/pro-tip lines
+                if (line.toLowerCase().includes('tip:') || line.toLowerCase().includes('pro tip')) {
+                    line = `<div class="tip-card">${line.replace(/\*\*?(?:Pro )?Tip:?\*\*?/gi, '')}</div>`;
+                }
+
+                if (line.startsWith('<') || line.startsWith('</')) {
                     result.push(line);
-                } else if (!line.startsWith('</')) {
+                } else {
                     result.push('<p>' + line + '</p>');
                 }
             }
 
-            return result.join('\n');
+            // Close any open day cards
+            let finalHtml = result.join('\n');
+
+            // Clean up empty divs and fix structure
+            finalHtml = finalHtml.replace(/<\/div><div class="day-card">/g, '</div>\n<div class="day-card">');
+            finalHtml = finalHtml.replace(/^<\/div>/, ''); // Remove leading close div
+
+            // Add closing div for last day card if needed
+            const dayCardCount = (finalHtml.match(/<div class="day-card">/g) || []).length;
+            const closeDivCount = (finalHtml.match(/<\/div>/g) || []).length;
+            if (dayCardCount > 0) {
+                finalHtml += '</div>';
+            }
+
+            return finalHtml;
         }
 
         function displayFormattedItinerary(content, container) {
             const htmlContent = convertMarkdownToHTML(content);
+            const destination = document.getElementById('ai-dest').value.trim() || 'Your Destination';
+            const duration = document.getElementById('ai-days').value.trim() || '5 days';
 
             container.innerHTML = `
                 <div class="itinerary-container">
+                    <div class="itinerary-header">
+                        <h1>🌍 ${destination} Adventure</h1>
+                        <p>📅 ${duration} • ✨ Personalized Itinerary</p>
+                    </div>
                     ${htmlContent}
                     <div class="itinerary-actions">
                         <button class="btn-outline" onclick="copyItinerary()">
@@ -1039,12 +1361,40 @@
                         <button class="btn-outline" onclick="downloadItinerary()">
                             <i class="fas fa-download"></i> Download
                         </button>
+                        <button class="btn-outline" onclick="printItinerary()">
+                            <i class="fas fa-print"></i> Print
+                        </button>
                         <button class="btn-main" onclick="generateAITrip()">
                             <i class="fas fa-sync"></i> Generate New
                         </button>
                     </div>
                 </div>
             `;
+        }
+
+        function printItinerary() {
+            const content = document.querySelector('.itinerary-container');
+            if (content) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>VOYA AI - Travel Itinerary</title>
+                        <style>
+                            body { font-family: 'Segoe UI', sans-serif; padding: 20px; }
+                            h1 { color: #003580; }
+                            h2 { color: #1a73e8; margin-top: 20px; }
+                            ul { margin: 10px 0; }
+                            li { margin: 5px 0; }
+                            .itinerary-actions { display: none; }
+                        </style>
+                    </head>
+                    <body>${content.innerHTML}</body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
         }
 
         function copyItinerary() {
