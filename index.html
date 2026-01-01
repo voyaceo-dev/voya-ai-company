@@ -693,12 +693,12 @@
         <div id="flights" class="tab-content">
             <div class="search-grid">
                 <div class="input-group">
-                    <label>From</label>
-                    <input type="text" id="flight-from" placeholder="e.g., Mumbai, Delhi, BOM">
+                    <label>From (Airport Code)</label>
+                    <input type="text" id="flight-from" placeholder="e.g., DEL, BOM, JFK">
                 </div>
                 <div class="input-group">
-                    <label>To</label>
-                    <input type="text" id="flight-to" placeholder="e.g., Dubai, London, DXB">
+                    <label>To (Airport Code)</label>
+                    <input type="text" id="flight-to" placeholder="e.g., DXB, LHR, SIN">
                 </div>
                 <div class="input-group">
                     <label>Departure</label>
@@ -709,7 +709,49 @@
                     <input type="date" id="flight-return">
                 </div>
             </div>
-            <button class="btn-main" onclick="searchFlights()">Search Flights</button>
+
+            <!-- Flight Filters -->
+            <div class="search-grid" style="margin-bottom: 20px;">
+                <div class="input-group">
+                    <label>Travel Class</label>
+                    <select id="flight-class">
+                        <option value="1">Economy</option>
+                        <option value="2">Premium Economy</option>
+                        <option value="3">Business</option>
+                        <option value="4">First Class</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Stops</label>
+                    <select id="flight-stops">
+                        <option value="">Any</option>
+                        <option value="1">Non-stop only</option>
+                        <option value="2">1 stop or fewer</option>
+                        <option value="3">2 stops or fewer</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Passengers</label>
+                    <select id="flight-passengers">
+                        <option value="1">1 Adult</option>
+                        <option value="2">2 Adults</option>
+                        <option value="3">3 Adults</option>
+                        <option value="4">4 Adults</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Sort By</label>
+                    <select id="flight-sort">
+                        <option value="price">Price (Low to High)</option>
+                        <option value="duration">Duration (Shortest)</option>
+                        <option value="departure">Departure Time</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="searchFlights()">
+                <i class="fas fa-search"></i> Search Flights
+            </button>
 
             <div id="flight-loader" class="loader">
                 <div class="spinner"></div>
@@ -738,7 +780,48 @@
                     <input type="date" id="hotel-checkout">
                 </div>
             </div>
-            <button class="btn-main" onclick="searchHotels()">Search Hotels</button>
+
+            <!-- Hotel Filters -->
+            <div class="search-grid" style="margin-bottom: 20px;">
+                <div class="input-group">
+                    <label>Guests</label>
+                    <select id="hotel-guests">
+                        <option value="1">1 Guest</option>
+                        <option value="2" selected>2 Guests</option>
+                        <option value="3">3 Guests</option>
+                        <option value="4">4 Guests</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Rooms</label>
+                    <select id="hotel-rooms">
+                        <option value="1" selected>1 Room</option>
+                        <option value="2">2 Rooms</option>
+                        <option value="3">3 Rooms</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Min Rating</label>
+                    <select id="hotel-rating">
+                        <option value="">Any Rating</option>
+                        <option value="3">3+ Stars</option>
+                        <option value="4">4+ Stars</option>
+                        <option value="4.5">4.5+ Stars</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Sort By</label>
+                    <select id="hotel-sort">
+                        <option value="relevance">Relevance</option>
+                        <option value="lowest_price">Price (Low to High)</option>
+                        <option value="highest_rating">Rating (High to Low)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="searchHotels()">
+                <i class="fas fa-search"></i> Search Hotels
+            </button>
 
             <div id="hotel-loader" class="loader">
                 <div class="spinner"></div>
@@ -848,10 +931,11 @@
             // Check for best_flights or other_flights in the response
             const allFlights = [...(data.best_flights || []), ...(data.other_flights || [])];
 
-            for (const flightGroup of allFlights) {
+            for (const flightGroup of allFlights.slice(0, 15)) { // Limit to 15 results
                 if (flightGroup.flights && flightGroup.flights.length > 0) {
                     const firstLeg = flightGroup.flights[0];
                     const lastLeg = flightGroup.flights[flightGroup.flights.length - 1];
+                    const price = flightGroup.price || 0;
 
                     flights.push({
                         airline: firstLeg.airline || 'Unknown Airline',
@@ -860,7 +944,9 @@
                         departure: `${firstLeg.departure_airport?.time || 'N/A'}`,
                         arrival: `${lastLeg.arrival_airport?.time || 'N/A'}`,
                         duration: flightGroup.total_duration ? `${Math.floor(flightGroup.total_duration / 60)}h ${flightGroup.total_duration % 60}m` : 'N/A',
-                        price: flightGroup.price ? `₹${flightGroup.price.toLocaleString('en-IN')}` : 'Price N/A',
+                        durationMins: flightGroup.total_duration || 999,
+                        price: price ? `₹${price.toLocaleString('en-IN')}` : 'Price N/A',
+                        priceNum: price,
                         stops: flightGroup.flights.length === 1 ? 'Non-stop' : `${flightGroup.flights.length - 1} stop(s)`
                     });
                 }
@@ -870,15 +956,25 @@
         }
 
         async function searchFlights() {
-            const from = document.getElementById('flight-from').value.trim();
-            const to = document.getElementById('flight-to').value.trim();
+            const from = document.getElementById('flight-from').value.trim().toUpperCase();
+            const to = document.getElementById('flight-to').value.trim().toUpperCase();
             const depart = document.getElementById('flight-depart').value;
             const returnDate = document.getElementById('flight-return').value;
+            const travelClass = document.getElementById('flight-class').value;
+            const stops = document.getElementById('flight-stops').value;
+            const passengers = document.getElementById('flight-passengers').value;
+            const sortBy = document.getElementById('flight-sort').value;
             const resultsDiv = document.getElementById('flight-results');
             const loader = document.getElementById('flight-loader');
 
             if (!from || !to || !depart) {
-                alert("Please fill in From, To, and Departure date");
+                alert("Please fill in From (Airport Code), To (Airport Code), and Departure date");
+                return;
+            }
+
+            // Validate airport codes (should be 3 letters)
+            if (from.length < 3 || to.length < 3) {
+                alert("Please use valid 3-letter airport codes (e.g., DEL, BOM, DXB, LHR)");
                 return;
             }
 
@@ -895,11 +991,14 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        departure_id: from.toUpperCase(),
-                        arrival_id: to.toUpperCase(),
+                        departure_id: from,
+                        arrival_id: to,
                         outbound_date: depart,
                         return_date: returnDate || undefined,
-                        currency: 'INR'
+                        currency: 'INR',
+                        travel_class: travelClass,
+                        stops: stops || undefined,
+                        adults: passengers
                     })
                 });
 
@@ -914,6 +1013,7 @@
                             arrival: f.arrival_time,
                             duration: f.duration,
                             price: f.price_formatted,
+                            priceNum: f.price || 0,
                             stops: f.stops
                         }));
                     }
@@ -927,27 +1027,41 @@
                 try {
                     const params = new URLSearchParams({
                         engine: 'google_flights',
-                        departure_id: from.toUpperCase(),
-                        arrival_id: to.toUpperCase(),
+                        departure_id: from,
+                        arrival_id: to,
                         outbound_date: depart,
                         currency: 'INR',
                         hl: 'en',
+                        adults: passengers,
+                        travel_class: travelClass,
                         api_key: SERPAPI_KEY
                     });
 
                     if (returnDate) {
                         params.append('return_date', returnDate);
-                        params.append('type', '1');
+                        params.append('type', '1'); // Round trip
                     } else {
-                        params.append('type', '2');
+                        params.append('type', '2'); // One way
+                    }
+
+                    if (stops) {
+                        params.append('stops', stops);
                     }
 
                     const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
+                    console.log('SerpAPI URL:', serpApiUrl);
+
                     const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
 
                     if (response.ok) {
                         const data = await response.json();
-                        flights = parseFlightResults(data, from, to);
+                        console.log('SerpAPI Response:', data);
+
+                        if (data.error) {
+                            console.error('SerpAPI Error:', data.error);
+                        } else {
+                            flights = parseFlightResults(data, from, to);
+                        }
                     }
                 } catch (err) {
                     console.log('Direct SerpAPI also failed:', err.message);
@@ -959,6 +1073,19 @@
                 console.log('Using mock flight data');
                 flights = getMockFlights(from, to, depart);
                 usedFallback = true;
+            }
+
+            // Apply sorting
+            if (sortBy === 'price') {
+                flights.sort((a, b) => (a.priceNum || 0) - (b.priceNum || 0));
+            } else if (sortBy === 'duration') {
+                flights.sort((a, b) => {
+                    const getDuration = (d) => {
+                        const match = d.match(/(\d+)h\s*(\d+)?m?/);
+                        return match ? parseInt(match[1]) * 60 + (parseInt(match[2]) || 0) : 999;
+                    };
+                    return getDuration(a.duration) - getDuration(b.duration);
+                });
             }
 
             loader.style.display = 'none';
@@ -1049,15 +1176,20 @@
             // Check for properties in the response
             const properties = data.properties || [];
 
-            for (const hotel of properties.slice(0, 10)) { // Limit to 10 results
+            for (const hotel of properties.slice(0, 15)) { // Limit to 15 results
                 const amenitiesList = hotel.amenities ? hotel.amenities.slice(0, 4).join(', ') : 'WiFi, AC';
+                const priceStr = hotel.rate_per_night?.lowest || hotel.rate_per_night?.extracted_lowest || '';
+                const priceNum = priceStr ? parseInt(priceStr.toString().replace(/[^0-9]/g, '')) || 5000 : 5000;
+                const ratingNum = hotel.overall_rating || 4.0;
 
                 hotels.push({
                     name: hotel.name || 'Hotel',
-                    location: hotel.neighborhood || destination,
-                    rating: hotel.overall_rating ? `${hotel.overall_rating} ★` : '4.0 ★',
+                    location: hotel.neighborhood || hotel.location || destination,
+                    rating: `${ratingNum} ★`,
+                    ratingNum: ratingNum,
                     amenities: amenitiesList,
-                    price: hotel.rate_per_night?.lowest ? `₹${parseInt(hotel.rate_per_night.lowest.replace(/[^0-9]/g, '') || 5000).toLocaleString('en-IN')}/night` : '₹5,000/night',
+                    price: `₹${priceNum.toLocaleString('en-IN')}/night`,
+                    priceNum: priceNum,
                     image: '🏨'
                 });
             }
@@ -1069,6 +1201,10 @@
             const destination = document.getElementById('hotel-dest').value.trim();
             const checkin = document.getElementById('hotel-checkin').value;
             const checkout = document.getElementById('hotel-checkout').value;
+            const guests = document.getElementById('hotel-guests').value;
+            const rooms = document.getElementById('hotel-rooms').value;
+            const minRating = document.getElementById('hotel-rating').value;
+            const sortBy = document.getElementById('hotel-sort').value;
             const resultsDiv = document.getElementById('hotel-results');
             const loader = document.getElementById('hotel-loader');
 
@@ -1099,7 +1235,8 @@
                         check_in_date: checkin,
                         check_out_date: checkout,
                         currency: 'INR',
-                        adults: 2
+                        adults: parseInt(guests),
+                        sort_by: sortBy
                     })
                 });
 
@@ -1110,8 +1247,10 @@
                             name: h.name,
                             location: h.location,
                             rating: h.rating_formatted,
+                            ratingNum: h.rating || 0,
                             amenities: h.amenities_formatted,
                             price: h.price_formatted,
+                            priceNum: h.price ? parseFloat(h.price.replace(/[^0-9.]/g, '')) : 0,
                             image: '🏨'
                         }));
                     }
@@ -1131,15 +1270,28 @@
                         currency: 'INR',
                         hl: 'en',
                         gl: 'in',
+                        adults: guests,
                         api_key: SERPAPI_KEY
                     });
 
+                    if (sortBy && sortBy !== 'relevance') {
+                        params.append('sort_by', sortBy === 'lowest_price' ? '3' : '4');
+                    }
+
                     const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
+                    console.log('SerpAPI URL:', serpApiUrl);
+
                     const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
 
                     if (response.ok) {
                         const data = await response.json();
-                        hotels = parseHotelResults(data, destination);
+                        console.log('SerpAPI Response:', data);
+
+                        if (data.error) {
+                            console.error('SerpAPI Error:', data.error);
+                        } else {
+                            hotels = parseHotelResults(data, destination);
+                        }
                     }
                 } catch (err) {
                     console.log('Direct SerpAPI also failed:', err.message);
@@ -1151,6 +1303,22 @@
                 console.log('Using mock hotel data');
                 hotels = getMockHotels(destination);
                 usedFallback = true;
+            }
+
+            // Apply rating filter
+            if (minRating) {
+                const minRatingNum = parseFloat(minRating);
+                hotels = hotels.filter(h => {
+                    const rating = parseFloat(h.rating) || h.ratingNum || 0;
+                    return rating >= minRatingNum;
+                });
+            }
+
+            // Apply sorting
+            if (sortBy === 'lowest_price') {
+                hotels.sort((a, b) => (a.priceNum || 0) - (b.priceNum || 0));
+            } else if (sortBy === 'highest_rating') {
+                hotels.sort((a, b) => (b.ratingNum || 0) - (a.ratingNum || 0));
             }
 
             loader.style.display = 'none';
