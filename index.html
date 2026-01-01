@@ -36,13 +36,28 @@
         .logo { font-size: 1.5rem; font-weight: bold; color: #fff; text-decoration: none; }
         nav a { color: #ccc; text-decoration: none; margin: 0 15px; font-size: 0.9rem; transition: 0.3s; }
         .header-actions { display: flex; align-items: center; gap: 15px; }
-        .btn-signin { background: var(--accent-blue); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-signin { 
+            background: var(--accent-blue); 
+            color: white; 
+            border: none; 
+            padding: 10px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
 
-        .hero { text-align: center; padding: 60px 20px; background: linear-gradient(to bottom, #1a1a1a, #2c3e50); }
-        .hero h1 { font-size: 3rem; margin-bottom: 10px; }
+        .btn-signin:hover {
+            background: #002a66;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 53, 128, 0.4);
+        }
+
+        .hero { text-align: center; padding: 80px 20px 120px; background: linear-gradient(to bottom, #1a1a1a, #2c3e50); }
+        .hero h1 { font-size: 3rem; margin-bottom: 10px; color: #fff; }
         .hero p { color: #bbb; font-size: 1.1rem; }
 
-        .container { max-width: 1000px; margin: -40px auto 50px; padding: 0 20px; }
+        .container { max-width: 1000px; margin: 50px auto; padding: 0 20px; }
 
         .tabs-nav {
             display: flex;
@@ -62,15 +77,25 @@
             color: var(--gray);
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             height: 100%;
+            font-size: 0.95rem;
         }
 
-        .tab-btn.active { color: var(--accent-blue); border-bottom: 3px solid var(--accent-blue); background: #f8f9fa; }
+        .tab-btn:hover {
+            background: #f0f0f0;
+            color: var(--accent-blue);
+        }
+
+        .tab-btn.active { 
+            color: var(--accent-blue); 
+            border-bottom: 3px solid var(--accent-blue); 
+            background: #f8f9fa; 
+        }
 
         .tab-content {
             background: white;
@@ -89,6 +114,13 @@
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 53, 128, 0.1);
         }
 
         .btn-main {
@@ -102,6 +134,18 @@
             cursor: pointer;
             width: 100%;
             transition: 0.2s;
+        }
+
+        .btn-main:hover {
+            background: #002a66;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 53, 128, 0.3);
+        }
+
+        .btn-main:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .results-area { 
@@ -152,23 +196,120 @@
         .itinerary-container li { margin-bottom: 0.5rem; }
 
         .itinerary-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-        .btn-outline { background: none; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .btn-outline { 
+            background: none; 
+            border: 2px solid var(--accent-blue); 
+            color: var(--accent-blue); 
+            padding: 10px 20px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            background: var(--accent-blue);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 53, 128, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .tabs-nav {
+                flex-direction: column;
+                min-height: auto;
+            }
+
+            .tab-btn {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <header>
         <a href="#" class="logo">VOYA 🌍 AI</a>
-        <div class="header-actions"><button class="btn-signin">Sign In</button></div>
+        <div class="header-actions">
+            <button class="btn-signin">Sign In</button>
+        </div>
     </header>
+
+    <section class="hero">
+        <h1>Travel Smarter with AI</h1>
+        <p>Plan your perfect journey in seconds</p>
+    </section>
 
     <div class="container">
         <div class="tabs-nav">
-            <button class="tab-btn" onclick="switchTab('flights')"><i class="fas fa-plane"></i> Flights</button>
-            <button class="tab-btn" onclick="switchTab('hotels')"><i class="fas fa-hotel"></i> Hotels</button>
-            <button class="tab-btn active" onclick="switchTab('ai-itinerary')"><i class="fas fa-robot"></i> AI Itinerary</button>
+            <button class="tab-btn" onclick="switchTab('flights')">
+                <i class="fas fa-plane"></i> Flights
+            </button>
+            <button class="tab-btn" onclick="switchTab('hotels')">
+                <i class="fas fa-hotel"></i> Hotels
+            </button>
+            <button class="tab-btn active" onclick="switchTab('ai-itinerary')">
+                <i class="fas fa-robot"></i> AI Itinerary
+            </button>
         </div>
 
+        <!-- Flights Tab -->
+        <div id="flights" class="tab-content">
+            <div class="search-grid">
+                <div class="input-group">
+                    <label>From</label>
+                    <input type="text" placeholder="Departure city">
+                </div>
+                <div class="input-group">
+                    <label>To</label>
+                    <input type="text" placeholder="Destination city">
+                </div>
+                <div class="input-group">
+                    <label>Departure</label>
+                    <input type="date">
+                </div>
+                <div class="input-group">
+                    <label>Return</label>
+                    <input type="date">
+                </div>
+            </div>
+            <button class="btn-main">Search Flights</button>
+        </div>
+
+        <!-- Hotels Tab -->
+        <div id="hotels" class="tab-content">
+            <div class="search-grid">
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Destination</label>
+                    <input type="text" placeholder="Where are you going?">
+                </div>
+                <div class="input-group">
+                    <label>Check-in</label>
+                    <input type="date">
+                </div>
+                <div class="input-group">
+                    <label>Check-out</label>
+                    <input type="date">
+                </div>
+            </div>
+            <button class="btn-main">Search Hotels</button>
+        </div>
+
+        <!-- AI Itinerary Tab -->
         <div id="ai-itinerary" class="tab-content" style="display: block;">
             <div class="search-grid">
                 <div class="input-group" style="grid-column: span 2;">
