@@ -44,6 +44,8 @@
         .container { max-width: 1000px; margin: -40px auto 50px; padding: 0 20px; }
 
         .tabs-nav {
+                align-items: center;  /* ADD THIS - vertically centers children */
+                min-height: 60px;  /* ADD THIS - ensures consistent height */
             display: flex;
             background: #fff;
             border-radius: 12px 12px 0 0;
@@ -51,9 +53,10 @@
             border-bottom: 2px solid #eee;
         }
 
-        .tab-btn {
+        58
+        
             flex: 1;
-            padding: 15px;
+            padding: 18px 15px;
             border: none;
             background: white;
             color: var(--gray);
@@ -64,6 +67,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            height: 100%;  /* ADD THIS - makes buttons fill parent height */
         }
 
         .tab-btn.active { color: var(--accent-blue); border-bottom: 3px solid var(--accent-blue); background: #f8f9fa; }
@@ -278,3 +282,4 @@
     </script>
 </body>
 </html>
+60
