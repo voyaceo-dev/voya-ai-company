@@ -79,4 +79,82 @@ Please provide:
   }
 });
 
+            // Flights API endpoint
+app.post('/api/flights/search', async (req, res) => {
+  try {
+    const { departure_id, arrival_id, outbound_date, return_date, adults, currency, travel_class, stops, sort_by } = req.body;
+    const SERPAPI_KEY = process.env.SERPAPI_KEY;
+    
+    if (!SERPAPI_KEY) {
+      return res.status(500).json({ error: 'SerpAPI key not configured' });
+    }
+    
+    const params = new URLSearchParams({
+      engine: 'google_flights',
+      departure_id,
+      arrival_id,
+      outbound_date,
+      currency: currency || 'INR',
+      hl: 'en',
+      gl: 'in',
+      adults: adults || '1',
+      travel_class: travel_class || '1',
+      stops: stops || '0',
+      sort_by: sort_by || '1',
+      api_key: SERPAPI_KEY
+    });
+    
+    if (return_date) {
+      params.append('return_date', return_date);
+      params.append('type', '1');
+    } else {
+      params.append('type', '2');
+    }
+    
+    const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+    const data = await response.json();
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Flights API Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Hotels API endpoint
+app.post('/api/hotels/search', async (req, res) => {
+  try {
+    const { q, check_in_date, check_out_date, adults, currency, rating, sort_by } = req.body;
+    const SERPAPI_KEY = process.env.SERPAPI_KEY;
+    
+    if (!SERPAPI_KEY) {
+      return res.status(500).json({ error: 'SerpAPI key not configured' });
+    }
+    
+    const params = new URLSearchParams({
+      engine: 'google_hotels',
+      q: q || 'hotels',
+      check_in_date,
+      check_out_date,
+      currency: currency || 'INR',
+      hl: 'en',
+      gl: 'in',
+      adults: adults || '1',
+      api_key: SERPAPI_KEY
+    });
+    
+    if (rating) params.append('rating', rating);
+    if (sort_by) params.append('sort_by', sort_by);
+    
+    const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+    const data = await response.json();
+    
+    res.json(data);
+  } catch (error) {
+    console.error('Hotels API Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 app.listen(PORT, '0.0.0.0', () => console.log(`VOYA API on port ${PORT}`));
