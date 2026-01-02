@@ -114,8 +114,30 @@ app.post('/api/flights/search', async (req, res) => {
     const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
     const data = await response.json();
     
-    res.json(data);
-  } catch (error) {
+// Parse SerpAPI response
+    const flights = [];
+    const allFlights = [...(data.best_flights || []), ...(data.other_flights || [])];
+    
+    for (const flightGroup of allFlights) {
+      if (flightGroup.flights && flightGroup.flights.length > 0) {
+        const firstLeg = flightGroup.flights[0];
+        const lastLeg = flightGroup.flights[flightGroup.flights.length - 1];
+        const price = flightGroup.price || 0;
+        flights.push({
+          airline: firstLeg.airline || 'Unknown',
+          from: firstLeg.departure_airport?.id || departure_id,
+          to: lastLeg.arrival_airport?.id || arrival_id,
+          departure: firstLeg.departure_airport?.time || 'N/A',
+          arrival: lastLeg.arrival_airport?.time || 'N/A',
+          duration: flightGroup.total_duration ? `${Math.floor(flightGroup.total_duration / 60)}h` : 'N/A',
+          price: price ? `₹${price}` : 'N/A',
+          priceNum: price,
+          stops: flightGroup.flights.length === 1 ? 'Non-stop' : `${flightGroup.flights.length - 1} stops`
+        });
+      }
+    }
+    
+    res.json({ flights: flights });  } catch (error) {
     console.error('Flights API Error:', error);
     res.status(500).json({ error: error.message });
   }
@@ -149,8 +171,27 @@ app.post('/api/hotels/search', async (req, res) => {
     const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
     const data = await response.json();
     
-    res.json(data);
-  } catch (error) {
+// Parse SerpAPI hotel response
+    const hotels = [];
+    const properties = data.properties || [];
+    
+    for (const hotel of properties) {
+      const priceNum = hotel.rate_per_night?.extracted_lowest || 5000;
+      const ratingNum = hotel.overall_rating || 4.0;
+      
+      hotels.push({
+        name: hotel.name || 'Hotel',
+        location: hotel.neighborhood || hotel.location || 'Unknown',
+        rating: `${ratingNum} ★`,
+        ratingNum: ratingNum,
+        amenities: hotel.amenities ? hotel.amenities.slice(0, 4).join(', ') : 'WiFi',
+        price: `₹${priceNum}/night`,
+        priceNum: priceNum,
+        image: hotel.thumbnail || '🏘'
+      });
+    }
+    
+    res.json({ hotels: hotels });  } catch (error) {
     console.error('Hotels API Error:', error);
     res.status(500).json({ error: error.message });
   }
