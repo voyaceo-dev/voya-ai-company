@@ -1104,6 +1104,48 @@
             }
         }
 
+
+        // Cache to store airline logos
+const airlineLogoCache = {};
+
+// Function to load airline logo from URL
+async function loadAirlineLogo(url) {
+    if (!url) return null;
+    if (airlineLogoCache[url]) return airlineLogoCache[url];
+    
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            airlineLogoCache[url] = objectUrl;
+            return objectUrl;
+        }
+    } catch (error) {
+        console.error('Error loading logo:', error);
+    }
+    return null;
+}
+
+// Function to preload logos for all flights
+async function preloadFlightLogos(flights) {
+    const logoUrls = new Set();
+    flights.forEach(flight => {
+        if (flight.airlineLogo) logoUrls.add(flight.airlineLogo);
+    });
+    
+    await Promise.all(
+        Array.from(logoUrls).map(url => loadAirlineLogo(url))
+    );
+}
+
+// Enhanced flight display function to use cached logos
+async function displayFlightsWithLogos(flights, container) {
+    await preloadFlightLogos(flights);
+    displayFlights(flights, container);
+}
+
+
         function displayFlights(flights, container) {
             if (!flights || flights.length === 0) {
                 container.innerHTML = '<div class="no-results"><i class="fas fa-plane" style="font-size:3rem;margin-bottom:15px;color:#ccc;"></i><br>No flights found for your search criteria.</div>';
