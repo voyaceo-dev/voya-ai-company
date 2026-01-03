@@ -1032,7 +1032,8 @@
                             duration: f.duration,
                             price: f.price_formatted,
                             priceNum: f.price || 0,
-                            stops: f.stops
+                            stops: f.stops,
+                            bookingToken: f.booking_token || null
                         }));
                     }
                 }
@@ -1146,7 +1147,7 @@
                             <span class="detail-value">${flight.from} → ${flight.to}</span>
                         </div>
                     </div>
-                    <button class="btn-book" onclick="alert('🎉 Redirecting to booking page...')">Book Now</button>
+                    <button class="btn-book" onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')">Book Now</button>
                 </div>`;
             }).join('');
 
@@ -1270,7 +1271,8 @@
                             amenities: h.amenities_formatted,
                             price: h.price_formatted,
                             priceNum: h.price ? parseFloat(h.price.replace(/[^0-9.]/g, '')) : 0,
-                            image: '🏨'
+                            image: '🏨',
+                            link: h.link || null
                         }));
                     }
                 }
@@ -1374,11 +1376,144 @@
                             <span class="detail-value">${hotel.amenities}</span>
                         </div>
                     </div>
-                    <button class="btn-book" onclick="alert('🎉 Redirecting to booking page...')">Book Now</button>
+                    <button class="btn-book" onclick="bookHotel('${encodeURIComponent(hotel.name)}', '${encodeURIComponent(hotel.location)}', '${hotel.link || ''}')">Book Now</button>
                 </div>
             `).join('');
 
             container.innerHTML = html;
+        }
+
+        // Booking functions for flights and hotels
+        async function bookFlight(from, to, airline, bookingToken) {
+            if (!bookingToken) {
+                // No booking token - fallback to Google Flights search
+                const bookingUrl = `https://www.google.com/travel/flights?q=flights%20from%20${encodeURIComponent(from)}%20to%20${encodeURIComponent(to)}&hl=en&gl=in&curr=INR`;
+                window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            // Show loading state
+            const loadingToast = showToast('Fetching booking options...', 'info');
+
+            try {
+                // Fetch actual booking options from backend
+                const response = await fetch(`${API_BASE_URL}/api/flights/booking`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ booking_token: bookingToken })
+                });
+
+                hideToast(loadingToast);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.booking_options && data.booking_options.length > 0) {
+                        // Show booking options modal
+                        showBookingOptionsModal(data.booking_options, airline, from, to);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching booking options:', err);
+                hideToast(loadingToast);
+            }
+
+            // Fallback: Open Google Flights with booking token
+            const fallbackUrl = `https://www.google.com/travel/flights/booking?hl=en&gl=in&curr=INR&token=${encodeURIComponent(bookingToken)}`;
+            window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        function showBookingOptionsModal(options, airline, from, to) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('booking-modal');
+            if (existingModal) existingModal.remove();
+
+            // Create modal HTML
+            const modalHtml = `
+                <div id="booking-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
+                    <div style="background:white;border-radius:12px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;color:#333;">
+                        <div style="padding:20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+                            <h3 style="margin:0;color:#003580;">✈️ Book ${airline} - ${from} → ${to}</h3>
+                            <button onclick="closeBookingModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
+                        </div>
+                        <div style="padding:20px;">
+                            <p style="color:#666;margin-bottom:15px;">Choose where to complete your booking:</p>
+                            ${options.map((opt, index) => `
+                                <div style="border:1px solid #e0e0e0;border-radius:8px;padding:15px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;${opt.is_airline ? 'border-color:#28a745;background:#f8fff8;' : ''}" 
+                                     onclick="openBookingUrl('${encodeURIComponent(opt.booking_url)}')"
+                                     onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'"
+                                     onmouseout="this.style.transform='none';this.style.boxShadow='none'">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <div>
+                                            <strong style="color:#333;">${opt.book_with}</strong>
+                                            ${opt.is_airline ? '<span style="background:#28a745;color:white;font-size:0.7rem;padding:2px 6px;border-radius:4px;margin-left:8px;">✓ Direct Airline</span>' : ''}
+                                            ${opt.option_title ? `<div style="color:#666;font-size:0.85rem;margin-top:4px;">${opt.option_title}</div>` : ''}
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div style="font-size:1.25rem;font-weight:bold;color:#003580;">${opt.price_formatted}</div>
+                                        </div>
+                                    </div>
+                                    ${opt.baggage_prices && opt.baggage_prices.length > 0 ? `
+                                        <div style="margin-top:8px;font-size:0.8rem;color:#888;">
+                                            🧳 ${opt.baggage_prices.slice(0, 2).join(' • ')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeBookingModal() {
+            const modal = document.getElementById('booking-modal');
+            if (modal) modal.remove();
+        }
+
+        function openBookingUrl(encodedUrl) {
+            closeBookingModal();
+            const url = decodeURIComponent(encodedUrl);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.id = 'toast-' + Date.now();
+            toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'info' ? '#003580' : '#28a745'};color:white;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
+            toast.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>${message}`;
+            document.body.appendChild(toast);
+            return toast.id;
+        }
+
+        function hideToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) toast.remove();
+        }
+
+        function bookHotel(hotelName, location, directLink) {
+            let bookingUrl;
+
+            if (directLink && directLink !== 'null' && directLink !== '') {
+                // Use the direct link from SerpAPI
+                bookingUrl = decodeURIComponent(directLink);
+            } else {
+                // Fallback: Search Google Hotels for this property
+                const searchQuery = `${decodeURIComponent(hotelName)} ${decodeURIComponent(location)} hotel booking`;
+                bookingUrl = `https://www.google.com/travel/hotels?q=${encodeURIComponent(searchQuery)}&hl=en&gl=in&curr=INR`;
+            }
+
+            // Open in new tab
+            const newWindow = window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                // Popup blocked - try alternate approach
+                alert('Please allow popups for this site to complete your booking.\n\nAlternatively, click OK to open the booking page.');
+                window.location.href = bookingUrl;
+            }
         }
 
         async function generateAITrip() {
