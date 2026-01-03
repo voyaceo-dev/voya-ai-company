@@ -1384,7 +1384,8 @@
         }
 
         // Booking functions for flights and hotels
-        async function bookFlight(from, to, airline, bookingToken) {
+        // Works like Skyscanner - redirects to Google Flights booking page which shows all partner options
+        function bookFlight(from, to, airline, bookingToken) {
             if (!bookingToken) {
                 // No booking token - fallback to Google Flights search
                 const bookingUrl = `https://www.google.com/travel/flights?q=flights%20from%20${encodeURIComponent(from)}%20to%20${encodeURIComponent(to)}&hl=en&gl=in&curr=INR`;
@@ -1392,36 +1393,23 @@
                 return;
             }
 
-            // Show loading state
-            const loadingToast = showToast('Fetching booking options...', 'info');
+            // Open Google Flights booking page with the token
+            // This page shows all booking partners (airlines like IndiGo, travel agents like MakeMyTrip) with prices
+            // Users can click on any option to go directly to that site's booking page
+            const bookingUrl = `https://www.google.com/travel/flights/booking?hl=en&gl=in&curr=INR&token=${encodeURIComponent(bookingToken)}`;
 
-            try {
-                // Fetch actual booking options from backend
-                const response = await fetch(`${API_BASE_URL}/api/flights/booking`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ booking_token: bookingToken })
-                });
+            // Show brief loading message
+            const loadingToast = showToast('Opening booking options...', 'info');
 
+            // Open the booking page in new tab
+            const newWindow = window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+
+            setTimeout(() => hideToast(loadingToast), 1500);
+
+            if (!newWindow || newWindow.closed) {
                 hideToast(loadingToast);
-
-                if (response.ok) {
-                    const data = await response.json();
-
-                    if (data.booking_options && data.booking_options.length > 0) {
-                        // Show booking options modal
-                        showBookingOptionsModal(data.booking_options, airline, from, to);
-                        return;
-                    }
-                }
-            } catch (err) {
-                console.error('Error fetching booking options:', err);
-                hideToast(loadingToast);
+                alert('Popup was blocked! Please allow popups for this site to complete your booking.');
             }
-
-            // Fallback: Open Google Flights with booking token
-            const fallbackUrl = `https://www.google.com/travel/flights/booking?hl=en&gl=in&curr=INR&token=${encodeURIComponent(bookingToken)}`;
-            window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
         }
 
         function showBookingOptionsModal(options, airline, from, to) {
