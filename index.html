@@ -636,6 +636,492 @@
             box-shadow: 0 4px 15px rgba(0, 53, 128, 0.3);
         }
 
+        /* Full-Page Search Overlay - Trip.com/Skyscanner Style */
+        .search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 50%, #0d1929 100%);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .search-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .search-overlay.fade-out {
+            opacity: 0;
+        }
+
+        /* Starfield background effect */
+        .search-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.5) 1px, transparent 0),
+                radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.4) 1px, transparent 0),
+                radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.3) 1px, transparent 0),
+                radial-gradient(1px 1px at 80% 20%, rgba(255, 255, 255, 0.5) 1px, transparent 0);
+            background-size: 200px 200px;
+            animation: twinkle 4s infinite;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .overlay-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        /* Route display with flight path */
+        .route-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .airport-code {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(0, 150, 255, 0.5);
+        }
+
+        .airport-name {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .flight-path-container {
+            position: relative;
+            width: 200px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flight-path-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    rgba(0, 150, 255, 0.8) 20%,
+                    rgba(0, 150, 255, 0.8) 80%,
+                    transparent 100%);
+        }
+
+        .flight-path-dashes {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 8px,
+                    rgba(255, 255, 255, 0.4) 8px,
+                    rgba(255, 255, 255, 0.4) 16px);
+            animation: dashMove 1s linear infinite;
+        }
+
+        @keyframes dashMove {
+            from {
+                background-position: 0 0;
+            }
+
+            to {
+                background-position: 24px 0;
+            }
+        }
+
+        .airplane-icon {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            left: -20px;
+            top: 50%;
+            margin-top: -20px;
+            animation: flyPlane 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px rgba(0, 150, 255, 0.8));
+        }
+
+        .airplane-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #fff;
+        }
+
+        @keyframes flyPlane {
+            0% {
+                left: -20px;
+                transform: translateY(0) rotate(0deg);
+            }
+
+            25% {
+                left: calc(25% - 10px);
+                transform: translateY(-8px) rotate(-3deg);
+            }
+
+            50% {
+                left: calc(50% - 20px);
+                transform: translateY(-12px) rotate(0deg);
+            }
+
+            75% {
+                left: calc(75% - 10px);
+                transform: translateY(-6px) rotate(3deg);
+            }
+
+            100% {
+                left: calc(100% - 20px);
+                transform: translateY(0) rotate(0deg);
+            }
+        }
+
+        /* Search info badges */
+        .search-info {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .info-badge {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-badge i {
+            color: #00a8ff;
+        }
+
+        /* Progress section */
+        .search-progress {
+            margin-bottom: 40px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            max-width: 400px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto 20px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0096ff, #00d4ff, #00ff88);
+            background-size: 200% 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: gradientShift 2s linear infinite;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+        .search-status-text {
+            font-size: 1.2rem;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 8px;
+            animation: pulseText 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseText {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .search-substatus {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Partner logos carousel */
+        .partners-section {
+            margin-top: 30px;
+        }
+
+        .partners-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 15px;
+        }
+
+        .partners-logos {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .partner-logo {
+            width: 80px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #333;
+            font-weight: 700;
+            opacity: 0;
+            animation: logoFade 0.5s ease forwards;
+        }
+
+        .partner-logo:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .partner-logo:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .partner-logo:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .partner-logo:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .partner-logo:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes logoFade {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cloud decorations */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+
+        .cloud-1 {
+            width: 300px;
+            height: 150px;
+            top: 10%;
+            left: 5%;
+            animation: floatCloud 20s ease-in-out infinite;
+        }
+
+        .cloud-2 {
+            width: 400px;
+            height: 200px;
+            bottom: 15%;
+            right: 5%;
+            animation: floatCloud 25s ease-in-out infinite reverse;
+        }
+
+        .cloud-3 {
+            width: 250px;
+            height: 120px;
+            top: 40%;
+            right: 15%;
+            animation: floatCloud 18s ease-in-out infinite;
+        }
+
+        @keyframes floatCloud {
+
+            0%,
+            100% {
+                transform: translateX(0) translateY(0);
+            }
+
+            25% {
+                transform: translateX(20px) translateY(-10px);
+            }
+
+            50% {
+                transform: translateX(0) translateY(10px);
+            }
+
+            75% {
+                transform: translateX(-20px) translateY(-5px);
+            }
+        }
+
+        /* Cancel button */
+        .overlay-cancel {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .overlay-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* Airport Autocomplete Styles */
+        .airport-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .airport-autocomplete {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        .airport-autocomplete.active {
+            display: block;
+        }
+
+        .airport-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .airport-item:last-child {
+            border-bottom: none;
+        }
+
+        .airport-item:hover {
+            background: #f5f8ff;
+        }
+
+        .airport-item.selected {
+            background: #e8f0fe;
+        }
+
+        .airport-code {
+            font-weight: 700;
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+            min-width: 45px;
+        }
+
+        .airport-info {
+            flex: 1;
+        }
+
+        .airport-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .airport-city {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .airport-icon {
+            color: #ccc;
+            font-size: 1.2rem;
+        }
+
         @media (max-width: 768px) {
             .tabs-nav {
                 flex-direction: column;
@@ -663,6 +1149,82 @@
 </head>
 
 <body>
+
+    <!-- Full-Page Search Overlay -->
+    <div id="search-overlay" class="search-overlay">
+        <!-- Decorative clouds -->
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+
+        <!-- Cancel button -->
+        <button class="overlay-cancel" onclick="cancelSearch()">
+            <i class="fas fa-times"></i> Cancel
+        </button>
+
+        <div class="overlay-content">
+            <!-- Route display with animated plane -->
+            <div class="route-display">
+                <div class="airport-info">
+                    <div class="airport-code" id="overlay-from">DEL</div>
+                    <div class="airport-name" id="overlay-from-name">Departure</div>
+                </div>
+
+                <div class="flight-path-container">
+                    <div class="flight-path-line"></div>
+                    <div class="flight-path-dashes"></div>
+                    <div class="airplane-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path transform="rotate(90 12 12)"
+                                d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="airport-info">
+                    <div class="airport-code" id="overlay-to">DXB</div>
+                    <div class="airport-name" id="overlay-to-name">Arrival</div>
+                </div>
+            </div>
+
+            <!-- Search info badges -->
+            <div class="search-info" id="overlay-info">
+                <div class="info-badge">
+                    <i class="fas fa-calendar"></i>
+                    <span id="overlay-date">Date</span>
+                </div>
+                <div class="info-badge">
+                    <i class="fas fa-users"></i>
+                    <span id="overlay-passengers">1 Passenger</span>
+                </div>
+                <div class="info-badge">
+                    <i class="fas fa-chair"></i>
+                    <span id="overlay-class">Economy</span>
+                </div>
+            </div>
+
+            <!-- Progress section -->
+            <div class="search-progress">
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                </div>
+                <div class="search-status-text" id="search-status">Searching for best flights...</div>
+                <div class="search-substatus" id="search-substatus">Connecting to airlines</div>
+            </div>
+
+            <!-- Partner logos -->
+            <div class="partners-section">
+                <div class="partners-label">Searching 100+ airlines and travel sites</div>
+                <div class="partners-logos" id="partners-logos">
+                    <div class="partner-logo">Air India</div>
+                    <div class="partner-logo">IndiGo</div>
+                    <div class="partner-logo">SpiceJet</div>
+                    <div class="partner-logo">Emirates</div>
+                    <div class="partner-logo">Vistara</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <header>
         <a href="#" class="logo">VOYA 🌍 AI</a>
@@ -693,12 +1255,21 @@
         <div id="flights" class="tab-content">
             <div class="search-grid">
                 <div class="input-group">
-                    <label>From (Airport Code)</label>
-                    <input type="text" id="flight-from" placeholder="e.g., DEL, BOM, JFK">
+                    <label>From</label>
+                    <div class="airport-input-container">
+                        <input type="text" id="flight-from" placeholder="City or airport" autocomplete="off"
+                            oninput="searchAirport(this, 'from-dropdown')"
+                            onfocus="showRecentAirports('from-dropdown')">
+                        <div id="from-dropdown" class="airport-autocomplete"></div>
+                    </div>
                 </div>
                 <div class="input-group">
-                    <label>To (Airport Code)</label>
-                    <input type="text" id="flight-to" placeholder="e.g., DXB, LHR, SIN">
+                    <label>To</label>
+                    <div class="airport-input-container">
+                        <input type="text" id="flight-to" placeholder="City or airport" autocomplete="off"
+                            oninput="searchAirport(this, 'to-dropdown')" onfocus="showRecentAirports('to-dropdown')">
+                        <div id="to-dropdown" class="airport-autocomplete"></div>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Departure</label>
@@ -891,41 +1462,138 @@
             }
         }
 
-        // Mock flight data for fallback
-        function getMockFlights(from, to, depart) {
-            return [
-                {
-                    airline: 'Air India',
-                    from: from,
-                    to: to,
-                    departure: depart + ' 10:30 AM',
-                    arrival: depart + ' 2:45 PM',
-                    duration: '4h 15m',
-                    price: '₹12,450',
-                    stops: 'Non-stop'
-                },
-                {
-                    airline: 'IndiGo',
-                    from: from,
-                    to: to,
-                    departure: depart + ' 2:15 PM',
-                    arrival: depart + ' 6:40 PM',
-                    duration: '4h 25m',
-                    price: '₹9,890',
-                    stops: 'Non-stop'
-                },
-                {
-                    airline: 'SpiceJet',
-                    from: from,
-                    to: to,
-                    departure: depart + ' 6:00 AM',
-                    arrival: depart + ' 11:30 AM',
-                    duration: '5h 30m',
-                    price: '₹7,650',
-                    stops: '1 stop'
-                }
-            ];
+        // Comprehensive Airports Database (300+ airports worldwide)
+        const airports = [
+            // INDIA - All Major Airports
+            { code: 'DEL', name: 'Indira Gandhi Intl', city: 'New Delhi', country: 'India' }, { code: 'BOM', name: 'Chhatrapati Shivaji Intl', city: 'Mumbai', country: 'India' }, { code: 'BLR', name: 'Kempegowda Intl', city: 'Bangalore', country: 'India' }, { code: 'MAA', name: 'Chennai Intl', city: 'Chennai', country: 'India' }, { code: 'CCU', name: 'Netaji Subhash Chandra Bose Intl', city: 'Kolkata', country: 'India' }, { code: 'HYD', name: 'Rajiv Gandhi Intl', city: 'Hyderabad', country: 'India' }, { code: 'COK', name: 'Cochin Intl', city: 'Kochi', country: 'India' }, { code: 'GOI', name: 'Goa Intl (Dabolim)', city: 'Goa', country: 'India' }, { code: 'AMD', name: 'Sardar Vallabhbhai Patel Intl', city: 'Ahmedabad', country: 'India' }, { code: 'PNQ', name: 'Pune Airport', city: 'Pune', country: 'India' }, { code: 'JAI', name: 'Jaipur Intl', city: 'Jaipur', country: 'India' }, { code: 'LKO', name: 'Chaudhary Charan Singh Intl', city: 'Lucknow', country: 'India' }, { code: 'GAU', name: 'Lokpriya Gopinath Bordoloi Intl', city: 'Guwahati', country: 'India' }, { code: 'SXR', name: 'Sheikh ul-Alam Intl', city: 'Srinagar', country: 'India' }, { code: 'IXC', name: 'Chandigarh Intl', city: 'Chandigarh', country: 'India' }, { code: 'TRV', name: 'Trivandrum Intl', city: 'Thiruvananthapuram', country: 'India' }, { code: 'VNS', name: 'Lal Bahadur Shastri Intl', city: 'Varanasi', country: 'India' }, { code: 'IXB', name: 'Bagdogra Airport', city: 'Siliguri', country: 'India' }, { code: 'IXM', name: 'Madurai Airport', city: 'Madurai', country: 'India' }, { code: 'IXE', name: 'Mangalore Intl', city: 'Mangalore', country: 'India' }, { code: 'NAG', name: 'Dr. Babasaheb Ambedkar Intl', city: 'Nagpur', country: 'India' }, { code: 'PAT', name: 'Jay Prakash Narayan Intl', city: 'Patna', country: 'India' }, { code: 'BBI', name: 'Biju Patnaik Intl', city: 'Bhubaneswar', country: 'India' }, { code: 'IXR', name: 'Birsa Munda Airport', city: 'Ranchi', country: 'India' }, { code: 'RAJ', name: 'Rajkot Airport', city: 'Rajkot', country: 'India' }, { code: 'BDQ', name: 'Vadodara Airport', city: 'Vadodara', country: 'India' }, { code: 'STV', name: 'Surat Airport', city: 'Surat', country: 'India' }, { code: 'IDR', name: 'Devi Ahilyabai Holkar Airport', city: 'Indore', country: 'India' }, { code: 'BHO', name: 'Raja Bhoj Airport', city: 'Bhopal', country: 'India' }, { code: 'RPR', name: 'Swami Vivekananda Airport', city: 'Raipur', country: 'India' }, { code: 'VTZ', name: 'Visakhapatnam Airport', city: 'Visakhapatnam', country: 'India' }, { code: 'CJB', name: 'Coimbatore Intl', city: 'Coimbatore', country: 'India' }, { code: 'TRZ', name: 'Tiruchirappalli Intl', city: 'Tiruchirappalli', country: 'India' }, { code: 'IXA', name: 'Agartala Airport', city: 'Agartala', country: 'India' }, { code: 'IMF', name: 'Imphal Airport', city: 'Imphal', country: 'India' }, { code: 'DIB', name: 'Dibrugarh Airport', city: 'Dibrugarh', country: 'India' }, { code: 'JDH', name: 'Jodhpur Airport', city: 'Jodhpur', country: 'India' }, { code: 'UDR', name: 'Maharana Pratap Airport', city: 'Udaipur', country: 'India' }, { code: 'IXJ', name: 'Jammu Airport', city: 'Jammu', country: 'India' }, { code: 'ATQ', name: 'Sri Guru Ram Dass Jee Intl', city: 'Amritsar', country: 'India' }, { code: 'DED', name: 'Jolly Grant Airport', city: 'Dehradun', country: 'India' }, { code: 'IXL', name: 'Kushok Bakula Rimpochee Airport', city: 'Leh', country: 'India' }, { code: 'GOX', name: 'Manohar Intl (Mopa)', city: 'North Goa', country: 'India' },
+            // UAE & MIDDLE EAST
+            { code: 'DXB', name: 'Dubai Intl', city: 'Dubai', country: 'UAE' }, { code: 'AUH', name: 'Abu Dhabi Intl', city: 'Abu Dhabi', country: 'UAE' }, { code: 'SHJ', name: 'Sharjah Intl', city: 'Sharjah', country: 'UAE' }, { code: 'DWC', name: 'Al Maktoum Intl', city: 'Dubai', country: 'UAE' }, { code: 'DOH', name: 'Hamad Intl', city: 'Doha', country: 'Qatar' }, { code: 'MCT', name: 'Muscat Intl', city: 'Muscat', country: 'Oman' }, { code: 'SLL', name: 'Salalah Airport', city: 'Salalah', country: 'Oman' }, { code: 'BAH', name: 'Bahrain Intl', city: 'Manama', country: 'Bahrain' }, { code: 'KWI', name: 'Kuwait Intl', city: 'Kuwait City', country: 'Kuwait' }, { code: 'RUH', name: 'King Khalid Intl', city: 'Riyadh', country: 'Saudi Arabia' }, { code: 'JED', name: 'King Abdulaziz Intl', city: 'Jeddah', country: 'Saudi Arabia' }, { code: 'DMM', name: 'King Fahd Intl', city: 'Dammam', country: 'Saudi Arabia' }, { code: 'MED', name: 'Prince Mohammad Bin Abdulaziz Intl', city: 'Medina', country: 'Saudi Arabia' }, { code: 'TLV', name: 'Ben Gurion Intl', city: 'Tel Aviv', country: 'Israel' }, { code: 'AMM', name: 'Queen Alia Intl', city: 'Amman', country: 'Jordan' }, { code: 'BEY', name: 'Beirut Rafic Hariri Intl', city: 'Beirut', country: 'Lebanon' }, { code: 'BGW', name: 'Baghdad Intl', city: 'Baghdad', country: 'Iraq' }, { code: 'IKA', name: 'Imam Khomeini Intl', city: 'Tehran', country: 'Iran' },
+            // SOUTHEAST ASIA
+            { code: 'SIN', name: 'Singapore Changi', city: 'Singapore', country: 'Singapore' }, { code: 'BKK', name: 'Suvarnabhumi', city: 'Bangkok', country: 'Thailand' }, { code: 'DMK', name: 'Don Mueang Intl', city: 'Bangkok', country: 'Thailand' }, { code: 'HKT', name: 'Phuket Intl', city: 'Phuket', country: 'Thailand' }, { code: 'CNX', name: 'Chiang Mai Intl', city: 'Chiang Mai', country: 'Thailand' }, { code: 'KUL', name: 'Kuala Lumpur Intl', city: 'Kuala Lumpur', country: 'Malaysia' }, { code: 'PEN', name: 'Penang Intl', city: 'Penang', country: 'Malaysia' }, { code: 'LGK', name: 'Langkawi Intl', city: 'Langkawi', country: 'Malaysia' }, { code: 'BKI', name: 'Kota Kinabalu Intl', city: 'Kota Kinabalu', country: 'Malaysia' }, { code: 'KCH', name: 'Kuching Intl', city: 'Kuching', country: 'Malaysia' }, { code: 'CGK', name: 'Soekarno-Hatta Intl', city: 'Jakarta', country: 'Indonesia' }, { code: 'DPS', name: 'Ngurah Rai Intl', city: 'Bali', country: 'Indonesia' }, { code: 'SUB', name: 'Juanda Intl', city: 'Surabaya', country: 'Indonesia' }, { code: 'YIA', name: 'Yogyakarta Intl', city: 'Yogyakarta', country: 'Indonesia' }, { code: 'UPG', name: 'Sultan Hasanuddin Intl', city: 'Makassar', country: 'Indonesia' }, { code: 'MNL', name: 'Ninoy Aquino Intl', city: 'Manila', country: 'Philippines' }, { code: 'CEB', name: 'Mactan-Cebu Intl', city: 'Cebu', country: 'Philippines' }, { code: 'CRK', name: 'Clark Intl', city: 'Angeles', country: 'Philippines' }, { code: 'SGN', name: 'Tan Son Nhat Intl', city: 'Ho Chi Minh City', country: 'Vietnam' }, { code: 'HAN', name: 'Noi Bai Intl', city: 'Hanoi', country: 'Vietnam' }, { code: 'DAD', name: 'Da Nang Intl', city: 'Da Nang', country: 'Vietnam' }, { code: 'CXR', name: 'Cam Ranh Intl', city: 'Nha Trang', country: 'Vietnam' }, { code: 'PQC', name: 'Phu Quoc Intl', city: 'Phu Quoc', country: 'Vietnam' }, { code: 'RGN', name: 'Yangon Intl', city: 'Yangon', country: 'Myanmar' }, { code: 'REP', name: 'Siem Reap Intl', city: 'Siem Reap', country: 'Cambodia' }, { code: 'PNH', name: 'Phnom Penh Intl', city: 'Phnom Penh', country: 'Cambodia' }, { code: 'VTE', name: 'Wattay Intl', city: 'Vientiane', country: 'Laos' }, { code: 'BWN', name: 'Brunei Intl', city: 'Bandar Seri Begawan', country: 'Brunei' },
+            // EAST ASIA
+            { code: 'HKG', name: 'Hong Kong Intl', city: 'Hong Kong', country: 'China' }, { code: 'PEK', name: 'Beijing Capital Intl', city: 'Beijing', country: 'China' }, { code: 'PKX', name: 'Beijing Daxing Intl', city: 'Beijing', country: 'China' }, { code: 'PVG', name: 'Shanghai Pudong Intl', city: 'Shanghai', country: 'China' }, { code: 'SHA', name: 'Shanghai Hongqiao Intl', city: 'Shanghai', country: 'China' }, { code: 'CAN', name: 'Guangzhou Baiyun Intl', city: 'Guangzhou', country: 'China' }, { code: 'SZX', name: 'Shenzhen Bao an Intl', city: 'Shenzhen', country: 'China' }, { code: 'CTU', name: 'Chengdu Shuangliu Intl', city: 'Chengdu', country: 'China' }, { code: 'CKG', name: 'Chongqing Jiangbei Intl', city: 'Chongqing', country: 'China' }, { code: 'XIY', name: 'Xi an Xianyang Intl', city: 'Xi an', country: 'China' }, { code: 'KMG', name: 'Kunming Changshui Intl', city: 'Kunming', country: 'China' }, { code: 'HGH', name: 'Hangzhou Xiaoshan Intl', city: 'Hangzhou', country: 'China' }, { code: 'NKG', name: 'Nanjing Lukou Intl', city: 'Nanjing', country: 'China' }, { code: 'WUH', name: 'Wuhan Tianhe Intl', city: 'Wuhan', country: 'China' }, { code: 'TSN', name: 'Tianjin Binhai Intl', city: 'Tianjin', country: 'China' }, { code: 'SYX', name: 'Sanya Phoenix Intl', city: 'Sanya', country: 'China' }, { code: 'TAO', name: 'Qingdao Jiaodong Intl', city: 'Qingdao', country: 'China' }, { code: 'DLC', name: 'Dalian Zhoushuizi Intl', city: 'Dalian', country: 'China' }, { code: 'XMN', name: 'Xiamen Gaoqi Intl', city: 'Xiamen', country: 'China' }, { code: 'FOC', name: 'Fuzhou Changle Intl', city: 'Fuzhou', country: 'China' }, { code: 'MFM', name: 'Macau Intl', city: 'Macau', country: 'China' }, { code: 'TPE', name: 'Taiwan Taoyuan Intl', city: 'Taipei', country: 'Taiwan' }, { code: 'TSA', name: 'Taipei Songshan', city: 'Taipei', country: 'Taiwan' }, { code: 'KHH', name: 'Kaohsiung Intl', city: 'Kaohsiung', country: 'Taiwan' }, { code: 'NRT', name: 'Narita Intl', city: 'Tokyo', country: 'Japan' }, { code: 'HND', name: 'Tokyo Haneda', city: 'Tokyo', country: 'Japan' }, { code: 'KIX', name: 'Kansai Intl', city: 'Osaka', country: 'Japan' }, { code: 'ITM', name: 'Osaka Itami', city: 'Osaka', country: 'Japan' }, { code: 'NGO', name: 'Chubu Centrair Intl', city: 'Nagoya', country: 'Japan' }, { code: 'FUK', name: 'Fukuoka Airport', city: 'Fukuoka', country: 'Japan' }, { code: 'CTS', name: 'New Chitose', city: 'Sapporo', country: 'Japan' }, { code: 'OKA', name: 'Naha Airport', city: 'Okinawa', country: 'Japan' }, { code: 'ICN', name: 'Incheon Intl', city: 'Seoul', country: 'South Korea' }, { code: 'GMP', name: 'Gimpo Intl', city: 'Seoul', country: 'South Korea' }, { code: 'PUS', name: 'Gimhae Intl', city: 'Busan', country: 'South Korea' }, { code: 'CJU', name: 'Jeju Intl', city: 'Jeju', country: 'South Korea' }, { code: 'ULN', name: 'Chinggis Khaan Intl', city: 'Ulaanbaatar', country: 'Mongolia' },
+            // EUROPE
+            { code: 'LHR', name: 'Heathrow', city: 'London', country: 'UK' }, { code: 'LGW', name: 'Gatwick', city: 'London', country: 'UK' }, { code: 'STN', name: 'Stansted', city: 'London', country: 'UK' }, { code: 'LTN', name: 'Luton', city: 'London', country: 'UK' }, { code: 'MAN', name: 'Manchester', city: 'Manchester', country: 'UK' }, { code: 'EDI', name: 'Edinburgh', city: 'Edinburgh', country: 'UK' }, { code: 'BHX', name: 'Birmingham', city: 'Birmingham', country: 'UK' }, { code: 'GLA', name: 'Glasgow', city: 'Glasgow', country: 'UK' }, { code: 'BRS', name: 'Bristol', city: 'Bristol', country: 'UK' }, { code: 'NCL', name: 'Newcastle', city: 'Newcastle', country: 'UK' }, { code: 'CDG', name: 'Charles de Gaulle', city: 'Paris', country: 'France' }, { code: 'ORY', name: 'Paris Orly', city: 'Paris', country: 'France' }, { code: 'NCE', name: 'Nice Cote d Azur', city: 'Nice', country: 'France' }, { code: 'LYS', name: 'Lyon Saint-Exupery', city: 'Lyon', country: 'France' }, { code: 'MRS', name: 'Marseille Provence', city: 'Marseille', country: 'France' }, { code: 'TLS', name: 'Toulouse Blagnac', city: 'Toulouse', country: 'France' }, { code: 'FRA', name: 'Frankfurt', city: 'Frankfurt', country: 'Germany' }, { code: 'MUC', name: 'Munich', city: 'Munich', country: 'Germany' }, { code: 'DUS', name: 'Dusseldorf', city: 'Dusseldorf', country: 'Germany' }, { code: 'TXL', name: 'Berlin Tegel', city: 'Berlin', country: 'Germany' }, { code: 'BER', name: 'Berlin Brandenburg', city: 'Berlin', country: 'Germany' }, { code: 'HAM', name: 'Hamburg', city: 'Hamburg', country: 'Germany' }, { code: 'CGN', name: 'Cologne Bonn', city: 'Cologne', country: 'Germany' }, { code: 'STR', name: 'Stuttgart', city: 'Stuttgart', country: 'Germany' }, { code: 'AMS', name: 'Amsterdam Schiphol', city: 'Amsterdam', country: 'Netherlands' }, { code: 'BRU', name: 'Brussels', city: 'Brussels', country: 'Belgium' }, { code: 'FCO', name: 'Rome Fiumicino', city: 'Rome', country: 'Italy' }, { code: 'MXP', name: 'Milan Malpensa', city: 'Milan', country: 'Italy' }, { code: 'LIN', name: 'Milan Linate', city: 'Milan', country: 'Italy' }, { code: 'VCE', name: 'Venice Marco Polo', city: 'Venice', country: 'Italy' }, { code: 'NAP', name: 'Naples', city: 'Naples', country: 'Italy' }, { code: 'BGY', name: 'Milan Bergamo', city: 'Bergamo', country: 'Italy' }, { code: 'MAD', name: 'Madrid Barajas', city: 'Madrid', country: 'Spain' }, { code: 'BCN', name: 'Barcelona El Prat', city: 'Barcelona', country: 'Spain' }, { code: 'PMI', name: 'Palma de Mallorca', city: 'Palma', country: 'Spain' }, { code: 'AGP', name: 'Malaga', city: 'Malaga', country: 'Spain' }, { code: 'ALC', name: 'Alicante', city: 'Alicante', country: 'Spain' }, { code: 'VLC', name: 'Valencia', city: 'Valencia', country: 'Spain' }, { code: 'SVQ', name: 'Seville', city: 'Seville', country: 'Spain' }, { code: 'IBZ', name: 'Ibiza', city: 'Ibiza', country: 'Spain' }, { code: 'TFS', name: 'Tenerife South', city: 'Tenerife', country: 'Spain' }, { code: 'LPA', name: 'Gran Canaria', city: 'Las Palmas', country: 'Spain' }, { code: 'LIS', name: 'Lisbon Portela', city: 'Lisbon', country: 'Portugal' }, { code: 'OPO', name: 'Porto', city: 'Porto', country: 'Portugal' }, { code: 'FAO', name: 'Faro', city: 'Faro', country: 'Portugal' }, { code: 'ATH', name: 'Athens Intl', city: 'Athens', country: 'Greece' }, { code: 'SKG', name: 'Thessaloniki', city: 'Thessaloniki', country: 'Greece' }, { code: 'HER', name: 'Heraklion', city: 'Crete', country: 'Greece' }, { code: 'RHO', name: 'Rhodes', city: 'Rhodes', country: 'Greece' }, { code: 'JMK', name: 'Mykonos', city: 'Mykonos', country: 'Greece' }, { code: 'JTR', name: 'Santorini', city: 'Santorini', country: 'Greece' }, { code: 'IST', name: 'Istanbul', city: 'Istanbul', country: 'Turkey' }, { code: 'SAW', name: 'Sabiha Gokcen', city: 'Istanbul', country: 'Turkey' }, { code: 'AYT', name: 'Antalya', city: 'Antalya', country: 'Turkey' }, { code: 'ADB', name: 'Izmir Adnan Menderes', city: 'Izmir', country: 'Turkey' }, { code: 'ESB', name: 'Ankara Esenboga', city: 'Ankara', country: 'Turkey' }, { code: 'DLM', name: 'Dalaman', city: 'Dalaman', country: 'Turkey' }, { code: 'BJV', name: 'Bodrum Milas', city: 'Bodrum', country: 'Turkey' }, { code: 'ZRH', name: 'Zurich', city: 'Zurich', country: 'Switzerland' }, { code: 'GVA', name: 'Geneva', city: 'Geneva', country: 'Switzerland' }, { code: 'BSL', name: 'Basel', city: 'Basel', country: 'Switzerland' }, { code: 'VIE', name: 'Vienna', city: 'Vienna', country: 'Austria' }, { code: 'SZG', name: 'Salzburg', city: 'Salzburg', country: 'Austria' }, { code: 'INN', name: 'Innsbruck', city: 'Innsbruck', country: 'Austria' }, { code: 'CPH', name: 'Copenhagen', city: 'Copenhagen', country: 'Denmark' }, { code: 'OSL', name: 'Oslo Gardermoen', city: 'Oslo', country: 'Norway' }, { code: 'BGO', name: 'Bergen', city: 'Bergen', country: 'Norway' }, { code: 'ARN', name: 'Stockholm Arlanda', city: 'Stockholm', country: 'Sweden' }, { code: 'GOT', name: 'Gothenburg Landvetter', city: 'Gothenburg', country: 'Sweden' }, { code: 'HEL', name: 'Helsinki Vantaa', city: 'Helsinki', country: 'Finland' }, { code: 'DUB', name: 'Dublin', city: 'Dublin', country: 'Ireland' }, { code: 'SNN', name: 'Shannon', city: 'Shannon', country: 'Ireland' }, { code: 'ORK', name: 'Cork', city: 'Cork', country: 'Ireland' }, { code: 'PRG', name: 'Prague Vaclav Havel', city: 'Prague', country: 'Czech Republic' }, { code: 'WAW', name: 'Warsaw Chopin', city: 'Warsaw', country: 'Poland' }, { code: 'KRK', name: 'Krakow', city: 'Krakow', country: 'Poland' }, { code: 'BUD', name: 'Budapest Ferenc Liszt', city: 'Budapest', country: 'Hungary' }, { code: 'OTP', name: 'Bucharest Henri Coanda', city: 'Bucharest', country: 'Romania' }, { code: 'SOF', name: 'Sofia', city: 'Sofia', country: 'Bulgaria' }, { code: 'ZAG', name: 'Zagreb', city: 'Zagreb', country: 'Croatia' }, { code: 'SPU', name: 'Split', city: 'Split', country: 'Croatia' }, { code: 'DBV', name: 'Dubrovnik', city: 'Dubrovnik', country: 'Croatia' }, { code: 'BEG', name: 'Belgrade Nikola Tesla', city: 'Belgrade', country: 'Serbia' }, { code: 'LJU', name: 'Ljubljana', city: 'Ljubljana', country: 'Slovenia' }, { code: 'TIA', name: 'Tirana', city: 'Tirana', country: 'Albania' }, { code: 'SKP', name: 'Skopje', city: 'Skopje', country: 'North Macedonia' }, { code: 'KBP', name: 'Kyiv Boryspil', city: 'Kyiv', country: 'Ukraine' }, { code: 'SVO', name: 'Moscow Sheremetyevo', city: 'Moscow', country: 'Russia' }, { code: 'DME', name: 'Moscow Domodedovo', city: 'Moscow', country: 'Russia' }, { code: 'LED', name: 'St Petersburg Pulkovo', city: 'St Petersburg', country: 'Russia' }, { code: 'RIX', name: 'Riga', city: 'Riga', country: 'Latvia' }, { code: 'VNO', name: 'Vilnius', city: 'Vilnius', country: 'Lithuania' }, { code: 'TLL', name: 'Tallinn', city: 'Tallinn', country: 'Estonia' }, { code: 'KEF', name: 'Keflavik', city: 'Reykjavik', country: 'Iceland' },
+            // NORTH AMERICA - USA
+            { code: 'JFK', name: 'John F Kennedy Intl', city: 'New York', country: 'USA' }, { code: 'EWR', name: 'Newark Liberty Intl', city: 'Newark', country: 'USA' }, { code: 'LGA', name: 'LaGuardia', city: 'New York', country: 'USA' }, { code: 'LAX', name: 'Los Angeles Intl', city: 'Los Angeles', country: 'USA' }, { code: 'SFO', name: 'San Francisco Intl', city: 'San Francisco', country: 'USA' }, { code: 'ORD', name: 'O Hare Intl', city: 'Chicago', country: 'USA' }, { code: 'MDW', name: 'Midway Intl', city: 'Chicago', country: 'USA' }, { code: 'ATL', name: 'Hartsfield-Jackson Atlanta Intl', city: 'Atlanta', country: 'USA' }, { code: 'DFW', name: 'Dallas Fort Worth Intl', city: 'Dallas', country: 'USA' }, { code: 'DEN', name: 'Denver Intl', city: 'Denver', country: 'USA' }, { code: 'SEA', name: 'Seattle-Tacoma Intl', city: 'Seattle', country: 'USA' }, { code: 'MIA', name: 'Miami Intl', city: 'Miami', country: 'USA' }, { code: 'FLL', name: 'Fort Lauderdale-Hollywood Intl', city: 'Fort Lauderdale', country: 'USA' }, { code: 'MCO', name: 'Orlando Intl', city: 'Orlando', country: 'USA' }, { code: 'TPA', name: 'Tampa Intl', city: 'Tampa', country: 'USA' }, { code: 'BOS', name: 'Boston Logan Intl', city: 'Boston', country: 'USA' }, { code: 'PHL', name: 'Philadelphia Intl', city: 'Philadelphia', country: 'USA' }, { code: 'IAD', name: 'Washington Dulles Intl', city: 'Washington DC', country: 'USA' }, { code: 'DCA', name: 'Ronald Reagan Washington National', city: 'Washington DC', country: 'USA' }, { code: 'BWI', name: 'Baltimore Washington Intl', city: 'Baltimore', country: 'USA' }, { code: 'DTW', name: 'Detroit Metro Wayne County', city: 'Detroit', country: 'USA' }, { code: 'MSP', name: 'Minneapolis-St Paul Intl', city: 'Minneapolis', country: 'USA' }, { code: 'CLT', name: 'Charlotte Douglas Intl', city: 'Charlotte', country: 'USA' }, { code: 'PHX', name: 'Phoenix Sky Harbor Intl', city: 'Phoenix', country: 'USA' }, { code: 'LAS', name: 'Harry Reid Intl', city: 'Las Vegas', country: 'USA' }, { code: 'SAN', name: 'San Diego Intl', city: 'San Diego', country: 'USA' }, { code: 'SJC', name: 'San Jose Intl', city: 'San Jose', country: 'USA' }, { code: 'OAK', name: 'Oakland Intl', city: 'Oakland', country: 'USA' }, { code: 'PDX', name: 'Portland Intl', city: 'Portland', country: 'USA' }, { code: 'SLC', name: 'Salt Lake City Intl', city: 'Salt Lake City', country: 'USA' }, { code: 'AUS', name: 'Austin-Bergstrom Intl', city: 'Austin', country: 'USA' }, { code: 'IAH', name: 'George Bush Intercontinental', city: 'Houston', country: 'USA' }, { code: 'HOU', name: 'William P Hobby', city: 'Houston', country: 'USA' }, { code: 'MSY', name: 'Louis Armstrong New Orleans Intl', city: 'New Orleans', country: 'USA' }, { code: 'RDU', name: 'Raleigh-Durham Intl', city: 'Raleigh', country: 'USA' }, { code: 'BNA', name: 'Nashville Intl', city: 'Nashville', country: 'USA' }, { code: 'STL', name: 'St Louis Lambert Intl', city: 'St Louis', country: 'USA' }, { code: 'MCI', name: 'Kansas City Intl', city: 'Kansas City', country: 'USA' }, { code: 'IND', name: 'Indianapolis Intl', city: 'Indianapolis', country: 'USA' }, { code: 'CMH', name: 'John Glenn Columbus Intl', city: 'Columbus', country: 'USA' }, { code: 'CLE', name: 'Cleveland Hopkins Intl', city: 'Cleveland', country: 'USA' }, { code: 'PIT', name: 'Pittsburgh Intl', city: 'Pittsburgh', country: 'USA' }, { code: 'CVG', name: 'Cincinnati Northern Kentucky Intl', city: 'Cincinnati', country: 'USA' }, { code: 'MKE', name: 'General Mitchell Intl', city: 'Milwaukee', country: 'USA' }, { code: 'SMF', name: 'Sacramento Intl', city: 'Sacramento', country: 'USA' }, { code: 'SNA', name: 'John Wayne Airport', city: 'Orange County', country: 'USA' }, { code: 'BUR', name: 'Hollywood Burbank', city: 'Burbank', country: 'USA' }, { code: 'HNL', name: 'Daniel K Inouye Intl', city: 'Honolulu', country: 'USA' }, { code: 'OGG', name: 'Kahului', city: 'Maui', country: 'USA' }, { code: 'ANC', name: 'Ted Stevens Anchorage Intl', city: 'Anchorage', country: 'USA' },
+            // CANADA
+            { code: 'YYZ', name: 'Toronto Pearson Intl', city: 'Toronto', country: 'Canada' }, { code: 'YVR', name: 'Vancouver Intl', city: 'Vancouver', country: 'Canada' }, { code: 'YUL', name: 'Montreal Trudeau Intl', city: 'Montreal', country: 'Canada' }, { code: 'YYC', name: 'Calgary Intl', city: 'Calgary', country: 'Canada' }, { code: 'YEG', name: 'Edmonton Intl', city: 'Edmonton', country: 'Canada' }, { code: 'YOW', name: 'Ottawa Macdonald-Cartier Intl', city: 'Ottawa', country: 'Canada' }, { code: 'YWG', name: 'Winnipeg Richardson Intl', city: 'Winnipeg', country: 'Canada' }, { code: 'YHZ', name: 'Halifax Stanfield Intl', city: 'Halifax', country: 'Canada' }, { code: 'YQB', name: 'Quebec Jean Lesage Intl', city: 'Quebec City', country: 'Canada' }, { code: 'YXE', name: 'Saskatoon John G Diefenbaker Intl', city: 'Saskatoon', country: 'Canada' }, { code: 'YQR', name: 'Regina Intl', city: 'Regina', country: 'Canada' }, { code: 'YYJ', name: 'Victoria Intl', city: 'Victoria', country: 'Canada' }, { code: 'YKA', name: 'Kamloops', city: 'Kamloops', country: 'Canada' }, { code: 'YXX', name: 'Abbotsford Intl', city: 'Abbotsford', country: 'Canada' },
+            // MEXICO & CENTRAL AMERICA
+            { code: 'MEX', name: 'Mexico City Intl', city: 'Mexico City', country: 'Mexico' }, { code: 'CUN', name: 'Cancun Intl', city: 'Cancun', country: 'Mexico' }, { code: 'GDL', name: 'Guadalajara Intl', city: 'Guadalajara', country: 'Mexico' }, { code: 'SJD', name: 'Los Cabos Intl', city: 'San Jose del Cabo', country: 'Mexico' }, { code: 'PVR', name: 'Puerto Vallarta Intl', city: 'Puerto Vallarta', country: 'Mexico' }, { code: 'MTY', name: 'Monterrey Intl', city: 'Monterrey', country: 'Mexico' }, { code: 'TIJ', name: 'Tijuana Intl', city: 'Tijuana', country: 'Mexico' }, { code: 'PTY', name: 'Tocumen Intl', city: 'Panama City', country: 'Panama' }, { code: 'SJO', name: 'Juan Santamaria Intl', city: 'San Jose', country: 'Costa Rica' }, { code: 'LIR', name: 'Daniel Oduber Quiros Intl', city: 'Liberia', country: 'Costa Rica' }, { code: 'SAL', name: 'El Salvador Intl', city: 'San Salvador', country: 'El Salvador' }, { code: 'GUA', name: 'La Aurora Intl', city: 'Guatemala City', country: 'Guatemala' }, { code: 'MGA', name: 'Augusto C Sandino Intl', city: 'Managua', country: 'Nicaragua' }, { code: 'TGU', name: 'Toncontin Intl', city: 'Tegucigalpa', country: 'Honduras' }, { code: 'BZE', name: 'Philip S W Goldson Intl', city: 'Belize City', country: 'Belize' },
+            // CARIBBEAN
+            { code: 'MBJ', name: 'Sangster Intl', city: 'Montego Bay', country: 'Jamaica' }, { code: 'KIN', name: 'Norman Manley Intl', city: 'Kingston', country: 'Jamaica' }, { code: 'NAS', name: 'Lynden Pindling Intl', city: 'Nassau', country: 'Bahamas' }, { code: 'PUJ', name: 'Punta Cana Intl', city: 'Punta Cana', country: 'Dominican Republic' }, { code: 'SDQ', name: 'Las Americas Intl', city: 'Santo Domingo', country: 'Dominican Republic' }, { code: 'SJU', name: 'Luis Munoz Marin Intl', city: 'San Juan', country: 'Puerto Rico' }, { code: 'HAV', name: 'Jose Marti Intl', city: 'Havana', country: 'Cuba' }, { code: 'AUA', name: 'Queen Beatrix Intl', city: 'Oranjestad', country: 'Aruba' }, { code: 'CUR', name: 'Curacao Intl', city: 'Willemstad', country: 'Curacao' }, { code: 'SXM', name: 'Princess Juliana Intl', city: 'St Maarten', country: 'Sint Maarten' }, { code: 'BGI', name: 'Grantley Adams Intl', city: 'Bridgetown', country: 'Barbados' }, { code: 'POS', name: 'Piarco Intl', city: 'Port of Spain', country: 'Trinidad and Tobago' }, { code: 'GCM', name: 'Owen Roberts Intl', city: 'Grand Cayman', country: 'Cayman Islands' }, { code: 'UVF', name: 'Hewanorra Intl', city: 'St Lucia', country: 'Saint Lucia' }, { code: 'ANU', name: 'V C Bird Intl', city: 'St Johns', country: 'Antigua and Barbuda' }, { code: 'TAB', name: 'Tobago A N R Robinson Intl', city: 'Tobago', country: 'Trinidad and Tobago' },
+            // SOUTH AMERICA
+            { code: 'GRU', name: 'Sao Paulo Guarulhos Intl', city: 'Sao Paulo', country: 'Brazil' }, { code: 'GIG', name: 'Rio de Janeiro Galeao Intl', city: 'Rio de Janeiro', country: 'Brazil' }, { code: 'BSB', name: 'Brasilia Intl', city: 'Brasilia', country: 'Brazil' }, { code: 'CNF', name: 'Belo Horizonte Confins Intl', city: 'Belo Horizonte', country: 'Brazil' }, { code: 'SSA', name: 'Salvador Intl', city: 'Salvador', country: 'Brazil' }, { code: 'REC', name: 'Recife Guararapes Intl', city: 'Recife', country: 'Brazil' }, { code: 'FOR', name: 'Fortaleza Pinto Martins Intl', city: 'Fortaleza', country: 'Brazil' }, { code: 'POA', name: 'Porto Alegre Salgado Filho Intl', city: 'Porto Alegre', country: 'Brazil' }, { code: 'CWB', name: 'Curitiba Afonso Pena Intl', city: 'Curitiba', country: 'Brazil' }, { code: 'MAO', name: 'Eduardo Gomes Intl', city: 'Manaus', country: 'Brazil' }, { code: 'FLN', name: 'Florianopolis Intl', city: 'Florianopolis', country: 'Brazil' }, { code: 'VCP', name: 'Viracopos Intl', city: 'Campinas', country: 'Brazil' }, { code: 'EZE', name: 'Buenos Aires Ezeiza Intl', city: 'Buenos Aires', country: 'Argentina' }, { code: 'AEP', name: 'Buenos Aires Aeroparque', city: 'Buenos Aires', country: 'Argentina' }, { code: 'COR', name: 'Cordoba Intl', city: 'Cordoba', country: 'Argentina' }, { code: 'MDZ', name: 'Mendoza Intl', city: 'Mendoza', country: 'Argentina' }, { code: 'IGR', name: 'Iguazu Intl', city: 'Puerto Iguazu', country: 'Argentina' }, { code: 'BRC', name: 'San Carlos de Bariloche', city: 'Bariloche', country: 'Argentina' }, { code: 'SCL', name: 'Santiago Arturo Merino Benitez Intl', city: 'Santiago', country: 'Chile' }, { code: 'LIM', name: 'Lima Jorge Chavez Intl', city: 'Lima', country: 'Peru' }, { code: 'CUZ', name: 'Alejandro Velasco Astete Intl', city: 'Cusco', country: 'Peru' }, { code: 'BOG', name: 'Bogota El Dorado Intl', city: 'Bogota', country: 'Colombia' }, { code: 'MDE', name: 'Medellin Jose Maria Cordova Intl', city: 'Medellin', country: 'Colombia' }, { code: 'CTG', name: 'Cartagena Rafael Nunez Intl', city: 'Cartagena', country: 'Colombia' }, { code: 'CLO', name: 'Cali Alfonso Bonilla Aragon Intl', city: 'Cali', country: 'Colombia' }, { code: 'UIO', name: 'Quito Mariscal Sucre Intl', city: 'Quito', country: 'Ecuador' }, { code: 'GYE', name: 'Guayaquil Jose Joaquin de Olmedo Intl', city: 'Guayaquil', country: 'Ecuador' }, { code: 'GPS', name: 'Galapagos Seymour', city: 'Galapagos', country: 'Ecuador' }, { code: 'CCS', name: 'Caracas Simon Bolivar Intl', city: 'Caracas', country: 'Venezuela' }, { code: 'LPB', name: 'La Paz El Alto Intl', city: 'La Paz', country: 'Bolivia' }, { code: 'VVI', name: 'Santa Cruz Viru Viru Intl', city: 'Santa Cruz', country: 'Bolivia' }, { code: 'ASU', name: 'Asuncion Silvio Pettirossi Intl', city: 'Asuncion', country: 'Paraguay' }, { code: 'MVD', name: 'Montevideo Carrasco Intl', city: 'Montevideo', country: 'Uruguay' }, { code: 'PBM', name: 'Paramaribo Johan Adolf Pengel Intl', city: 'Paramaribo', country: 'Suriname' }, { code: 'GEO', name: 'Georgetown Cheddi Jagan Intl', city: 'Georgetown', country: 'Guyana' },
+            // AFRICA
+            { code: 'JNB', name: 'O R Tambo Intl', city: 'Johannesburg', country: 'South Africa' }, { code: 'CPT', name: 'Cape Town Intl', city: 'Cape Town', country: 'South Africa' }, { code: 'DUR', name: 'King Shaka Intl', city: 'Durban', country: 'South Africa' }, { code: 'CAI', name: 'Cairo Intl', city: 'Cairo', country: 'Egypt' }, { code: 'HRG', name: 'Hurghada Intl', city: 'Hurghada', country: 'Egypt' }, { code: 'SSH', name: 'Sharm El Sheikh Intl', city: 'Sharm El Sheikh', country: 'Egypt' }, { code: 'LXR', name: 'Luxor Intl', city: 'Luxor', country: 'Egypt' }, { code: 'ALG', name: 'Algiers Houari Boumediene', city: 'Algiers', country: 'Algeria' }, { code: 'CMN', name: 'Casablanca Mohammed V Intl', city: 'Casablanca', country: 'Morocco' }, { code: 'RAK', name: 'Marrakech Menara', city: 'Marrakech', country: 'Morocco' }, { code: 'TUN', name: 'Tunis Carthage Intl', city: 'Tunis', country: 'Tunisia' }, { code: 'NBO', name: 'Jomo Kenyatta Intl', city: 'Nairobi', country: 'Kenya' }, { code: 'MBA', name: 'Moi Intl', city: 'Mombasa', country: 'Kenya' }, { code: 'ADD', name: 'Bole Intl', city: 'Addis Ababa', country: 'Ethiopia' }, { code: 'EBB', name: 'Entebbe Intl', city: 'Kampala', country: 'Uganda' }, { code: 'DAR', name: 'Julius Nyerere Intl', city: 'Dar es Salaam', country: 'Tanzania' }, { code: 'ZNZ', name: 'Abeid Amani Karume Intl', city: 'Zanzibar', country: 'Tanzania' }, { code: 'JRO', name: 'Kilimanjaro Intl', city: 'Kilimanjaro', country: 'Tanzania' }, { code: 'KGL', name: 'Kigali Intl', city: 'Kigali', country: 'Rwanda' }, { code: 'ACC', name: 'Kotoka Intl', city: 'Accra', country: 'Ghana' }, { code: 'LOS', name: 'Murtala Muhammed Intl', city: 'Lagos', country: 'Nigeria' }, { code: 'ABV', name: 'Nnamdi Azikiwe Intl', city: 'Abuja', country: 'Nigeria' }, { code: 'DSS', name: 'Blaise Diagne Intl', city: 'Dakar', country: 'Senegal' }, { code: 'ABJ', name: 'Felix Houphouet-Boigny Intl', city: 'Abidjan', country: 'Ivory Coast' }, { code: 'ROB', name: 'Roberts Intl', city: 'Monrovia', country: 'Liberia' }, { code: 'FNA', name: 'Lungi Intl', city: 'Freetown', country: 'Sierra Leone' }, { code: 'DKR', name: 'Leopold Sedar Senghor Intl', city: 'Dakar', country: 'Senegal' }, { code: 'TIP', name: 'Tripoli Mitiga Intl', city: 'Tripoli', country: 'Libya' }, { code: 'KRT', name: 'Khartoum Intl', city: 'Khartoum', country: 'Sudan' }, { code: 'LUN', name: 'Kenneth Kaunda Intl', city: 'Lusaka', country: 'Zambia' }, { code: 'HRE', name: 'Robert Gabriel Mugabe Intl', city: 'Harare', country: 'Zimbabwe' }, { code: 'VFA', name: 'Victoria Falls Intl', city: 'Victoria Falls', country: 'Zimbabwe' }, { code: 'WDH', name: 'Hosea Kutako Intl', city: 'Windhoek', country: 'Namibia' }, { code: 'GBE', name: 'Sir Seretse Khama Intl', city: 'Gaborone', country: 'Botswana' }, { code: 'MPM', name: 'Maputo Intl', city: 'Maputo', country: 'Mozambique' }, { code: 'TNR', name: 'Antananarivo Ivato Intl', city: 'Antananarivo', country: 'Madagascar' }, { code: 'MRU', name: 'Sir Seewoosagur Ramgoolam Intl', city: 'Mauritius', country: 'Mauritius' }, { code: 'SEZ', name: 'Seychelles Intl', city: 'Victoria', country: 'Seychelles' }, { code: 'RUN', name: 'Roland Garros', city: 'Saint-Denis', country: 'Reunion' },
+            // AUSTRALIA & NEW ZEALAND & OCEANIA
+            { code: 'SYD', name: 'Sydney Kingsford Smith', city: 'Sydney', country: 'Australia' }, { code: 'MEL', name: 'Melbourne Tullamarine', city: 'Melbourne', country: 'Australia' }, { code: 'BNE', name: 'Brisbane', city: 'Brisbane', country: 'Australia' }, { code: 'PER', name: 'Perth', city: 'Perth', country: 'Australia' }, { code: 'ADL', name: 'Adelaide', city: 'Adelaide', country: 'Australia' }, { code: 'CBR', name: 'Canberra', city: 'Canberra', country: 'Australia' }, { code: 'OOL', name: 'Gold Coast', city: 'Gold Coast', country: 'Australia' }, { code: 'CNS', name: 'Cairns', city: 'Cairns', country: 'Australia' }, { code: 'DRW', name: 'Darwin Intl', city: 'Darwin', country: 'Australia' }, { code: 'HBA', name: 'Hobart Intl', city: 'Hobart', country: 'Australia' }, { code: 'TSV', name: 'Townsville', city: 'Townsville', country: 'Australia' }, { code: 'AKL', name: 'Auckland Intl', city: 'Auckland', country: 'New Zealand' }, { code: 'WLG', name: 'Wellington Intl', city: 'Wellington', country: 'New Zealand' }, { code: 'CHC', name: 'Christchurch Intl', city: 'Christchurch', country: 'New Zealand' }, { code: 'ZQN', name: 'Queenstown', city: 'Queenstown', country: 'New Zealand' }, { code: 'DUD', name: 'Dunedin Intl', city: 'Dunedin', country: 'New Zealand' }, { code: 'NAN', name: 'Nadi Intl', city: 'Nadi', country: 'Fiji' }, { code: 'SUV', name: 'Suva Nausori Intl', city: 'Suva', country: 'Fiji' }, { code: 'PPT', name: 'Faa a Intl', city: 'Papeete', country: 'French Polynesia' }, { code: 'NOU', name: 'La Tontouta Intl', city: 'Noumea', country: 'New Caledonia' }, { code: 'APW', name: 'Faleolo Intl', city: 'Apia', country: 'Samoa' }, { code: 'TBU', name: 'Fua amotu Intl', city: 'Nuku alofa', country: 'Tonga' }, { code: 'VLI', name: 'Bauerfield Intl', city: 'Port Vila', country: 'Vanuatu' }, { code: 'GUM', name: 'Antonio B Won Pat Intl', city: 'Guam', country: 'Guam' }, { code: 'POM', name: 'Jacksons Intl', city: 'Port Moresby', country: 'Papua New Guinea' },
+            // SOUTH ASIA (Pakistan, Bangladesh, Nepal, etc)
+            { code: 'KHI', name: 'Jinnah Intl', city: 'Karachi', country: 'Pakistan' }, { code: 'LHE', name: 'Allama Iqbal Intl', city: 'Lahore', country: 'Pakistan' }, { code: 'ISB', name: 'Islamabad Intl', city: 'Islamabad', country: 'Pakistan' }, { code: 'PEW', name: 'Peshawar Intl', city: 'Peshawar', country: 'Pakistan' }, { code: 'DAC', name: 'Hazrat Shahjalal Intl', city: 'Dhaka', country: 'Bangladesh' }, { code: 'CGP', name: 'Shah Amanat Intl', city: 'Chittagong', country: 'Bangladesh' }, { code: 'KTM', name: 'Tribhuvan Intl', city: 'Kathmandu', country: 'Nepal' }, { code: 'MLE', name: 'Velana Intl', city: 'Male', country: 'Maldives' }, { code: 'CMB', name: 'Bandaranaike Intl', city: 'Colombo', country: 'Sri Lanka' }, { code: 'HRI', name: 'Mattala Rajapaksa Intl', city: 'Hambantota', country: 'Sri Lanka' }, { code: 'PBH', name: 'Paro Intl', city: 'Paro', country: 'Bhutan' }, { code: 'GAN', name: 'Gan Intl', city: 'Addu City', country: 'Maldives' },
+            // CENTRAL ASIA
+            { code: 'TAS', name: 'Tashkent Intl', city: 'Tashkent', country: 'Uzbekistan' }, { code: 'ALA', name: 'Almaty Intl', city: 'Almaty', country: 'Kazakhstan' }, { code: 'NQZ', name: 'Nursultan Nazarbayev Intl', city: 'Astana', country: 'Kazakhstan' }, { code: 'FRU', name: 'Manas Intl', city: 'Bishkek', country: 'Kyrgyzstan' }, { code: 'DYU', name: 'Dushanbe Intl', city: 'Dushanbe', country: 'Tajikistan' }, { code: 'ASB', name: 'Ashgabat Intl', city: 'Ashgabat', country: 'Turkmenistan' }, { code: 'GYD', name: 'Heydar Aliyev Intl', city: 'Baku', country: 'Azerbaijan' }, { code: 'TBS', name: 'Tbilisi Intl', city: 'Tbilisi', country: 'Georgia' }, { code: 'EVN', name: 'Zvartnots Intl', city: 'Yerevan', country: 'Armenia' }
+        ];
+
+        let activeDropdown = null;
+
+        function searchAirport(input, dropdownId) {
+            const query = input.value.toLowerCase().trim();
+            const dropdown = document.getElementById(dropdownId);
+
+            if (query.length < 1) {
+                dropdown.classList.remove('active');
+                return;
+            }
+
+            const matches = airports.filter(airport =>
+                airport.code.toLowerCase().includes(query) ||
+                airport.city.toLowerCase().includes(query) ||
+                airport.name.toLowerCase().includes(query) ||
+                airport.country.toLowerCase().includes(query)
+            ).slice(0, 8);
+
+            displayAirportResults(matches, dropdown, input);
         }
+
+        function showRecentAirports(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const input = dropdown.previousElementSibling;
+
+            if (input.value.trim().length > 0) return;
+
+            // Show popular airports when focused with empty input
+            const popular = airports.slice(0, 6);
+            displayAirportResults(popular, dropdown, input, true);
+        }
+
+        function displayAirportResults(results, dropdown, input, isPopular = false) {
+            if (results.length === 0) {
+                dropdown.innerHTML = '<div class="airport-item" style="color:#888;justify-content:center;">No airports found</div>';
+                dropdown.classList.add('active');
+                return;
+            }
+
+            const header = isPopular ? '<div style="padding:8px 15px;background:#f8f9fa;color:#666;font-size:0.8rem;font-weight:600;">Popular Airports</div>' : '';
+
+            dropdown.innerHTML = header + results.map(airport => `
+                <div class="airport-item" onclick="selectAirport('${airport.code}', '${airport.city}', '${input.id}', '${dropdown.id}')">
+                    <i class="fas fa-plane-departure airport-icon"></i>
+                    <span class="airport-code">${airport.code}</span>
+                    <div class="airport-info">
+                        <div class="airport-name">${airport.city}</div>
+                        <div class="airport-city">${airport.name}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            dropdown.classList.add('active');
+            activeDropdown = dropdown;
+        }
+
+        function selectAirport(code, city, inputId, dropdownId) {
+            const input = document.getElementById(inputId);
+            input.value = code;
+            document.getElementById(dropdownId).classList.remove('active');
+            activeDropdown = null;
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.airport-input-container')) {
+                document.querySelectorAll('.airport-autocomplete').forEach(d => d.classList.remove('active'));
+                activeDropdown = null;
+            }
+        });
+
+        // Keyboard navigation for dropdowns
+        document.addEventListener('keydown', function (e) {
+            if (!activeDropdown) return;
+
+            const items = activeDropdown.querySelectorAll('.airport-item[onclick]');
+            if (items.length === 0) return;
+
+            let selectedIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                items.forEach(item => item.classList.remove('selected'));
+                selectedIndex = (selectedIndex + 1) % items.length;
+                items[selectedIndex].classList.add('selected');
+                items[selectedIndex].scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                items.forEach(item => item.classList.remove('selected'));
+                selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
+                items[selectedIndex].classList.add('selected');
+                items[selectedIndex].scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault();
+                items[selectedIndex].click();
+            } else if (e.key === 'Escape') {
+                activeDropdown.classList.remove('active');
+                activeDropdown = null;
+            }
+        });
 
         // Parse SerpAPI flight results into our format
         function parseFlightResults(data, from, to) {
@@ -972,6 +1640,98 @@
             return flights;
         }
 
+        // Search overlay helper functions
+        let searchAbortController = null;
+        let progressInterval = null;
+
+        function showSearchOverlay(from, to, depart, passengers, travelClass) {
+            const overlay = document.getElementById('search-overlay');
+            const progressBar = document.getElementById('progress-bar');
+
+            // Set route info
+            document.getElementById('overlay-from').textContent = from;
+            document.getElementById('overlay-to').textContent = to;
+            document.getElementById('overlay-from-name').textContent = 'Departure';
+            document.getElementById('overlay-to-name').textContent = 'Arrival';
+
+            // Set search info
+            const dateObj = new Date(depart);
+            const formattedDate = dateObj.toLocaleDateString('en-IN', {
+                weekday: 'short', day: 'numeric', month: 'short'
+            });
+            document.getElementById('overlay-date').textContent = formattedDate;
+            document.getElementById('overlay-passengers').textContent =
+                passengers == 1 ? '1 Passenger' : `${passengers} Passengers`;
+
+            const classNames = { '1': 'Economy', '2': 'Premium Economy', '3': 'Business', '4': 'First Class' };
+            document.getElementById('overlay-class').textContent = classNames[travelClass] || 'Economy';
+
+            // Reset progress
+            progressBar.style.width = '0%';
+            updateSearchStatus('Searching for best flights...', 'Connecting to airlines');
+
+            // Show overlay with animation
+            overlay.classList.add('active');
+            overlay.classList.remove('fade-out');
+            document.body.style.overflow = 'hidden';
+
+            // Start progress animation
+            startProgressAnimation();
+        }
+
+        function hideSearchOverlay() {
+            const overlay = document.getElementById('search-overlay');
+            overlay.classList.add('fade-out');
+
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+
+            setTimeout(() => {
+                overlay.classList.remove('active', 'fade-out');
+                document.body.style.overflow = '';
+            }, 400);
+        }
+
+        function updateSearchStatus(status, substatus) {
+            document.getElementById('search-status').textContent = status;
+            document.getElementById('search-substatus').textContent = substatus;
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        function startProgressAnimation() {
+            const stages = [
+                { percent: 15, status: 'Connecting to airlines...', substatus: 'Establishing connections' },
+                { percent: 30, status: 'Searching Air India, IndiGo...', substatus: 'Checking domestic flights' },
+                { percent: 45, status: 'Checking Emirates, Qatar...', substatus: 'Searching international routes' },
+                { percent: 60, status: 'Comparing prices...', substatus: 'Finding the best deals' },
+                { percent: 75, status: 'Analyzing options...', substatus: 'Sorting by relevance' },
+                { percent: 85, status: 'Finalizing results...', substatus: 'Almost there' }
+            ];
+
+            let stageIndex = 0;
+            progressInterval = setInterval(() => {
+                if (stageIndex < stages.length) {
+                    const stage = stages[stageIndex];
+                    updateProgress(stage.percent);
+                    updateSearchStatus(stage.status, stage.substatus);
+                    stageIndex++;
+                }
+            }, 800);
+        }
+
+        function cancelSearch() {
+            if (searchAbortController) {
+                searchAbortController.abort();
+                searchAbortController = null;
+            }
+            hideSearchOverlay();
+        }
+
         async function searchFlights() {
             const from = document.getElementById('flight-from').value.trim().toUpperCase();
             const to = document.getElementById('flight-to').value.trim().toUpperCase();
@@ -982,7 +1742,6 @@
             const passengers = document.getElementById('flight-passengers').value;
             const sortBy = document.getElementById('flight-sort').value;
             const resultsDiv = document.getElementById('flight-results');
-            const loader = document.getElementById('flight-loader');
 
             if (!from || !to || !depart) {
                 alert("Please fill in From (Airport Code), To (Airport Code), and Departure date");
@@ -995,18 +1754,23 @@
                 return;
             }
 
-            loader.style.display = 'block';
+            // Show full-page overlay
+            showSearchOverlay(from, to, depart, passengers, travelClass);
             resultsDiv.innerHTML = '';
 
             let flights = [];
             let usedFallback = false;
+            searchAbortController = new AbortController();
 
             try {
                 // Try 1: Backend API (preferred - handles CORS properly)
                 console.log('Trying backend API for flights...');
+                updateSearchStatus('Connecting to VOYA servers...', 'Fetching live prices');
+
                 const response = await fetch(`${API_BASE_URL}/api/flights/search`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal: searchAbortController.signal,
                     body: JSON.stringify({
                         departure_id: from,
                         arrival_id: to,
@@ -1022,6 +1786,9 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    updateProgress(70);
+                    updateSearchStatus('Processing results...', 'Found flight options');
+
                     if (data.flights && data.flights.length > 0) {
                         flights = data.flights.map(f => ({
                             airline: f.airline,
@@ -1038,12 +1805,19 @@
                     }
                 }
             } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.log('Search was cancelled');
+                    return;
+                }
                 console.log('Backend API failed, trying direct SerpAPI...', err.message);
             }
 
             // Try 2: Direct SerpAPI via CORS proxy (fallback)
-            if (flights.length === 0) {
+            if (flights.length === 0 && (!searchAbortController || !searchAbortController.signal.aborted)) {
                 try {
+                    updateSearchStatus('Searching alternate sources...', 'Checking more airlines');
+                    updateProgress(50);
+
                     const params = new URLSearchParams({
                         engine: 'google_flights',
                         departure_id: from,
@@ -1069,11 +1843,15 @@
                     const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
                     console.log('SerpAPI URL:', serpApiUrl);
 
-                    const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
+                    const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl), {
+                        signal: searchAbortController.signal
+                    });
 
                     if (response.ok) {
                         const data = await response.json();
                         console.log('SerpAPI Response:', data);
+                        updateProgress(85);
+                        updateSearchStatus('Found flights!', 'Preparing results');
 
                         if (data.error) {
                             console.error('SerpAPI Error:', data.error);
@@ -1082,69 +1860,26 @@
                         }
                     }
                 } catch (err) {
+                    if (err.name === 'AbortError') {
+                        console.log('Search was cancelled');
+                        return;
+                    }
                     console.log('Direct SerpAPI also failed:', err.message);
                 }
             }
 
-            // Try 3: Mock data (last resort)
-            if (flights.length === 0) {
-                console.log('Using mock flight data');
-                flights = getMockFlights(from, to, depart);
-                usedFallback = true;
-            }
+            // Finalize and show results
+            updateProgress(100);
+            updateSearchStatus('Complete!', `Found ${flights.length} flights`);
 
-            loader.style.display = 'none';
+            // Small delay to show completion state
+            await new Promise(resolve => setTimeout(resolve, 600));
+
+            hideSearchOverlay();
             displayFlights(flights, resultsDiv);
 
-            if (usedFallback) {
-                resultsDiv.insertAdjacentHTML('afterbegin',
-                    '<div style="background:#e3f2fd;padding:10px;border-radius:6px;margin-bottom:15px;color:#1565c0;font-size:0.9rem;">' +
-                    '<i class="fas fa-info-circle"></i> Showing demo results. Live data temporarily unavailable.</div>'
-                );
-            }
+            searchAbortController = null;
         }
-
-
-        // Cache to store airline logos
-const airlineLogoCache = {};
-
-// Function to load airline logo from URL
-async function loadAirlineLogo(url) {
-    if (!url) return null;
-    if (airlineLogoCache[url]) return airlineLogoCache[url];
-    
-    try {
-        const response = await fetch(url);
-        if (response.ok) {
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            airlineLogoCache[url] = objectUrl;
-            return objectUrl;
-        }
-    } catch (error) {
-        console.error('Error loading logo:', error);
-    }
-    return null;
-}
-
-// Function to preload logos for all flights
-async function preloadFlightLogos(flights) {
-    const logoUrls = new Set();
-    flights.forEach(flight => {
-        if (flight.airlineLogo) logoUrls.add(flight.airlineLogo);
-    });
-    
-    await Promise.all(
-        Array.from(logoUrls).map(url => loadAirlineLogo(url))
-    );
-}
-
-// Enhanced flight display function to use cached logos
-async function displayFlightsWithLogos(flights, container) {
-    await preloadFlightLogos(flights);
-    displayFlights(flights, container);
-}
-
 
         function displayFlights(flights, container) {
             if (!flights || flights.length === 0) {
@@ -1152,14 +1887,65 @@ async function displayFlightsWithLogos(flights, container) {
                 return;
             }
 
+            // Helper function to format time nicely
+            function formatFlightTime(timeStr) {
+                if (!timeStr || timeStr === 'N/A') return { time: '--:--', date: '', period: '' };
+
+                // Try to parse the time string (handles formats like "2026-01-10 at 10:30 AM" or just "10:30 AM")
+                const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+                const dateMatch = timeStr.match(/(\d{4}-\d{2}-\d{2})/);
+
+                let time = '--:--';
+                let period = '';
+                let date = '';
+
+                if (timeMatch) {
+                    let hours = parseInt(timeMatch[1]);
+                    const mins = timeMatch[2];
+                    period = timeMatch[3] ? timeMatch[3].toUpperCase() : '';
+
+                    if (!period) {
+                        // Convert 24h to 12h format
+                        period = hours >= 12 ? 'PM' : 'AM';
+                        hours = hours % 12 || 12;
+                    }
+                    time = `${hours}:${mins}`;
+                }
+
+                if (dateMatch) {
+                    const d = new Date(dateMatch[1]);
+                    date = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                }
+
+                return { time, date, period };
+            }
+
             const html = flights.map(flight => {
                 const airlineDisplay = flight.airlineLogo
-                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:24px;margin-right:8px;vertical-align:middle;">`
-                    : '<i class="fas fa-plane" style="margin-right:8px;"></i>';
+                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:28px;margin-right:10px;vertical-align:middle;border-radius:4px;">`
+                    : '<i class="fas fa-plane" style="margin-right:10px;font-size:1.2rem;color:var(--accent-blue);"></i>';
 
                 const layoverDisplay = flight.layoverInfo
                     ? `<p style="margin:5px 0 0 0; color: #ff9800; font-size:0.8rem;"><i class="fas fa-clock"></i> Via: ${flight.layoverInfo}</p>`
                     : '';
+
+                const dep = formatFlightTime(flight.departure);
+                const arr = formatFlightTime(flight.arrival);
+
+                // Calculate number of stops for airplane icons
+                const stopsMatch = flight.stops.match(/(\d+)/);
+                const numStops = stopsMatch ? parseInt(stopsMatch[1]) : (flight.stops.toLowerCase().includes('non') ? 0 : 0);
+
+                // Generate airplane icons based on stops (0 for non-stop, 1 for 1-stop, etc.)
+                let planeIcons = '';
+                if (numStops > 0) {
+                    const positions = numStops === 1 ? ['50%'] :
+                        numStops === 2 ? ['35%', '65%'] :
+                            numStops === 3 ? ['25%', '50%', '75%'] : ['25%', '45%', '65%', '85%'];
+                    for (let i = 0; i < Math.min(numStops, 4); i++) {
+                        planeIcons += `<i class="fas fa-plane" style="position:absolute;top:-8px;left:${positions[i]};transform:translateX(-50%);color:var(--accent-blue);font-size:1rem;"></i>`;
+                    }
+                }
 
                 return `
                 <div class="flight-card">
@@ -1171,59 +1957,34 @@ async function displayFlightsWithLogos(flights, container) {
                         </div>
                         <div class="price-tag">${flight.price}</div>
                     </div>
-                    <div class="flight-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Departure</span>
-                            <span class="detail-value">${flight.departure}</span>
+                    
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 10px;background:linear-gradient(135deg,#f8f9fa,#fff);border-radius:10px;margin:15px 0;">
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#333;">${dep.time}<span style="font-size:0.9rem;color:#666;margin-left:4px;">${dep.period}</span></div>
+                            <div style="font-size:0.85rem;color:#888;margin-top:4px;">${dep.date || ''}</div>
+                            <div style="font-size:0.9rem;color:var(--accent-blue);font-weight:600;margin-top:8px;">${flight.from}</div>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Arrival</span>
-                            <span class="detail-value">${flight.arrival}</span>
+                        
+                        <div style="flex:1.2;text-align:center;position:relative;">
+                            <div style="font-size:0.75rem;color:#888;margin-bottom:8px;">${flight.duration}</div>
+                            <div style="height:2px;background:linear-gradient(90deg,#e0e0e0,var(--accent-blue),#e0e0e0);position:relative;">
+                                ${planeIcons}
+                            </div>
+                            <div style="font-size:0.75rem;color:${numStops === 0 ? '#28a745' : '#ff9800'};margin-top:8px;font-weight:500;">${flight.stops}</div>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Duration</span>
-                            <span class="detail-value">${flight.duration}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Route</span>
-                            <span class="detail-value">${flight.from} → ${flight.to}</span>
+                        
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#333;">${arr.time}<span style="font-size:0.9rem;color:#666;margin-left:4px;">${arr.period}</span></div>
+                            <div style="font-size:0.85rem;color:#888;margin-top:4px;">${arr.date || ''}</div>
+                            <div style="font-size:0.9rem;color:var(--accent-blue);font-weight:600;margin-top:8px;">${flight.to}</div>
                         </div>
                     </div>
+                    
                     <button class="btn-book" onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')">Book Now</button>
                 </div>`;
             }).join('');
 
             container.innerHTML = html;
-        }
-
-        // Mock hotel data for fallback
-        function getMockHotels(destination) {
-            return [
-                {
-                    name: 'Grand Luxury Hotel',
-                    location: destination,
-                    rating: '4.5 ★',
-                    amenities: 'Pool, Spa, Free WiFi, Gym',
-                    price: '₹8,500/night',
-                    image: '🏨'
-                },
-                {
-                    name: 'City Center Inn',
-                    location: destination,
-                    rating: '4.2 ★',
-                    amenities: 'Free Breakfast, WiFi, Parking',
-                    price: '₹4,200/night',
-                    image: '🏨'
-                },
-                {
-                    name: 'Beach Resort Paradise',
-                    location: destination,
-                    rating: '4.8 ★',
-                    amenities: 'Beach Access, Pool, Restaurant, Bar',
-                    price: '₹12,900/night',
-                    image: '🏨'
-                }
-            ];
         }
 
         // Parse SerpAPI hotel results into our format
@@ -1367,22 +2128,8 @@ async function displayFlightsWithLogos(flights, container) {
                 }
             }
 
-            // Try 3: Mock data (last resort)
-            if (hotels.length === 0) {
-                console.log('Using mock hotel data');
-                hotels = getMockHotels(destination);
-                usedFallback = true;
-            }
-
             loader.style.display = 'none';
             displayHotels(hotels, resultsDiv, checkin, checkout);
-
-            if (usedFallback) {
-                resultsDiv.insertAdjacentHTML('afterbegin',
-                    '<div style="background:#e3f2fd;padding:10px;border-radius:6px;margin-bottom:15px;color:#1565c0;font-size:0.9rem;">' +
-                    '<i class="fas fa-info-circle"></i> Showing demo results. Live data temporarily unavailable.</div>'
-                );
-            }
         }
 
         function displayHotels(hotels, container, checkin, checkout) {
