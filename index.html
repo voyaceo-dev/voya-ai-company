@@ -1307,7 +1307,8 @@
 
             <!-- Standard Search (One Way / Round Trip) -->
             <div id="standard-search">
-                <div class="search-grid">
+                <!-- From / To Row -->
+                <div class="search-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
                     <div class="input-group">
                         <label>From</label>
                         <div class="airport-input-container">
@@ -1326,13 +1327,16 @@
                             <div id="to-dropdown" class="airport-autocomplete"></div>
                         </div>
                     </div>
-                    <div class="input-group">
+                </div>
+                <!-- Date Row -->
+                <div class="date-picker-row" style="display: flex; gap: 0; margin-bottom: 20px;">
+                    <div class="input-group" style="flex: 1;">
                         <label>Departure</label>
-                        <input type="date" id="flight-depart">
+                        <input type="date" id="flight-depart" style="border-radius: 6px 0 0 6px; border-right: none;">
                     </div>
-                    <div class="input-group" id="return-date-group">
+                    <div class="input-group" id="return-date-group" style="flex: 1;">
                         <label>Return</label>
-                        <input type="date" id="flight-return">
+                        <input type="date" id="flight-return" style="border-radius: 0 6px 6px 0;">
                     </div>
                 </div>
             </div>
@@ -2212,79 +2216,54 @@
             // Helper function to format time nicely
             function formatFlightTime(timeStr) {
                 if (!timeStr || timeStr === 'N/A') return { time: '--:--', date: '', period: '' };
-
-                // Try to parse the time string (handles formats like "2026-01-10 at 10:30 AM" or just "10:30 AM")
                 const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
                 const dateMatch = timeStr.match(/(\d{4}-\d{2}-\d{2})/);
-
-                let time = '--:--';
-                let period = '';
-                let date = '';
-
+                let time = '--:--', period = '', date = '';
                 if (timeMatch) {
                     let hours = parseInt(timeMatch[1]);
                     const mins = timeMatch[2];
                     period = timeMatch[3] ? timeMatch[3].toUpperCase() : '';
-
-                    if (!period) {
-                        // Convert 24h to 12h format
-                        period = hours >= 12 ? 'PM' : 'AM';
-                        hours = hours % 12 || 12;
-                    }
+                    if (!period) { period = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12 || 12; }
                     time = `${hours}:${mins}`;
                 }
-
-                if (dateMatch) {
-                    const d = new Date(dateMatch[1]);
-                    date = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-                }
-
+                if (dateMatch) { const d = new Date(dateMatch[1]); date = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }
                 return { time, date, period };
             }
 
-            // Helper to render a single flight leg
-            function renderFlightLeg(legData, label, airlineDisplay) {
+            // Compact flight segment for side-by-side display
+            function renderCompactFlight(legData, isReturn = false) {
                 const dep = formatFlightTime(legData.departure);
                 const arr = formatFlightTime(legData.arrival);
-
-                const stopsMatch = legData.stops.match(/(\d+)/);
-                const numStops = stopsMatch ? parseInt(stopsMatch[1]) : (legData.stops.toLowerCase().includes('non') ? 0 : 0);
-
-                let planeIcons = '';
-                if (numStops > 0) {
-                    const positions = numStops === 1 ? ['50%'] :
-                        numStops === 2 ? ['35%', '65%'] :
-                            numStops === 3 ? ['25%', '50%', '75%'] : ['25%', '45%', '65%', '85%'];
-                    for (let i = 0; i < Math.min(numStops, 4); i++) {
-                        planeIcons += `<i class="fas fa-plane" style="position:absolute;top:-8px;left:${positions[i]};transform:translateX(-50%);color:var(--accent-blue);font-size:1rem;"></i>`;
-                    }
-                }
+                const stopsMatch = legData.stops?.match(/(\d+)/);
+                const numStops = stopsMatch ? parseInt(stopsMatch[1]) : (legData.stops?.toLowerCase().includes('non') ? 0 : 0);
+                const stopsColor = numStops === 0 ? '#28a745' : '#ff9800';
 
                 return `
-                    <div style="margin-bottom:10px;">
-                        <div style="font-size:0.75rem;color:#666;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-                            <i class="fas fa-plane${label === 'Return' ? ' fa-rotate-180' : ''}" style="color:var(--accent-blue);"></i>
-                            ${label}
+                    <div style="padding:12px;background:${isReturn ? '#f0f7ff' : '#fff'};border-radius:8px;border:1px solid ${isReturn ? '#d0e4ff' : '#eee'};">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-size:0.75rem;font-weight:600;color:${isReturn ? '#1976d2' : '#003580'};text-transform:uppercase;">
+                                <i class="fas fa-plane${isReturn ? ' fa-rotate-180' : ''}" style="margin-right:5px;"></i>
+                                ${isReturn ? 'Return' : 'Departure'}
+                            </span>
+                            <span style="font-size:0.7rem;color:#888;">${dep.date || ''}</span>
                         </div>
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 10px;background:linear-gradient(135deg,#f8f9fa,#fff);border-radius:10px;">
-                            <div style="text-align:center;flex:1;">
-                                <div style="font-size:1.5rem;font-weight:700;color:#333;">${dep.time}<span style="font-size:0.8rem;color:#666;margin-left:4px;">${dep.period}</span></div>
-                                <div style="font-size:0.8rem;color:#888;margin-top:2px;">${dep.date || ''}</div>
-                                <div style="font-size:0.85rem;color:var(--accent-blue);font-weight:600;margin-top:6px;">${legData.from}</div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="text-align:center;">
+                                <div style="font-size:1.2rem;font-weight:700;color:#222;">${dep.time}</div>
+                                <div style="font-size:0.7rem;color:#888;">${dep.period}</div>
+                                <div style="font-size:0.75rem;color:#003580;font-weight:600;margin-top:2px;">${legData.from}</div>
                             </div>
-                            
-                            <div style="flex:1.2;text-align:center;position:relative;">
-                                <div style="font-size:0.7rem;color:#888;margin-bottom:6px;">${legData.duration}</div>
-                                <div style="height:2px;background:linear-gradient(90deg,#e0e0e0,var(--accent-blue),#e0e0e0);position:relative;">
-                                    ${planeIcons}
+                            <div style="flex:1;text-align:center;">
+                                <div style="font-size:0.65rem;color:#888;margin-bottom:3px;">${legData.duration}</div>
+                                <div style="height:2px;background:linear-gradient(90deg,#ddd,#003580,#ddd);position:relative;">
+                                    <i class="fas fa-plane" style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);color:#003580;font-size:0.8rem;"></i>
                                 </div>
-                                <div style="font-size:0.7rem;color:${numStops === 0 ? '#28a745' : '#ff9800'};margin-top:6px;font-weight:500;">${legData.stops}</div>
+                                <div style="font-size:0.65rem;color:${stopsColor};margin-top:3px;font-weight:500;">${legData.stops}</div>
                             </div>
-                            
-                            <div style="text-align:center;flex:1;">
-                                <div style="font-size:1.5rem;font-weight:700;color:#333;">${arr.time}<span style="font-size:0.8rem;color:#666;margin-left:4px;">${arr.period}</span></div>
-                                <div style="font-size:0.8rem;color:#888;margin-top:2px;">${arr.date || ''}</div>
-                                <div style="font-size:0.85rem;color:var(--accent-blue);font-weight:600;margin-top:6px;">${legData.to}</div>
+                            <div style="text-align:center;">
+                                <div style="font-size:1.2rem;font-weight:700;color:#222;">${arr.time}</div>
+                                <div style="font-size:0.7rem;color:#888;">${arr.period}</div>
+                                <div style="font-size:0.75rem;color:#003580;font-weight:600;margin-top:2px;">${legData.to}</div>
                             </div>
                         </div>
                     </div>`;
@@ -2292,50 +2271,45 @@
 
             const html = flights.map(flight => {
                 const airlineDisplay = flight.airlineLogo
-                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:28px;margin-right:10px;vertical-align:middle;border-radius:4px;">`
-                    : '<i class="fas fa-plane" style="margin-right:10px;font-size:1.2rem;color:var(--accent-blue);"></i>';
+                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:24px;margin-right:8px;vertical-align:middle;border-radius:4px;">`
+                    : '<i class="fas fa-plane" style="margin-right:8px;font-size:1rem;color:var(--accent-blue);"></i>';
 
                 const isRoundTrip = flight.tripType === 'Round trip' && flight.returnFlight;
-                const tripBadge = isRoundTrip
-                    ? '<span style="background:#e3f2fd;color:#1976d2;font-size:0.7rem;padding:3px 8px;border-radius:12px;margin-left:10px;">Round Trip</span>'
-                    : '<span style="background:#fff3e0;color:#f57c00;font-size:0.7rem;padding:3px 8px;border-radius:12px;margin-left:10px;">One Way</span>';
 
-                // Render outbound flight
-                const outboundHtml = renderFlightLeg({
-                    from: flight.from,
-                    to: flight.to,
-                    departure: flight.departure,
-                    arrival: flight.arrival,
-                    duration: flight.duration,
-                    stops: flight.stops
-                }, 'Departure', airlineDisplay);
-
-                // Render return flight if round trip
-                let returnHtml = '';
-                if (isRoundTrip) {
-                    returnHtml = renderFlightLeg({
-                        from: flight.returnFlight.from,
-                        to: flight.returnFlight.to,
-                        departure: flight.returnFlight.departure,
-                        arrival: flight.returnFlight.arrival,
-                        duration: flight.returnFlight.duration,
-                        stops: flight.returnFlight.stops
-                    }, 'Return', airlineDisplay);
+                // One-way flight: simple layout
+                if (!isRoundTrip) {
+                    return `
+                    <div class="flight-card">
+                        <div class="flight-header">
+                            <div>
+                                <h3 style="margin:0;color:var(--accent-blue);font-size:1rem;">${airlineDisplay}${flight.airline}
+                                    <span style="background:#fff3e0;color:#f57c00;font-size:0.65rem;padding:2px 6px;border-radius:10px;margin-left:8px;">One Way</span>
+                                </h3>
+                            </div>
+                            <div class="price-tag">${flight.price}</div>
+                        </div>
+                        <div style="margin:12px 0;">
+                            ${renderCompactFlight({ from: flight.from, to: flight.to, departure: flight.departure, arrival: flight.arrival, duration: flight.duration, stops: flight.stops })}
+                        </div>
+                        <button class="btn-book" onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')">Book Now</button>
+                    </div>`;
                 }
 
+                // Round-trip: MakeMyTrip-style side-by-side layout
                 return `
                 <div class="flight-card">
                     <div class="flight-header">
                         <div>
-                            <h3 style="margin:0; color: var(--accent-blue);">${airlineDisplay}${flight.airline}${tripBadge}</h3>
-                            <p style="margin:5px 0 0 0; color: var(--gray); font-size:0.9rem;">${flight.stops}${flight.flightNumber ? ` • ${flight.flightNumber}` : ''}</p>
+                            <h3 style="margin:0;color:var(--accent-blue);font-size:1rem;">${airlineDisplay}${flight.airline}
+                                <span style="background:#e3f2fd;color:#1976d2;font-size:0.65rem;padding:2px 6px;border-radius:10px;margin-left:8px;">Round Trip</span>
+                            </h3>
                         </div>
-                        <div class="price-tag">${flight.price}</div>
+                        <div class="price-tag">${flight.price}<span style="font-size:0.65rem;display:block;font-weight:normal;color:#888;">Total</span></div>
                     </div>
                     
-                    <div style="margin:15px 0;">
-                        ${outboundHtml}
-                        ${returnHtml}
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+                        ${renderCompactFlight({ from: flight.from, to: flight.to, departure: flight.departure, arrival: flight.arrival, duration: flight.duration, stops: flight.stops }, false)}
+                        ${renderCompactFlight({ from: flight.returnFlight.from, to: flight.returnFlight.to, departure: flight.returnFlight.departure, arrival: flight.returnFlight.arrival, duration: flight.returnFlight.duration, stops: flight.returnFlight.stops }, true)}
                     </div>
                     
                     <button class="btn-book" onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')">Book Now</button>
