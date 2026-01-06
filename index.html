@@ -1439,12 +1439,101 @@
     </div>
 
     <script>
-        // API Configuration - Use your deployed Lambda URL
+        // ====================================================================================
+        // VOYA AI Frontend - Security Hardened
+        // SECURITY: No API keys should EVER be stored in client-side code
+        // All API calls go through the secure backend
+        // ====================================================================================
+
+        // API Configuration - Secure backend endpoint
         const API_BASE_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
 
-        // Fallback: Direct SerpAPI (for local testing only)
-        const SERPAPI_KEY = '2ac06b96bf53714cadf1feb07191c133206451f77ebb990e77cce9fa94f8d3d3';
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        // ==================== SECURITY: INPUT VALIDATION UTILITIES ====================
+
+        /**
+         * SECURITY: Escape HTML to prevent XSS attacks
+         * @param {string} str - String to escape
+         * @returns {string} - Escaped string safe for HTML display
+         */
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        /**
+         * SECURITY: Validate airport code (exactly 3 letters A-Z)
+         * @param {string} code - Airport code to validate
+         * @returns {boolean} - True if valid
+         */
+        function isValidAirportCode(code) {
+            if (!code || typeof code !== 'string') return false;
+            return /^[A-Za-z]{3}$/.test(code.trim());
+        }
+
+        /**
+         * SECURITY: Validate date in YYYY-MM-DD format and not in distant past/future
+         * @param {string} dateStr - Date string to validate
+         * @returns {boolean} - True if valid
+         */
+        function isValidDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return false;
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return false;
+            // Allow dates within -1 day to +1 year from now
+            const minDate = new Date();
+            minDate.setDate(minDate.getDate() - 1);
+            const maxDate = new Date();
+            maxDate.setFullYear(maxDate.getFullYear() + 1);
+            return date >= minDate && date <= maxDate;
+        }
+
+        /**
+         * SECURITY: Sanitize and limit string length
+         * @param {string} str - String to sanitize
+         * @param {number} maxLength - Maximum allowed length
+         * @returns {string} - Sanitized string
+         */
+        function sanitizeString(str, maxLength = 100) {
+            if (!str || typeof str !== 'string') return '';
+            return str.trim().slice(0, maxLength);
+        }
+
+        /**
+         * SECURITY: Handle rate limit (429) responses gracefully
+         * @param {Response} response - Fetch response object
+         * @returns {string|null} - Error message if rate limited, null otherwise
+         */
+        function handleRateLimitResponse(response) {
+            if (response.status === 429) {
+                const retryAfter = response.headers.get('Retry-After') || '60';
+                return `Too many requests. Please wait ${retryAfter} seconds before trying again.`;
+            }
+            return null;
+        }
+
+        /**
+         * SECURITY: Handle API error responses with user-friendly messages
+         * @param {Response} response - Fetch response object
+         * @returns {Promise<string>} - User-friendly error message
+         */
+        async function handleErrorResponse(response) {
+            // Check for rate limiting first
+            const rateLimitError = handleRateLimitResponse(response);
+            if (rateLimitError) return rateLimitError;
+
+            try {
+                const data = await response.json();
+                if (data.details && Array.isArray(data.details)) {
+                    return data.details.join(', ');
+                }
+                return data.message || data.error || 'An error occurred. Please try again.';
+            } catch {
+                return 'An unexpected error occurred. Please try again.';
+            }
+        }
 
         function switchTab(event, tabName) {
             const tabs = document.querySelectorAll('.tab-content');
@@ -1732,9 +1821,42 @@
             hideSearchOverlay();
         }
 
+        // SECURITY: Validate flight search inputs before submitting
+        function validateFlightSearch(from, to, depart, returnDate) {
+            const errors = [];
+
+            if (!from) {
+                errors.push('Departure airport is required');
+            } else if (!isValidAirportCode(from)) {
+                errors.push('Departure must be a valid 3-letter airport code (e.g., DEL)');
+            }
+
+            if (!to) {
+                errors.push('Arrival airport is required');
+            } else if (!isValidAirportCode(to)) {
+                errors.push('Arrival must be a valid 3-letter airport code (e.g., DXB)');
+            }
+
+            if (!depart) {
+                errors.push('Departure date is required');
+            } else if (!isValidDate(depart)) {
+                errors.push('Please select a valid departure date (today or future)');
+            }
+
+            if (returnDate && !isValidDate(returnDate)) {
+                errors.push('Please select a valid return date');
+            }
+
+            if (returnDate && depart && new Date(returnDate) < new Date(depart)) {
+                errors.push('Return date must be after departure date');
+            }
+
+            return errors;
+        }
+
         async function searchFlights() {
-            const from = document.getElementById('flight-from').value.trim().toUpperCase();
-            const to = document.getElementById('flight-to').value.trim().toUpperCase();
+            const from = sanitizeString(document.getElementById('flight-from').value, 10).toUpperCase();
+            const to = sanitizeString(document.getElementById('flight-to').value, 10).toUpperCase();
             const depart = document.getElementById('flight-depart').value;
             const returnDate = document.getElementById('flight-return').value;
             const travelClass = document.getElementById('flight-class').value;
@@ -1743,14 +1865,10 @@
             const sortBy = document.getElementById('flight-sort').value;
             const resultsDiv = document.getElementById('flight-results');
 
-            if (!from || !to || !depart) {
-                alert("Please fill in From (Airport Code), To (Airport Code), and Departure date");
-                return;
-            }
-
-            // Validate airport codes (should be 3 letters)
-            if (from.length < 3 || to.length < 3) {
-                alert("Please use valid 3-letter airport codes (e.g., DEL, BOM, DXB, LHR)");
+            // SECURITY: Validate all inputs before sending to backend
+            const validationErrors = validateFlightSearch(from, to, depart, returnDate);
+            if (validationErrors.length > 0) {
+                alert(validationErrors.join('\n'));
                 return;
             }
 
@@ -1759,12 +1877,11 @@
             resultsDiv.innerHTML = '';
 
             let flights = [];
-            let usedFallback = false;
             searchAbortController = new AbortController();
 
             try {
-                // Try 1: Backend API (preferred - handles CORS properly)
-                console.log('Trying backend API for flights...');
+                // SECURITY: All API calls go through secure backend - no client-side API keys
+                console.log('Calling secure backend API for flights...');
                 updateSearchStatus('Connecting to VOYA servers...', 'Fetching live prices');
 
                 const response = await fetch(`${API_BASE_URL}/api/flights/search`, {
@@ -1786,86 +1903,42 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    updateProgress(70);
+                    updateProgress(85);
                     updateSearchStatus('Processing results...', 'Found flight options');
 
                     if (data.flights && data.flights.length > 0) {
                         flights = data.flights.map(f => ({
-                            airline: f.airline,
-                            from: f.from,
-                            to: f.to,
-                            departure: f.departure_time,
-                            arrival: f.arrival_time,
-                            duration: f.duration,
-                            price: f.price_formatted,
+                            airline: escapeHtml(f.airline),
+                            from: escapeHtml(f.from),
+                            to: escapeHtml(f.to),
+                            departure: escapeHtml(f.departure_time),
+                            arrival: escapeHtml(f.arrival_time),
+                            duration: escapeHtml(f.duration),
+                            price: escapeHtml(f.price_formatted),
                             priceNum: f.price || 0,
-                            stops: f.stops,
+                            stops: escapeHtml(f.stops),
                             bookingToken: f.booking_token || null
                         }));
                     }
+                } else {
+                    // SECURITY: Handle error responses including rate limits
+                    const errorMessage = await handleErrorResponse(response);
+                    console.error('Flight search failed:', errorMessage);
+                    hideSearchOverlay();
+                    resultsDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(errorMessage)}</div>`;
+                    searchAbortController = null;
+                    return;
                 }
             } catch (err) {
                 if (err.name === 'AbortError') {
                     console.log('Search was cancelled');
                     return;
                 }
-                console.log('Backend API failed, trying direct SerpAPI...', err.message);
-            }
-
-            // Try 2: Direct SerpAPI via CORS proxy (fallback)
-            if (flights.length === 0 && (!searchAbortController || !searchAbortController.signal.aborted)) {
-                try {
-                    updateSearchStatus('Searching alternate sources...', 'Checking more airlines');
-                    updateProgress(50);
-
-                    const params = new URLSearchParams({
-                        engine: 'google_flights',
-                        departure_id: from,
-                        arrival_id: to,
-                        outbound_date: depart,
-                        currency: 'INR',
-                        hl: 'en',
-                        gl: 'in',
-                        adults: passengers,
-                        travel_class: travelClass,
-                        stops: stops,
-                        sort_by: sortBy,
-                        api_key: SERPAPI_KEY
-                    });
-
-                    if (returnDate) {
-                        params.append('return_date', returnDate);
-                        params.append('type', '1'); // Round trip
-                    } else {
-                        params.append('type', '2'); // One way
-                    }
-
-                    const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
-                    console.log('SerpAPI URL:', serpApiUrl);
-
-                    const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl), {
-                        signal: searchAbortController.signal
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('SerpAPI Response:', data);
-                        updateProgress(85);
-                        updateSearchStatus('Found flights!', 'Preparing results');
-
-                        if (data.error) {
-                            console.error('SerpAPI Error:', data.error);
-                        } else {
-                            flights = parseFlightResults(data, from, to);
-                        }
-                    }
-                } catch (err) {
-                    if (err.name === 'AbortError') {
-                        console.log('Search was cancelled');
-                        return;
-                    }
-                    console.log('Direct SerpAPI also failed:', err.message);
-                }
+                console.error('Flight search error:', err.message);
+                hideSearchOverlay();
+                resultsDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> Unable to connect to server. Please check your internet connection and try again.</div>`;
+                searchAbortController = null;
+                return;
             }
 
             // Finalize and show results
@@ -2019,8 +2092,37 @@
             return hotels;
         }
 
+        // SECURITY: Validate hotel search inputs
+        function validateHotelSearch(destination, checkin, checkout) {
+            const errors = [];
+
+            if (!destination) {
+                errors.push('Destination is required');
+            } else if (destination.length < 2 || destination.length > 100) {
+                errors.push('Destination must be between 2 and 100 characters');
+            }
+
+            if (!checkin) {
+                errors.push('Check-in date is required');
+            } else if (!isValidDate(checkin)) {
+                errors.push('Please select a valid check-in date (today or future)');
+            }
+
+            if (!checkout) {
+                errors.push('Check-out date is required');
+            } else if (!isValidDate(checkout)) {
+                errors.push('Please select a valid check-out date');
+            }
+
+            if (checkin && checkout && new Date(checkout) <= new Date(checkin)) {
+                errors.push('Check-out date must be after check-in date');
+            }
+
+            return errors;
+        }
+
         async function searchHotels() {
-            const destination = document.getElementById('hotel-dest').value.trim();
+            const destination = sanitizeString(document.getElementById('hotel-dest').value, 100);
             const checkin = document.getElementById('hotel-checkin').value;
             const checkout = document.getElementById('hotel-checkout').value;
             const guests = document.getElementById('hotel-guests').value;
@@ -2030,13 +2132,10 @@
             const resultsDiv = document.getElementById('hotel-results');
             const loader = document.getElementById('hotel-loader');
 
-            if (!destination || !checkin || !checkout) {
-                alert("Please fill in all hotel search fields");
-                return;
-            }
-
-            if (new Date(checkout) <= new Date(checkin)) {
-                alert("Check-out date must be after check-in date");
+            // SECURITY: Validate all inputs before sending to backend
+            const validationErrors = validateHotelSearch(destination, checkin, checkout);
+            if (validationErrors.length > 0) {
+                alert(validationErrors.join('\n'));
                 return;
             }
 
@@ -2044,11 +2143,10 @@
             resultsDiv.innerHTML = '';
 
             let hotels = [];
-            let usedFallback = false;
 
             try {
-                // Try 1: Backend API (preferred - handles CORS properly)
-                console.log('Trying backend API for hotels...');
+                // SECURITY: All API calls go through secure backend - no client-side API keys
+                console.log('Calling secure backend API for hotels...');
                 const response = await fetch(`${API_BASE_URL}/api/hotels/search`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2067,65 +2165,30 @@
                     const data = await response.json();
                     if (data.hotels && data.hotels.length > 0) {
                         hotels = data.hotels.map(h => ({
-                            name: h.name,
-                            location: h.location,
-                            rating: h.rating_formatted,
+                            name: escapeHtml(h.name),
+                            location: escapeHtml(h.location),
+                            rating: escapeHtml(h.rating_formatted),
                             ratingNum: h.rating || 0,
-                            amenities: h.amenities_formatted,
-                            price: h.price_formatted,
-                            priceNum: h.price ? parseFloat(h.price.replace(/[^0-9.]/g, '')) : 0,
+                            amenities: escapeHtml(h.amenities_formatted),
+                            price: escapeHtml(h.price_formatted),
+                            priceNum: h.price ? parseFloat(String(h.price).replace(/[^0-9.]/g, '')) : 0,
                             image: '🏨',
                             link: h.link || null
                         }));
                     }
+                } else {
+                    // SECURITY: Handle error responses including rate limits
+                    const errorMessage = await handleErrorResponse(response);
+                    console.error('Hotel search failed:', errorMessage);
+                    loader.style.display = 'none';
+                    resultsDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> ${escapeHtml(errorMessage)}</div>`;
+                    return;
                 }
             } catch (err) {
-                console.log('Backend API failed, trying direct SerpAPI...', err.message);
-            }
-
-            // Try 2: Direct SerpAPI via CORS proxy (fallback)
-            if (hotels.length === 0) {
-                try {
-                    const params = new URLSearchParams({
-                        engine: 'google_hotels',
-                        q: destination + ' hotels',
-                        check_in_date: checkin,
-                        check_out_date: checkout,
-                        currency: 'INR',
-                        hl: 'en',
-                        gl: 'in',
-                        adults: guests,
-                        api_key: SERPAPI_KEY
-                    });
-
-                    // Add sort_by if not relevance (empty = relevance)
-                    if (sortBy) {
-                        params.append('sort_by', sortBy);
-                    }
-
-                    // Add rating filter if specified
-                    if (minRating) {
-                        params.append('rating', minRating);
-                    }
-
-                    const serpApiUrl = `https://serpapi.com/search.json?${params.toString()}`;
-                    console.log('SerpAPI URL:', serpApiUrl);
-
-                    const response = await fetch(CORS_PROXY + encodeURIComponent(serpApiUrl));
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('SerpAPI Response:', data);
-
-                        if (data.error) {
-                            console.error('SerpAPI Error:', data.error);
-                        } else {
-                            hotels = parseHotelResults(data, destination);
-                        }
-                    }
-                } catch (err) {
-                    console.log('Direct SerpAPI also failed:', err.message);
-                }
+                console.error('Hotel search error:', err.message);
+                loader.style.display = 'none';
+                resultsDiv.innerHTML = `<div class="error-message"><strong>Error:</strong> Unable to connect to server. Please check your internet connection and try again.</div>`;
+                return;
             }
 
             loader.style.display = 'none';
