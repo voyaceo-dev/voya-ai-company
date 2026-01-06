@@ -1295,10 +1295,10 @@
                 <div class="input-group">
                     <label>Stops</label>
                     <select id="flight-stops">
-                        <option value="0">Any number of stops</option>
-                        <option value="1">Non-stop only</option>
-                        <option value="2">1 stop or fewer</option>
-                        <option value="3">2 stops or fewer</option>
+                        <option value="0">Any stops</option>
+                        <option value="1">Non-stop</option>
+                        <option value="2">1 Stop</option>
+                        <option value="3">2+ Stops</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -1311,13 +1311,10 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>Sort By</label>
+                    <label>Show</label>
                     <select id="flight-sort">
-                        <option value="1">Top Flights</option>
-                        <option value="2">Price (Low to High)</option>
-                        <option value="3">Departure Time</option>
-                        <option value="4">Arrival Time</option>
-                        <option value="5">Duration (Shortest)</option>
+                        <option value="1">Best</option>
+                        <option value="2">Cheapest</option>
                     </select>
                 </div>
             </div>
@@ -1909,6 +1906,7 @@
                     if (data.flights && data.flights.length > 0) {
                         flights = data.flights.map(f => ({
                             airline: escapeHtml(f.airline),
+                            airlineLogo: f.airline_logo || null,
                             from: escapeHtml(f.from),
                             to: escapeHtml(f.to),
                             departure: escapeHtml(f.departure_time),
@@ -1917,7 +1915,19 @@
                             price: escapeHtml(f.price_formatted),
                             priceNum: f.price || 0,
                             stops: escapeHtml(f.stops),
-                            bookingToken: f.booking_token || null
+                            tripType: f.trip_type || 'One way',
+                            bookingToken: f.booking_token || null,
+                            // Return flight for round trips
+                            returnFlight: f.return_flight ? {
+                                airline: escapeHtml(f.return_flight.airline),
+                                airlineLogo: f.return_flight.airline_logo || null,
+                                from: escapeHtml(f.return_flight.from),
+                                to: escapeHtml(f.return_flight.to),
+                                departure: escapeHtml(f.return_flight.departure_time),
+                                arrival: escapeHtml(f.return_flight.arrival_time),
+                                duration: escapeHtml(f.return_flight.duration),
+                                stops: escapeHtml(f.return_flight.stops)
+                            } : null
                         }));
                     }
                 } else {
@@ -1993,23 +2003,14 @@
                 return { time, date, period };
             }
 
-            const html = flights.map(flight => {
-                const airlineDisplay = flight.airlineLogo
-                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:28px;margin-right:10px;vertical-align:middle;border-radius:4px;">`
-                    : '<i class="fas fa-plane" style="margin-right:10px;font-size:1.2rem;color:var(--accent-blue);"></i>';
+            // Helper to render a single flight leg
+            function renderFlightLeg(legData, label, airlineDisplay) {
+                const dep = formatFlightTime(legData.departure);
+                const arr = formatFlightTime(legData.arrival);
 
-                const layoverDisplay = flight.layoverInfo
-                    ? `<p style="margin:5px 0 0 0; color: #ff9800; font-size:0.8rem;"><i class="fas fa-clock"></i> Via: ${flight.layoverInfo}</p>`
-                    : '';
+                const stopsMatch = legData.stops.match(/(\d+)/);
+                const numStops = stopsMatch ? parseInt(stopsMatch[1]) : (legData.stops.toLowerCase().includes('non') ? 0 : 0);
 
-                const dep = formatFlightTime(flight.departure);
-                const arr = formatFlightTime(flight.arrival);
-
-                // Calculate number of stops for airplane icons
-                const stopsMatch = flight.stops.match(/(\d+)/);
-                const numStops = stopsMatch ? parseInt(stopsMatch[1]) : (flight.stops.toLowerCase().includes('non') ? 0 : 0);
-
-                // Generate airplane icons based on stops (0 for non-stop, 1 for 1-stop, etc.)
                 let planeIcons = '';
                 if (numStops > 0) {
                     const positions = numStops === 1 ? ['50%'] :
@@ -2021,36 +2022,81 @@
                 }
 
                 return `
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:0.75rem;color:#666;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-plane${label === 'Return' ? ' fa-rotate-180' : ''}" style="color:var(--accent-blue);"></i>
+                            ${label}
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 10px;background:linear-gradient(135deg,#f8f9fa,#fff);border-radius:10px;">
+                            <div style="text-align:center;flex:1;">
+                                <div style="font-size:1.5rem;font-weight:700;color:#333;">${dep.time}<span style="font-size:0.8rem;color:#666;margin-left:4px;">${dep.period}</span></div>
+                                <div style="font-size:0.8rem;color:#888;margin-top:2px;">${dep.date || ''}</div>
+                                <div style="font-size:0.85rem;color:var(--accent-blue);font-weight:600;margin-top:6px;">${legData.from}</div>
+                            </div>
+                            
+                            <div style="flex:1.2;text-align:center;position:relative;">
+                                <div style="font-size:0.7rem;color:#888;margin-bottom:6px;">${legData.duration}</div>
+                                <div style="height:2px;background:linear-gradient(90deg,#e0e0e0,var(--accent-blue),#e0e0e0);position:relative;">
+                                    ${planeIcons}
+                                </div>
+                                <div style="font-size:0.7rem;color:${numStops === 0 ? '#28a745' : '#ff9800'};margin-top:6px;font-weight:500;">${legData.stops}</div>
+                            </div>
+                            
+                            <div style="text-align:center;flex:1;">
+                                <div style="font-size:1.5rem;font-weight:700;color:#333;">${arr.time}<span style="font-size:0.8rem;color:#666;margin-left:4px;">${arr.period}</span></div>
+                                <div style="font-size:0.8rem;color:#888;margin-top:2px;">${arr.date || ''}</div>
+                                <div style="font-size:0.85rem;color:var(--accent-blue);font-weight:600;margin-top:6px;">${legData.to}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            const html = flights.map(flight => {
+                const airlineDisplay = flight.airlineLogo
+                    ? `<img src="${flight.airlineLogo}" alt="${flight.airline}" style="height:28px;margin-right:10px;vertical-align:middle;border-radius:4px;">`
+                    : '<i class="fas fa-plane" style="margin-right:10px;font-size:1.2rem;color:var(--accent-blue);"></i>';
+
+                const isRoundTrip = flight.tripType === 'Round trip' && flight.returnFlight;
+                const tripBadge = isRoundTrip
+                    ? '<span style="background:#e3f2fd;color:#1976d2;font-size:0.7rem;padding:3px 8px;border-radius:12px;margin-left:10px;">Round Trip</span>'
+                    : '<span style="background:#fff3e0;color:#f57c00;font-size:0.7rem;padding:3px 8px;border-radius:12px;margin-left:10px;">One Way</span>';
+
+                // Render outbound flight
+                const outboundHtml = renderFlightLeg({
+                    from: flight.from,
+                    to: flight.to,
+                    departure: flight.departure,
+                    arrival: flight.arrival,
+                    duration: flight.duration,
+                    stops: flight.stops
+                }, 'Departure', airlineDisplay);
+
+                // Render return flight if round trip
+                let returnHtml = '';
+                if (isRoundTrip) {
+                    returnHtml = renderFlightLeg({
+                        from: flight.returnFlight.from,
+                        to: flight.returnFlight.to,
+                        departure: flight.returnFlight.departure,
+                        arrival: flight.returnFlight.arrival,
+                        duration: flight.returnFlight.duration,
+                        stops: flight.returnFlight.stops
+                    }, 'Return', airlineDisplay);
+                }
+
+                return `
                 <div class="flight-card">
                     <div class="flight-header">
                         <div>
-                            <h3 style="margin:0; color: var(--accent-blue);">${airlineDisplay}${flight.airline}</h3>
+                            <h3 style="margin:0; color: var(--accent-blue);">${airlineDisplay}${flight.airline}${tripBadge}</h3>
                             <p style="margin:5px 0 0 0; color: var(--gray); font-size:0.9rem;">${flight.stops}${flight.flightNumber ? ` • ${flight.flightNumber}` : ''}</p>
-                            ${layoverDisplay}
                         </div>
                         <div class="price-tag">${flight.price}</div>
                     </div>
                     
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 10px;background:linear-gradient(135deg,#f8f9fa,#fff);border-radius:10px;margin:15px 0;">
-                        <div style="text-align:center;flex:1;">
-                            <div style="font-size:1.8rem;font-weight:700;color:#333;">${dep.time}<span style="font-size:0.9rem;color:#666;margin-left:4px;">${dep.period}</span></div>
-                            <div style="font-size:0.85rem;color:#888;margin-top:4px;">${dep.date || ''}</div>
-                            <div style="font-size:0.9rem;color:var(--accent-blue);font-weight:600;margin-top:8px;">${flight.from}</div>
-                        </div>
-                        
-                        <div style="flex:1.2;text-align:center;position:relative;">
-                            <div style="font-size:0.75rem;color:#888;margin-bottom:8px;">${flight.duration}</div>
-                            <div style="height:2px;background:linear-gradient(90deg,#e0e0e0,var(--accent-blue),#e0e0e0);position:relative;">
-                                ${planeIcons}
-                            </div>
-                            <div style="font-size:0.75rem;color:${numStops === 0 ? '#28a745' : '#ff9800'};margin-top:8px;font-weight:500;">${flight.stops}</div>
-                        </div>
-                        
-                        <div style="text-align:center;flex:1;">
-                            <div style="font-size:1.8rem;font-weight:700;color:#333;">${arr.time}<span style="font-size:0.9rem;color:#666;margin-left:4px;">${arr.period}</span></div>
-                            <div style="font-size:0.85rem;color:#888;margin-top:4px;">${arr.date || ''}</div>
-                            <div style="font-size:0.9rem;color:var(--accent-blue);font-weight:600;margin-top:8px;">${flight.to}</div>
-                        </div>
+                    <div style="margin:15px 0;">
+                        ${outboundHtml}
+                        ${returnHtml}
                     </div>
                     
                     <button class="btn-book" onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')">Book Now</button>
