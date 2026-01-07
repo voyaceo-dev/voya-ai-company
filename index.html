@@ -99,7 +99,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 50px auto;
             padding: 0 20px;
         }
@@ -2594,28 +2594,59 @@
         // Works like Skyscanner - opens Google Flights booking page with all partner options
         function bookFlight(from, to, airline, bookingToken) {
             if (!bookingToken) {
-                // No booking token - open Google Flights search
-                const bookingUrl = `https://www.google.com/travel/flights?q=flights%20from%20${encodeURIComponent(from)}%20to%20${encodeURIComponent(to)}&hl=en&gl=in&curr=INR`;
-                window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+                // No booking token - search on the airline's website directly
+                const airlineWebsites = {
+                    'IndiGo': 'https://www.goindigo.in/',
+                    'Air India': 'https://www.airindia.com/',
+                    'SpiceJet': 'https://www.spicejet.com/',
+                    'Vistara': 'https://www.airvistara.com/',
+                    'AirAsia India': 'https://www.airasia.co.in/',
+                    'Go First': 'https://www.flygofirst.com/',
+                    'Akasa Air': 'https://www.akasaair.com/'
+                };
+                const airlineUrl = airlineWebsites[airline] || `https://www.google.com/search?q=${encodeURIComponent(airline)}+book+flight+${encodeURIComponent(from)}+to+${encodeURIComponent(to)}`;
+                window.open(airlineUrl, '_blank', 'noopener,noreferrer');
                 return;
             }
 
             // Show loading message
-            const loadingToast = showToast('Opening booking options...', 'info');
+            const loadingToast = showToast('Fetching booking options from ' + airline + '...', 'info');
 
-            // Open Google Flights booking page with the token
-            // This page shows all booking partners (IndiGo, MakeMyTrip, Goibibo, etc.) with their prices
-            // Users click on their preferred option to go directly to that site's booking page
-            const bookingUrl = `https://www.google.com/travel/flights/booking?hl=en&gl=in&curr=INR&token=${encodeURIComponent(bookingToken)}`;
+            // Fetch booking options from our backend API
+            fetch(`${API_BASE_URL}/api/flights/booking`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ booking_token: bookingToken })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    hideToast(loadingToast);
 
-            const newWindow = window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+                    if (data.booking_options && data.booking_options.length > 0) {
+                        // Find the airline's direct booking option first, otherwise use first available
+                        const airlineOption = data.booking_options.find(opt => opt.is_airline) || data.booking_options[0];
 
-            setTimeout(() => hideToast(loadingToast), 1500);
-
-            if (!newWindow || newWindow.closed) {
-                hideToast(loadingToast);
-                alert('Popup was blocked! Please allow popups for this site to complete your booking.');
-            }
+                        if (airlineOption.booking_url) {
+                            // Redirect directly to the booking URL
+                            window.open(airlineOption.booking_url, '_blank', 'noopener,noreferrer');
+                        } else {
+                            // Show all options in a modal
+                            showBookingOptionsModal(data.booking_options, airline, from, to);
+                        }
+                    } else {
+                        // Fallback to airline website search
+                        alert('Could not get booking options. Opening airline website...');
+                        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(airline)}+book+flight+${encodeURIComponent(from)}+to+${encodeURIComponent(to)}`;
+                        window.open(searchUrl, '_blank', 'noopener,noreferrer');
+                    }
+                })
+                .catch(err => {
+                    hideToast(loadingToast);
+                    console.error('Booking API error:', err);
+                    // Fallback to Google Flights
+                    const bookingUrl = `https://www.google.com/travel/flights?q=flights%20from%20${encodeURIComponent(from)}%20to%20${encodeURIComponent(to)}&hl=en&gl=in&curr=INR`;
+                    window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+                });
         }
 
         function showBookingOptionsModal(options, airline, from, to) {
