@@ -2591,62 +2591,105 @@
         }
 
         // Booking functions for flights and hotels
-        // Works like Skyscanner - opens Google Flights booking page with all partner options
+        // Works like Skyscanner -        // Direct airline booking - bypass Google Flights completely
         function bookFlight(from, to, airline, bookingToken) {
-            if (!bookingToken) {
-                // No booking token - search on the airline's website directly
-                const airlineWebsites = {
-                    'IndiGo': 'https://www.goindigo.in/',
-                    'Air India': 'https://www.airindia.com/',
-                    'SpiceJet': 'https://www.spicejet.com/',
-                    'Vistara': 'https://www.airvistara.com/',
-                    'AirAsia India': 'https://www.airasia.co.in/',
-                    'Go First': 'https://www.flygofirst.com/',
-                    'Akasa Air': 'https://www.akasaair.com/'
-                };
-                const airlineUrl = airlineWebsites[airline] || `https://www.google.com/search?q=${encodeURIComponent(airline)}+book+flight+${encodeURIComponent(from)}+to+${encodeURIComponent(to)}`;
-                window.open(airlineUrl, '_blank', 'noopener,noreferrer');
-                return;
+            // Comprehensive map of airlines to their direct booking URLs
+            const airlineBookingUrls = {
+                // Indian Airlines
+                'IndiGo': (f, t) => `https://www.goindigo.in/booking/select-flight.html?origin=${f}&destination=${t}`,
+                'Air India': (f, t) => `https://www.airindia.com/in/en/book.html`,
+                'SpiceJet': (f, t) => `https://www.spicejet.com/`,
+                'Vistara': (f, t) => `https://www.airvistara.com/in/en/book.html`,
+                'AirAsia': (f, t) => `https://www.airasia.co.in/`,
+                'AirAsia India': (f, t) => `https://www.airasia.co.in/`,
+                'Go First': (f, t) => `https://www.flygofirst.com/`,
+                'Akasa Air': (f, t) => `https://www.akasaair.com/`,
+                'Air India Express': (f, t) => `https://www.airindiaexpress.com/`,
+                'Alliance Air': (f, t) => `https://www.allianceair.in/`,
+                'Star Air': (f, t) => `https://www.starair.in/`,
+                'Fly91': (f, t) => `https://www.fly91.com/`,
+
+                // Middle East Airlines
+                'Emirates': (f, t) => `https://www.emirates.com/in/english/book/`,
+                'Etihad': (f, t) => `https://www.etihad.com/en-in/book`,
+                'Qatar Airways': (f, t) => `https://www.qatarairways.com/en-in/book-trip/flights.html`,
+                'Oman Air': (f, t) => `https://www.omanair.com/en/book`,
+                'Gulf Air': (f, t) => `https://www.gulfair.com/book`,
+                'Saudia': (f, t) => `https://www.saudia.com/`,
+                'flydubai': (f, t) => `https://www.flydubai.com/en/book`,
+                'Air Arabia': (f, t) => `https://www.airarabia.com/en/book`,
+                'Kuwait Airways': (f, t) => `https://www.kuwaitairways.com/en/book`,
+
+                // Asian Airlines
+                'Singapore Airlines': (f, t) => `https://www.singaporeair.com/en_UK/in/book/`,
+                'Thai Airways': (f, t) => `https://www.thaiairways.com/en_IN/book/`,
+                'Malaysia Airlines': (f, t) => `https://www.malaysiaairlines.com/in/en/book.html`,
+                'Cathay Pacific': (f, t) => `https://www.cathaypacific.com/cx/en_IN/book-a-trip.html`,
+                'Japan Airlines': (f, t) => `https://www.jal.co.jp/en/`,
+                'ANA': (f, t) => `https://www.ana.co.jp/en/in/book-plan/`,
+                'Korean Air': (f, t) => `https://www.koreanair.com/in/en/booking`,
+                'China Eastern': (f, t) => `https://www.ceair.com/`,
+                'China Southern': (f, t) => `https://www.csair.com/en/`,
+                'Air China': (f, t) => `https://www.airchina.com.cn/`,
+                'Vietnam Airlines': (f, t) => `https://www.vietnamairlines.com/in/en/booking`,
+                'Thai Lion Air': (f, t) => `https://www.lionairthai.com/en/booking`,
+                'Philippine Airlines': (f, t) => `https://www.philippineairlines.com/en/book`,
+                'SriLankan Airlines': (f, t) => `https://www.srilankan.com/en_uk/book`,
+                'Garuda Indonesia': (f, t) => `https://www.garuda-indonesia.com/id/en/booking`,
+                'Scoot': (f, t) => `https://www.flyscoot.com/en/book`,
+
+                // European Airlines
+                'British Airways': (f, t) => `https://www.britishairways.com/travel/book/public/en_in`,
+                'Lufthansa': (f, t) => `https://www.lufthansa.com/in/en/booking`,
+                'Air France': (f, t) => `https://www.airfrance.in/booking`,
+                'KLM': (f, t) => `https://www.klm.co.in/`,
+                'Swiss': (f, t) => `https://www.swiss.com/in/en/book`,
+                'Turkish Airlines': (f, t) => `https://www.turkishairlines.com/en-in/flights/booking/`,
+                'Finnair': (f, t) => `https://www.finnair.com/in-en/flights`,
+                'Austrian': (f, t) => `https://www.austrian.com/`,
+                'LOT Polish': (f, t) => `https://www.lot.com/in/en/book`,
+                'Virgin Atlantic': (f, t) => `https://www.virginatlantic.com/in/en/book`,
+                'Aeroflot': (f, t) => `https://www.aeroflot.ru/ru-en`,
+
+                // American Airlines
+                'United Airlines': (f, t) => `https://www.united.com/en/in/book-flight`,
+                'American Airlines': (f, t) => `https://www.aa.com/booking`,
+                'Delta': (f, t) => `https://www.delta.com/flight-search`,
+                'Air Canada': (f, t) => `https://www.aircanada.com/in/en/aco/home/book.html`,
+
+                // Australian Airlines
+                'Qantas': (f, t) => `https://www.qantas.com/in/en/book-a-trip/flights.html`,
+
+                // African Airlines  
+                'Ethiopian Airlines': (f, t) => `https://www.ethiopianairlines.com/in/book`,
+                'Kenya Airways': (f, t) => `https://www.kenya-airways.com/in/en/book`,
+                'South African Airways': (f, t) => `https://www.flysaa.com/book`,
+                'EgyptAir': (f, t) => `https://www.egyptair.com/en/book`
+            };
+
+            // Find the matching airline booking URL (flexible matching)
+            let bookingUrl = null;
+            const airlineLower = airline.toLowerCase().trim();
+
+            for (const [name, urlFn] of Object.entries(airlineBookingUrls)) {
+                const nameLower = name.toLowerCase();
+                // Check for partial matches
+                if (airlineLower.includes(nameLower) || nameLower.includes(airlineLower) ||
+                    airlineLower.replace(/\s+/g, '').includes(nameLower.replace(/\s+/g, '')) ||
+                    nameLower.replace(/\s+/g, '').includes(airlineLower.replace(/\s+/g, ''))) {
+                    bookingUrl = urlFn(from, to);
+                    break;
+                }
             }
 
-            // Show loading message
-            const loadingToast = showToast('Fetching booking options from ' + airline + '...', 'info');
+            // Fallback: Search for the airline's official website
+            if (!bookingUrl) {
+                // Search for "[airline name] book flight official website"
+                bookingUrl = `https://www.google.com/search?q=${encodeURIComponent(airline)}+official+website+book+flight&btnI=1`;
+            }
 
-            // Fetch booking options from our backend API
-            fetch(`${API_BASE_URL}/api/flights/booking`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ booking_token: bookingToken })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    hideToast(loadingToast);
-
-                    if (data.booking_options && data.booking_options.length > 0) {
-                        // Find the airline's direct booking option first, otherwise use first available
-                        const airlineOption = data.booking_options.find(opt => opt.is_airline) || data.booking_options[0];
-
-                        if (airlineOption.booking_url) {
-                            // Redirect directly to the booking URL
-                            window.open(airlineOption.booking_url, '_blank', 'noopener,noreferrer');
-                        } else {
-                            // Show all options in a modal
-                            showBookingOptionsModal(data.booking_options, airline, from, to);
-                        }
-                    } else {
-                        // Fallback to airline website search
-                        alert('Could not get booking options. Opening airline website...');
-                        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(airline)}+book+flight+${encodeURIComponent(from)}+to+${encodeURIComponent(to)}`;
-                        window.open(searchUrl, '_blank', 'noopener,noreferrer');
-                    }
-                })
-                .catch(err => {
-                    hideToast(loadingToast);
-                    console.error('Booking API error:', err);
-                    // Fallback to Google Flights
-                    const bookingUrl = `https://www.google.com/travel/flights?q=flights%20from%20${encodeURIComponent(from)}%20to%20${encodeURIComponent(to)}&hl=en&gl=in&curr=INR`;
-                    window.open(bookingUrl, '_blank', 'noopener,noreferrer');
-                });
+            showToast(`Opening ${airline} booking page...`, 'success');
+            window.open(bookingUrl, '_blank', 'noopener,noreferrer');
         }
 
         function showBookingOptionsModal(options, airline, from, to) {
