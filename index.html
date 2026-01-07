@@ -2215,10 +2215,10 @@
 
             // Helper function to format time nicely
             function formatFlightTime(timeStr) {
-                if (!timeStr || timeStr === 'N/A') return { time: '--:--', date: '', period: '', fullDate: '' };
+                if (!timeStr || timeStr === 'N/A') return { time: '--:--', date: '', period: '', fullDate: '', weekday: '' };
                 const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
                 const dateMatch = timeStr.match(/(\d{4}-\d{2}-\d{2})/);
-                let time = '--:--', period = '', date = '', fullDate = '';
+                let time = '--:--', period = '', date = '', fullDate = '', weekday = '';
                 if (timeMatch) {
                     let hours = parseInt(timeMatch[1]);
                     const mins = timeMatch[2];
@@ -2230,12 +2230,13 @@
                     const d = new Date(dateMatch[1]);
                     date = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
                     fullDate = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+                    weekday = d.toLocaleDateString('en-IN', { weekday: 'short' });
                 }
-                return { time, date, period, fullDate };
+                return { time, date, period, fullDate, weekday };
             }
 
-            // Enhanced flight segment with MakeMyTrip-style design
-            function renderFlightSection(legData, sectionType, airlineData) {
+            // MakeMyTrip-style section with header and table
+            function renderFlightTableSection(legData, sectionType, airlineData, price = null) {
                 const dep = formatFlightTime(legData.departure);
                 const arr = formatFlightTime(legData.arrival);
                 const stopsMatch = legData.stops?.match(/(\d+)/);
@@ -2244,68 +2245,71 @@
                 const stopsText = numStops === 0 ? 'Non stop' : legData.stops;
 
                 const isReturn = sectionType === 'return';
-                const headerBg = isReturn ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' : 'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)';
-                const headerColor = isReturn ? '#1565c0' : '#f57c00';
-                const borderColor = isReturn ? '#90caf9' : '#ffe082';
-                const routeLabel = isReturn ? `${legData.from} → ${legData.to}` : `${legData.from} → ${legData.to}`;
-                const sectionLabel = isReturn ? 'Return Journey' : 'Onward Journey';
+                const headerBg = '#003580'; // Dark blue header like MakeMyTrip
+                const routeText = `${legData.from} → ${legData.to}`;
+                const dateText = dep.fullDate || dep.date || '';
 
                 const airlineDisplay = airlineData?.logo
-                    ? `<img src="${airlineData.logo}" alt="${airlineData.name}" style="height:20px;margin-right:6px;vertical-align:middle;border-radius:3px;">`
-                    : `<i class="fas fa-plane" style="margin-right:6px;font-size:0.85rem;color:${headerColor};"></i>`;
+                    ? `<img src="${airlineData.logo}" alt="${airlineData.name}" style="height:24px;margin-right:8px;vertical-align:middle;border-radius:3px;">`
+                    : `<i class="fas fa-plane" style="margin-right:8px;font-size:1rem;color:#f57c00;"></i>`;
 
                 return `
-                    <div style="flex:1;min-width:280px;border:1px solid ${borderColor};border-radius:12px;overflow:hidden;background:#fff;">
-                        <!-- Section Header -->
-                        <div style="background:${headerBg};padding:10px 15px;border-bottom:1px solid ${borderColor};">
+                    <div style="flex:1;min-width:300px;border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff;">
+                        <!-- Section Header - Dark like MakeMyTrip -->
+                        <div style="background:${headerBg};padding:12px 16px;color:#fff;">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <div>
-                                    <span style="font-size:0.7rem;font-weight:700;color:${headerColor};text-transform:uppercase;letter-spacing:0.5px;">
-                                        <i class="fas fa-plane${isReturn ? '-arrival' : '-departure'}" style="margin-right:5px;"></i>
-                                        ${sectionLabel}
-                                    </span>
-                                    <div style="font-size:0.85rem;font-weight:600;color:#333;margin-top:2px;">${routeLabel}</div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="font-size:0.7rem;color:#666;">${dep.fullDate || dep.date}</div>
-                                </div>
+                                <div style="font-size:1rem;font-weight:600;">${routeText}</div>
+                                <div style="font-size:0.85rem;opacity:0.9;">${dateText}</div>
                             </div>
                         </div>
                         
-                        <!-- Flight Details -->
-                        <div style="padding:15px;">
-                            <!-- Airline Row -->
-                            <div style="display:flex;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed #e0e0e0;">
+                        <!-- Table Header Row -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr ${price ? '1fr' : ''};background:#f5f5f5;border-bottom:1px solid #e0e0e0;">
+                            <div style="padding:10px 12px;font-size:0.75rem;font-weight:600;color:#666;text-transform:uppercase;">Departure</div>
+                            <div style="padding:10px 12px;font-size:0.75rem;font-weight:600;color:#666;text-transform:uppercase;text-align:center;">Duration</div>
+                            <div style="padding:10px 12px;font-size:0.75rem;font-weight:600;color:#666;text-transform:uppercase;text-align:right;">Arrival</div>
+                            ${price ? '<div style="padding:10px 12px;font-size:0.75rem;font-weight:600;color:#666;text-transform:uppercase;text-align:right;">Price ↑</div>' : ''}
+                        </div>
+                        
+                        <!-- Flight Row -->
+                        <div style="padding:16px;border-left:3px solid ${isReturn ? '#1976d2' : '#f57c00'};">
+                            <!-- Airline Info -->
+                            <div style="display:flex;align-items:center;margin-bottom:12px;">
                                 ${airlineDisplay}
-                                <span style="font-size:0.85rem;font-weight:500;color:#333;">${airlineData?.name || 'Airline'}</span>
+                                <span style="font-size:0.9rem;font-weight:500;color:#333;">${airlineData?.name || 'Airline'}</span>
                             </div>
                             
-                            <!-- Time and Route -->
-                            <div style="display:flex;align-items:center;justify-content:space-between;">
-                                <!-- Departure -->
-                                <div style="text-align:center;min-width:70px;">
-                                    <div style="font-size:1.4rem;font-weight:700;color:#222;">${dep.time}</div>
-                                    <div style="font-size:0.7rem;color:#888;margin-top:2px;">${dep.period}</div>
-                                    <div style="font-size:0.8rem;font-weight:600;color:#003580;margin-top:4px;background:#e8f4fd;padding:3px 8px;border-radius:4px;">${legData.from}</div>
+                            <!-- Time Row with Duration -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr ${price ? '1fr' : ''};align-items:center;">
+                                <!-- Departure Time -->
+                                <div>
+                                    <div style="font-size:1.3rem;font-weight:700;color:#222;">${dep.time}</div>
+                                    <div style="font-size:0.75rem;color:#666;">${legData.from}</div>
                                 </div>
                                 
                                 <!-- Duration & Stops -->
-                                <div style="flex:1;text-align:center;padding:0 10px;">
-                                    <div style="font-size:0.75rem;color:#666;margin-bottom:6px;">${legData.duration}</div>
-                                    <div style="position:relative;height:2px;background:#e0e0e0;border-radius:2px;">
-                                        <div style="position:absolute;left:0;top:-3px;width:8px;height:8px;background:#003580;border-radius:50%;"></div>
-                                        <div style="position:absolute;right:0;top:-3px;width:8px;height:8px;background:#003580;border-radius:50%;"></div>
-                                        <i class="fas fa-plane" style="position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(${isReturn ? 180 : 0}deg);color:#003580;font-size:0.9rem;background:#fff;padding:0 3px;"></i>
+                                <div style="text-align:center;">
+                                    <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">${legData.duration}</div>
+                                    <div style="position:relative;height:2px;background:#ddd;margin:0 10px;">
+                                        <div style="position:absolute;left:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
+                                        <div style="position:absolute;right:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
                                     </div>
-                                    <div style="font-size:0.7rem;color:${stopsColor};margin-top:8px;font-weight:600;">${stopsText}</div>
+                                    <div style="font-size:0.7rem;color:${stopsColor};margin-top:4px;font-weight:600;">${stopsText}</div>
                                 </div>
                                 
-                                <!-- Arrival -->
-                                <div style="text-align:center;min-width:70px;">
-                                    <div style="font-size:1.4rem;font-weight:700;color:#222;">${arr.time}</div>
-                                    <div style="font-size:0.7rem;color:#888;margin-top:2px;">${arr.period}</div>
-                                    <div style="font-size:0.8rem;font-weight:600;color:#003580;margin-top:4px;background:#e8f4fd;padding:3px 8px;border-radius:4px;">${legData.to}</div>
+                                <!-- Arrival Time -->
+                                <div style="text-align:right;">
+                                    <div style="font-size:1.3rem;font-weight:700;color:#222;">${arr.time}</div>
+                                    <div style="font-size:0.75rem;color:#666;">${legData.to}</div>
                                 </div>
+                                
+                                ${price ? `
+                                <!-- Price Column -->
+                                <div style="text-align:right;">
+                                    <div style="font-size:1.2rem;font-weight:700;color:#003580;">${price}</div>
+                                    <div style="font-size:0.65rem;color:#888;">/adult</div>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     </div>`;
@@ -2318,24 +2322,19 @@
 
                 const isRoundTrip = flight.tripType === 'Round trip' && flight.returnFlight;
 
-                // One-way flight: simple layout
+                // One-way flight: simple single section
                 if (!isRoundTrip) {
                     return `
                     <div style="background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:16px;overflow:hidden;border:1px solid #e0e0e0;">
-                        <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f0f0;">
-                            <div style="display:flex;align-items:center;">
-                                ${airlineDisplay}
-                                <span style="font-size:1rem;font-weight:600;color:#333;">${flight.airline}</span>
-                                <span style="background:#fff3e0;color:#f57c00;font-size:0.7rem;padding:3px 10px;border-radius:12px;margin-left:12px;font-weight:600;">One Way</span>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:1.3rem;font-weight:700;color:#003580;">${flight.price}</div>
-                                <div style="font-size:0.7rem;color:#888;">per adult</div>
-                            </div>
-                        </div>
-                        <div style="padding:16px;">
-                            ${renderFlightSection({ from: flight.from, to: flight.to, departure: flight.departure, arrival: flight.arrival, duration: flight.duration, stops: flight.stops }, 'onward', { name: flight.airline, logo: flight.airlineLogo })}
-                        </div>
+                        ${renderFlightTableSection({
+                        from: flight.from,
+                        to: flight.to,
+                        departure: flight.departure,
+                        arrival: flight.arrival,
+                        duration: flight.duration,
+                        stops: flight.stops
+                    }, 'onward', { name: flight.airline, logo: flight.airlineLogo }, flight.price)}
+                        
                         <div style="padding:12px 16px;background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;">
                             <button onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')" style="background:linear-gradient(135deg, #003580 0%, #1a73e8 100%);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:600;font-size:0.9rem;cursor:pointer;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,53,128,0.3);">
                                 <i class="fas fa-bolt" style="margin-right:6px;"></i>Book Now
@@ -2344,65 +2343,62 @@
                     </div>`;
                 }
 
-                // Round-trip: MakeMyTrip-style side-by-side layout
+                // Round-trip: MakeMyTrip-style TWO SEPARATE SECTIONS side by side
                 const returnAirline = flight.returnFlight.airline || flight.airline;
                 const returnLogo = flight.returnFlight.airlineLogo || flight.airlineLogo;
 
                 return `
-                <div style="background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:16px;overflow:hidden;border:1px solid #e0e0e0;">
-                    <!-- Round Trip Header -->
-                    <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);border-bottom:1px solid #e0e0e0;">
-                        <div style="display:flex;align-items:center;">
-                            ${airlineDisplay}
-                            <div>
-                                <span style="font-size:1rem;font-weight:600;color:#333;">${flight.airline}</span>
-                                ${returnAirline !== flight.airline ? `<span style="font-size:0.8rem;color:#666;margin-left:5px;">+ ${returnAirline}</span>` : ''}
-                                <span style="background:linear-gradient(135deg, #e3f2fd, #bbdefb);color:#1565c0;font-size:0.7rem;padding:3px 10px;border-radius:12px;margin-left:12px;font-weight:600;">
-                                    <i class="fas fa-exchange-alt" style="margin-right:4px;"></i>Round Trip
-                                </span>
-                            </div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:1.4rem;font-weight:700;color:#003580;">${flight.price}</div>
-                            <div style="font-size:0.7rem;color:#888;">Total for all travelers</div>
-                        </div>
-                    </div>
+                <div style="background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:20px;overflow:hidden;border:1px solid #e0e0e0;">
                     
-                    <!-- Two-Column Flight Sections -->
-                    <div style="padding:16px;">
-                        <div style="display:flex;flex-wrap:wrap;gap:16px;">
-                            ${renderFlightSection({
+                    <!-- TWO SECTIONS SIDE BY SIDE -->
+                    <div style="display:flex;flex-wrap:wrap;">
+                        <!-- SECTION 1: Outbound (A → B) -->
+                        <div style="flex:1;min-width:320px;border-right:1px solid #e0e0e0;">
+                            ${renderFlightTableSection({
                     from: flight.from,
                     to: flight.to,
                     departure: flight.departure,
                     arrival: flight.arrival,
                     duration: flight.duration,
                     stops: flight.stops
-                }, 'onward', { name: flight.airline, logo: flight.airlineLogo })}
-                            
-                            ${renderFlightSection({
+                }, 'onward', { name: flight.airline, logo: flight.airlineLogo }, null)}
+                        </div>
+                        
+                        <!-- SECTION 2: Return (B → A) -->
+                        <div style="flex:1;min-width:320px;">
+                            ${renderFlightTableSection({
                     from: flight.returnFlight.from,
                     to: flight.returnFlight.to,
                     departure: flight.returnFlight.departure,
                     arrival: flight.returnFlight.arrival,
                     duration: flight.returnFlight.duration,
                     stops: flight.returnFlight.stops
-                }, 'return', { name: returnAirline, logo: returnLogo })}
+                }, 'return', { name: returnAirline, logo: returnLogo }, null)}
                         </div>
                     </div>
                     
-                    <!-- Bottom Action Bar -->
-                    <div style="padding:12px 16px;background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                        <div style="display:flex;align-items:center;gap:15px;">
-                            <div style="font-size:0.75rem;color:#666;">
-                                <i class="fas fa-info-circle" style="margin-right:4px;color:#1976d2;"></i>
-                                Fare Details
+                    <!-- Bottom Summary Bar -->
+                    <div style="padding:14px 20px;background:linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                        <div style="display:flex;align-items:center;gap:20px;">
+                            <div>
+                                <span style="font-size:0.75rem;color:#888;">Departure</span>
+                                <div style="font-size:0.85rem;font-weight:600;color:#333;">${flight.airline}</div>
+                            </div>
+                            <div>
+                                <span style="font-size:0.75rem;color:#888;">Return</span>
+                                <div style="font-size:0.85rem;font-weight:600;color:#333;">${returnAirline}</div>
                             </div>
                         </div>
-                        <div style="display:flex;gap:10px;">
-                            <button onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')" style="background:linear-gradient(135deg, #003580 0%, #1a73e8 100%);color:#fff;border:none;padding:12px 32px;border-radius:8px;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,53,128,0.3);">
-                                <i class="fas fa-bolt" style="margin-right:6px;"></i>Book Now
-                            </button>
+                        <div style="display:flex;align-items:center;gap:20px;">
+                            <div style="text-align:right;">
+                                <div style="font-size:1.5rem;font-weight:700;color:#003580;">${flight.price}</div>
+                                <div style="font-size:0.7rem;color:#888;">Total Price</div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:6px;">
+                                <button onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')" style="background:linear-gradient(135deg, #ff6b35 0%, #f45c22 100%);color:#fff;border:none;padding:12px 32px;border-radius:6px;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(255,107,53,0.3);">
+                                    BOOK NOW
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>`;
