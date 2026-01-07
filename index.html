@@ -1314,7 +1314,8 @@
                         <div class="airport-input-container">
                             <input type="text" id="flight-from" placeholder="City or airport" autocomplete="off"
                                 oninput="searchAirport(this, 'from-dropdown')"
-                                onfocus="showRecentAirports('from-dropdown')">
+                                onfocus="showRecentAirports('from-dropdown')"
+                                style="font-size:1.1rem;padding:14px 16px;font-weight:500;">
                             <div id="from-dropdown" class="airport-autocomplete"></div>
                         </div>
                     </div>
@@ -1322,8 +1323,8 @@
                         <label>To</label>
                         <div class="airport-input-container">
                             <input type="text" id="flight-to" placeholder="City or airport" autocomplete="off"
-                                oninput="searchAirport(this, 'to-dropdown')"
-                                onfocus="showRecentAirports('to-dropdown')">
+                                oninput="searchAirport(this, 'to-dropdown')" onfocus="showRecentAirports('to-dropdown')"
+                                style="font-size:1.1rem;padding:14px 16px;font-weight:500;">
                             <div id="to-dropdown" class="airport-autocomplete"></div>
                         </div>
                     </div>
@@ -1425,6 +1426,7 @@
                     <select id="flight-sort">
                         <option value="1">Best</option>
                         <option value="2">Cheapest</option>
+                        <option value="3">Fastest</option>
                     </select>
                 </div>
             </div>
@@ -2249,6 +2251,12 @@
                 const routeText = `${legData.from} → ${legData.to}`;
                 const dateText = dep.fullDate || dep.date || '';
 
+                // Handle unknown times - show "TBC" (To Be Confirmed) instead of "--:--"
+                const isMissingTime = dep.time === '--:--' || legData.departure?.includes('--:--');
+                const depTimeDisplay = isMissingTime ? 'TBC' : dep.time;
+                const arrTimeDisplay = isMissingTime ? 'TBC' : arr.time;
+                const timeStyle = isMissingTime ? 'font-size:1.1rem;font-weight:600;color:#888;font-style:italic;' : 'font-size:1.3rem;font-weight:700;color:#222;';
+
                 const airlineDisplay = airlineData?.logo
                     ? `<img src="${airlineData.logo}" alt="${airlineData.name}" style="height:24px;margin-right:8px;vertical-align:middle;border-radius:3px;">`
                     : `<i class="fas fa-plane" style="margin-right:8px;font-size:1rem;color:#f57c00;"></i>`;
@@ -2283,13 +2291,13 @@
                             <div style="display:grid;grid-template-columns:1fr 1fr 1fr ${price ? '1fr' : ''};align-items:center;">
                                 <!-- Departure Time -->
                                 <div>
-                                    <div style="font-size:1.3rem;font-weight:700;color:#222;">${dep.time}</div>
+                                    <div style="${timeStyle}">${depTimeDisplay}</div>
                                     <div style="font-size:0.75rem;color:#666;">${legData.from}</div>
                                 </div>
                                 
                                 <!-- Duration & Stops -->
                                 <div style="text-align:center;">
-                                    <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">${legData.duration}</div>
+                                    <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">${isMissingTime ? 'TBC' : legData.duration}</div>
                                     <div style="position:relative;height:2px;background:#ddd;margin:0 10px;">
                                         <div style="position:absolute;left:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
                                         <div style="position:absolute;right:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
@@ -2299,7 +2307,7 @@
                                 
                                 <!-- Arrival Time -->
                                 <div style="text-align:right;">
-                                    <div style="font-size:1.3rem;font-weight:700;color:#222;">${arr.time}</div>
+                                    <div style="${timeStyle}">${arrTimeDisplay}</div>
                                     <div style="font-size:0.75rem;color:#666;">${legData.to}</div>
                                 </div>
                                 
