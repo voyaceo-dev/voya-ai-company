@@ -2251,13 +2251,11 @@
                 const routeText = `${legData.from} → ${legData.to}`;
                 const dateText = dep.fullDate || dep.date || '';
 
-                // Handle unknown times - show "TBC" (To Be Confirmed) instead of placeholder times
-                // Detect --:--, 00:00, or 12:00 AM (midnight) as missing time indicators
-                const isMissingTime = dep.time === '--:--' || dep.time === '12:00' ||
-                    legData.departure?.includes('--:--') || legData.departure?.includes('00:00');
-                const depTimeDisplay = isMissingTime ? 'See options' : dep.time;
-                const arrTimeDisplay = isMissingTime ? 'at booking' : arr.time;
-                const timeStyle = isMissingTime ? 'font-size:0.95rem;font-weight:500;color:#1976d2;' : 'font-size:1.3rem;font-weight:700;color:#222;';
+                // Handle missing times - only for edge cases where API returns N/A
+                const isMissingTime = dep.time === 'N/A' || legData.departure === 'N/A';
+                const depTimeDisplay = isMissingTime ? 'N/A' : dep.time;
+                const arrTimeDisplay = isMissingTime ? 'N/A' : arr.time;
+                const timeStyle = isMissingTime ? 'font-size:1rem;font-weight:500;color:#888;' : 'font-size:1.3rem;font-weight:700;color:#222;';
 
                 const airlineDisplay = airlineData?.logo
                     ? `<img src="${airlineData.logo}" alt="${airlineData.name}" style="height:24px;margin-right:8px;vertical-align:middle;border-radius:3px;">`
