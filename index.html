@@ -2246,6 +2246,9 @@
                 const stopsColor = numStops === 0 ? '#28a745' : '#ff9800';
                 const stopsText = numStops === 0 ? 'Non stop' : legData.stops;
 
+                // Generate airplane symbols based on number of stops
+                const stopPlanes = numStops > 0 ? '✈️'.repeat(Math.min(numStops, 3)) : '';
+
                 const isReturn = sectionType === 'return';
                 const headerBg = '#003580'; // Dark blue header like MakeMyTrip
                 const routeText = `${legData.from} → ${legData.to}`;
@@ -2300,6 +2303,7 @@
                                     <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">${isMissingTime ? 'TBC' : legData.duration}</div>
                                     <div style="position:relative;height:2px;background:#ddd;margin:0 10px;">
                                         <div style="position:absolute;left:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
+                                        ${numStops > 0 ? `<div style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:0.7rem;letter-spacing:2px;">${stopPlanes}</div>` : ''}
                                         <div style="position:absolute;right:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
                                     </div>
                                     <div style="font-size:0.7rem;color:${stopsColor};margin-top:4px;font-weight:600;">${stopsText}</div>
