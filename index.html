@@ -2593,78 +2593,78 @@
         // Booking functions for flights and hotels
         // Works like Skyscanner -        // Direct airline booking - bypass Google Flights completely
         function bookFlight(from, to, airline, bookingToken) {
-            // Comprehensive map of airlines to their direct booking URLs
+            // Comprehensive map of airlines to their direct booking URLs (simplified homepage links)
             const airlineBookingUrls = {
                 // Indian Airlines
-                'IndiGo': (f, t) => `https://www.goindigo.in/booking/select-flight.html?origin=${f}&destination=${t}`,
-                'Air India': (f, t) => `https://www.airindia.com/in/en/book.html`,
-                'SpiceJet': (f, t) => `https://www.spicejet.com/`,
-                'Vistara': (f, t) => `https://www.airvistara.com/in/en/book.html`,
-                'AirAsia': (f, t) => `https://www.airasia.co.in/`,
-                'AirAsia India': (f, t) => `https://www.airasia.co.in/`,
-                'Go First': (f, t) => `https://www.flygofirst.com/`,
-                'Akasa Air': (f, t) => `https://www.akasaair.com/`,
-                'Air India Express': (f, t) => `https://www.airindiaexpress.com/`,
-                'Alliance Air': (f, t) => `https://www.allianceair.in/`,
-                'Star Air': (f, t) => `https://www.starair.in/`,
-                'Fly91': (f, t) => `https://www.fly91.com/`,
+                'IndiGo': () => `https://www.goindigo.in/`,
+                'Air India': () => `https://www.airindia.com/`,
+                'SpiceJet': () => `https://www.spicejet.com/`,
+                'Vistara': () => `https://www.airvistara.com/`,
+                'AirAsia': () => `https://www.airasia.co.in/`,
+                'AirAsia India': () => `https://www.airasia.co.in/`,
+                'Go First': () => `https://www.flygofirst.com/`,
+                'Akasa Air': () => `https://www.akasaair.com/`,
+                'Air India Express': () => `https://www.airindiaexpress.com/`,
+                'Alliance Air': () => `https://www.allianceair.in/`,
+                'Star Air': () => `https://www.starair.in/`,
+                'Fly91': () => `https://www.fly91.com/`,
 
                 // Middle East Airlines
-                'Emirates': (f, t) => `https://www.emirates.com/in/english/book/`,
-                'Etihad': (f, t) => `https://www.etihad.com/en-in/book`,
-                'Qatar Airways': (f, t) => `https://www.qatarairways.com/en-in/book-trip/flights.html`,
-                'Oman Air': (f, t) => `https://www.omanair.com/en/book`,
-                'Gulf Air': (f, t) => `https://www.gulfair.com/book`,
-                'Saudia': (f, t) => `https://www.saudia.com/`,
-                'flydubai': (f, t) => `https://www.flydubai.com/en/book`,
-                'Air Arabia': (f, t) => `https://www.airarabia.com/en/book`,
-                'Kuwait Airways': (f, t) => `https://www.kuwaitairways.com/en/book`,
+                'Emirates': () => `https://www.emirates.com/in/english/`,
+                'Etihad': () => `https://www.etihad.com/en-in/`,
+                'Qatar Airways': () => `https://www.qatarairways.com/en-in/`,
+                'Oman Air': () => `https://www.omanair.com/`,
+                'Gulf Air': () => `https://www.gulfair.com/`,
+                'Saudia': () => `https://www.saudia.com/`,
+                'flydubai': () => `https://www.flydubai.com/`,
+                'Air Arabia': () => `https://www.airarabia.com/`,
+                'Kuwait Airways': () => `https://www.kuwaitairways.com/`,
 
                 // Asian Airlines
-                'Singapore Airlines': (f, t) => `https://www.singaporeair.com/en_UK/in/book/`,
-                'Thai Airways': (f, t) => `https://www.thaiairways.com/en_IN/book/`,
-                'Malaysia Airlines': (f, t) => `https://www.malaysiaairlines.com/in/en/book.html`,
-                'Cathay Pacific': (f, t) => `https://www.cathaypacific.com/cx/en_IN/book-a-trip.html`,
-                'Japan Airlines': (f, t) => `https://www.jal.co.jp/en/`,
-                'ANA': (f, t) => `https://www.ana.co.jp/en/in/book-plan/`,
-                'Korean Air': (f, t) => `https://www.koreanair.com/in/en/booking`,
-                'China Eastern': (f, t) => `https://www.ceair.com/`,
-                'China Southern': (f, t) => `https://www.csair.com/en/`,
-                'Air China': (f, t) => `https://www.airchina.com.cn/`,
-                'Vietnam Airlines': (f, t) => `https://www.vietnamairlines.com/in/en/booking`,
-                'Thai Lion Air': (f, t) => `https://www.lionairthai.com/en/booking`,
-                'Philippine Airlines': (f, t) => `https://www.philippineairlines.com/en/book`,
-                'SriLankan Airlines': (f, t) => `https://www.srilankan.com/en_uk/book`,
-                'Garuda Indonesia': (f, t) => `https://www.garuda-indonesia.com/id/en/booking`,
-                'Scoot': (f, t) => `https://www.flyscoot.com/en/book`,
+                'Singapore Airlines': () => `https://www.singaporeair.com/`,
+                'Thai Airways': () => `https://www.thaiairways.com/`,
+                'Malaysia Airlines': () => `https://www.malaysiaairlines.com/`,
+                'Cathay Pacific': () => `https://www.cathaypacific.com/`,
+                'Japan Airlines': () => `https://www.jal.co.jp/en/`,
+                'ANA': () => `https://www.ana.co.jp/en/`,
+                'Korean Air': () => `https://www.koreanair.com/`,
+                'China Eastern': () => `https://www.ceair.com/`,
+                'China Southern': () => `https://www.csair.com/`,
+                'Air China': () => `https://www.airchina.com.cn/`,
+                'Vietnam Airlines': () => `https://www.vietnamairlines.com/`,
+                'Thai Lion Air': () => `https://www.lionairthai.com/`,
+                'Philippine Airlines': () => `https://www.philippineairlines.com/`,
+                'SriLankan Airlines': () => `https://www.srilankan.com/`,
+                'Garuda Indonesia': () => `https://www.garuda-indonesia.com/`,
+                'Scoot': () => `https://www.flyscoot.com/`,
 
                 // European Airlines
-                'British Airways': (f, t) => `https://www.britishairways.com/travel/book/public/en_in`,
-                'Lufthansa': (f, t) => `https://www.lufthansa.com/in/en/booking`,
-                'Air France': (f, t) => `https://www.airfrance.in/booking`,
-                'KLM': (f, t) => `https://www.klm.co.in/`,
-                'Swiss': (f, t) => `https://www.swiss.com/in/en/book`,
-                'Turkish Airlines': (f, t) => `https://www.turkishairlines.com/en-in/flights/booking/`,
-                'Finnair': (f, t) => `https://www.finnair.com/in-en/flights`,
-                'Austrian': (f, t) => `https://www.austrian.com/`,
-                'LOT Polish': (f, t) => `https://www.lot.com/in/en/book`,
-                'Virgin Atlantic': (f, t) => `https://www.virginatlantic.com/in/en/book`,
-                'Aeroflot': (f, t) => `https://www.aeroflot.ru/ru-en`,
+                'British Airways': () => `https://www.britishairways.com/`,
+                'Lufthansa': () => `https://www.lufthansa.com/`,
+                'Air France': () => `https://www.airfrance.in/`,
+                'KLM': () => `https://www.klm.com/`,
+                'Swiss': () => `https://www.swiss.com/`,
+                'Turkish Airlines': () => `https://www.turkishairlines.com/`,
+                'Finnair': () => `https://www.finnair.com/`,
+                'Austrian': () => `https://www.austrian.com/`,
+                'LOT Polish': () => `https://www.lot.com/`,
+                'Virgin Atlantic': () => `https://www.virginatlantic.com/`,
+                'Aeroflot': () => `https://www.aeroflot.ru/`,
 
                 // American Airlines
-                'United Airlines': (f, t) => `https://www.united.com/en/in/book-flight`,
-                'American Airlines': (f, t) => `https://www.aa.com/booking`,
-                'Delta': (f, t) => `https://www.delta.com/flight-search`,
-                'Air Canada': (f, t) => `https://www.aircanada.com/in/en/aco/home/book.html`,
+                'United Airlines': () => `https://www.united.com/`,
+                'American Airlines': () => `https://www.aa.com/`,
+                'Delta': () => `https://www.delta.com/`,
+                'Air Canada': () => `https://www.aircanada.com/`,
 
                 // Australian Airlines
-                'Qantas': (f, t) => `https://www.qantas.com/in/en/book-a-trip/flights.html`,
+                'Qantas': () => `https://www.qantas.com/`,
 
                 // African Airlines  
-                'Ethiopian Airlines': (f, t) => `https://www.ethiopianairlines.com/in/book`,
-                'Kenya Airways': (f, t) => `https://www.kenya-airways.com/in/en/book`,
-                'South African Airways': (f, t) => `https://www.flysaa.com/book`,
-                'EgyptAir': (f, t) => `https://www.egyptair.com/en/book`
+                'Ethiopian Airlines': () => `https://www.ethiopianairlines.com/`,
+                'Kenya Airways': () => `https://www.kenya-airways.com/`,
+                'South African Airways': () => `https://www.flysaa.com/`,
+                'EgyptAir': () => `https://www.egyptair.com/`
             };
 
             // Find the matching airline booking URL (flexible matching)
@@ -2751,9 +2751,16 @@
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             toast.id = 'toast-' + Date.now();
-            toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'info' ? '#003580' : '#28a745'};color:white;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
-            toast.innerHTML = `<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>${message}`;
+            toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'info' ? '#003580' : '#28a745'};color:white;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s ease;`;
+            toast.innerHTML = `<i class="fas fa-external-link-alt" style="margin-right:8px;"></i>${message}`;
             document.body.appendChild(toast);
+
+            // Auto-hide toast after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+
             return toast.id;
         }
 
