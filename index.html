@@ -1486,11 +1486,9 @@
                     <label>Min Rating</label>
                     <select id="hotel-rating">
                         <option value="">Any Rating</option>
-                        <option value="1">⭐</option>
-                        <option value="2">⭐⭐</option>
-                        <option value="3">⭐⭐⭐</option>
-                        <option value="4">⭐⭐⭐⭐</option>
-                        <option value="5">⭐⭐⭐⭐⭐</option>
+                        <option value="7">⭐⭐⭐+ (3.5+)</option>
+                        <option value="8">⭐⭐⭐⭐ (4.0+)</option>
+                        <option value="9">⭐⭐⭐⭐+ (4.5+)</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -2518,7 +2516,7 @@
                         currency: 'INR',
                         adults: parseInt(guests),
                         sort_by: sortBy || undefined,
-                        rating: minRating || undefined
+                        min_rating: minRating || undefined
                     })
                 });
 
