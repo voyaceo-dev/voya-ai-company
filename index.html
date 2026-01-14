@@ -1482,15 +1482,7 @@
                         <option value="3">3 Rooms</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label>Min Rating</label>
-                    <select id="hotel-rating">
-                        <option value="">Any Rating</option>
-                        <option value="7">⭐⭐⭐+ (3.5+)</option>
-                        <option value="8">⭐⭐⭐⭐ (4.0+)</option>
-                        <option value="9">⭐⭐⭐⭐+ (4.5+)</option>
-                    </select>
-                </div>
+
                 <div class="input-group">
                     <label>Sort By</label>
                     <select id="hotel-sort">
@@ -2486,7 +2478,6 @@
             const checkout = document.getElementById('hotel-checkout').value;
             const guests = document.getElementById('hotel-guests').value;
             const rooms = document.getElementById('hotel-rooms').value;
-            const minRating = document.getElementById('hotel-rating').value;
             const sortBy = document.getElementById('hotel-sort').value;
             const resultsDiv = document.getElementById('hotel-results');
             const loader = document.getElementById('hotel-loader');
@@ -2515,8 +2506,7 @@
                         check_out_date: checkout,
                         currency: 'INR',
                         adults: parseInt(guests),
-                        sort_by: sortBy || undefined,
-                        min_rating: minRating || undefined
+                        sort_by: sortBy || undefined
                     })
                 });
 
