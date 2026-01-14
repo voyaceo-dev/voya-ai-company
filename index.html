@@ -2875,9 +2875,16 @@
                 return `<table class="budget-table"><tbody>${match}</tbody></table>`;
             });
 
-            // Convert headings - detect Day patterns for card wrapping
-            html = html.replace(/^## (Day \d+.*$)/gm, '</div><div class="day-card"><h2>$1</h2>');
+            // Convert headings - detect Day patterns for card wrapping (support multiple formats)
+            // Handle ### **Day X...** format
+            html = html.replace(/^###\s*\*\*\s*(Day\s*\d+[^*]*)\*\*\s*$/gim, '</div><div class="day-card"><h2>$1</h2>');
+            // Handle ### Day X format
+            html = html.replace(/^###\s+(Day\s*\d+.*)$/gim, '</div><div class="day-card"><h2>$1</h2>');
+            // Handle ## Day X format
+            html = html.replace(/^##\s+(Day\s*\d+.*)$/gim, '</div><div class="day-card"><h2>$1</h2>');
+            // Handle other ## headings
             html = html.replace(/^## (.*$)/gm, '<div class="itinerary-section"><h2>$1</h2>');
+            // Handle ### headings (not Day)
             html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
             html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
             html = html.replace(/^# (.*$)/gm, '<div class="itinerary-header"><h1>$1</h1></div>');
@@ -3088,6 +3095,10 @@
             const destination = document.getElementById('ai-dest').value.trim() || 'Travel';
             const filename = `VOYA-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
 
+            // Temporarily append to DOM (required for html2canvas to work properly)
+            pdfContent.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; background: white;';
+            document.body.appendChild(pdfContent);
+
             // PDF options
             const opt = {
                 margin: [10, 10, 10, 10],
@@ -3100,8 +3111,10 @@
 
             // Generate PDF
             html2pdf().set(opt).from(pdfContent).save().then(() => {
+                document.body.removeChild(pdfContent);
                 showToast('PDF downloaded successfully!', 'success');
             }).catch(err => {
+                document.body.removeChild(pdfContent);
                 console.error('PDF generation error:', err);
                 alert('Failed to generate PDF. Please try again.');
             });
