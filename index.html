@@ -352,6 +352,141 @@
             margin-top: 20px;
         }
 
+        /* Itinerary Styles */
+        .itinerary-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .itinerary-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .itinerary-header h1 {
+            color: var(--accent-blue);
+            font-size: 1.8rem;
+            margin: 0 0 8px 0;
+        }
+
+        .itinerary-header p {
+            color: var(--gray);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .day-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .day-card h2 {
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .day-card h2::before {
+            content: '📅';
+        }
+
+        .day-card h3 {
+            color: #1a73e8;
+            font-size: 1.1rem;
+            margin: 15px 0 10px 0;
+        }
+
+        .day-card h4 {
+            color: #333;
+            font-size: 1rem;
+            margin: 12px 0 8px 0;
+        }
+
+        .day-card p {
+            color: #555;
+            line-height: 1.7;
+            margin: 8px 0;
+        }
+
+        .day-card ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .day-card li {
+            color: #444;
+            line-height: 1.6;
+            margin: 6px 0;
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #fffbea 100%);
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        .budget-table th,
+        .budget-table td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .budget-table th {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .budget-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .itinerary-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+
         .loader {
             display: none;
             text-align: center;
@@ -2846,104 +2981,97 @@
         function convertMarkdownToHTML(markdown) {
             if (!markdown) return '';
 
-            let html = markdown;
-
-            // Remove horizontal rules
-            html = html.replace(/^[\-\*\_]{3,}$/gm, '');
-
-            // Convert markdown tables to HTML tables with budget styling
-            html = html.replace(/\|(.+)\|/g, function (match) {
-                const cells = match.split('|').filter(cell => cell.trim());
-                if (cells.some(cell => cell.includes('---'))) {
-                    return ''; // Skip separator rows
-                }
-                const isHeader = cells.some(cell =>
-                    cell.toLowerCase().includes('category') ||
-                    cell.toLowerCase().includes('budget') ||
-                    cell.toLowerCase().includes('₹')
-                );
-                const cellTag = isHeader && cells[0].toLowerCase().includes('category') ? 'th' : 'td';
-                const row = cells.map(cell => `<${cellTag}>${cell.trim()}</${cellTag}>`).join('');
-                return `<tr>${row}</tr>`;
-            });
-
-            // Wrap table rows in table structure
-            html = html.replace(/(<tr>.*?<\/tr>(?:\s*<tr>.*?<\/tr>)*)/gs, function (match) {
-                if (match.includes('<th>')) {
-                    return `<table class="budget-table"><thead>${match.split('</tr>')[0]}</tr></thead><tbody>${match.split('</tr>').slice(1).join('</tr>')}</tbody></table>`;
-                }
-                return `<table class="budget-table"><tbody>${match}</tbody></table>`;
-            });
-
-            // Convert headings - detect Day patterns for card wrapping (support multiple formats)
-            // Handle ### **Day X...** format
-            html = html.replace(/^###\s*\*\*\s*(Day\s*\d+[^*]*)\*\*\s*$/gim, '</div><div class="day-card"><h2>$1</h2>');
-            // Handle ### Day X format
-            html = html.replace(/^###\s+(Day\s*\d+.*)$/gim, '</div><div class="day-card"><h2>$1</h2>');
-            // Handle ## Day X format
-            html = html.replace(/^##\s+(Day\s*\d+.*)$/gim, '</div><div class="day-card"><h2>$1</h2>');
-            // Handle other ## headings
-            html = html.replace(/^## (.*$)/gm, '<div class="itinerary-section"><h2>$1</h2>');
-            // Handle ### headings (not Day)
-            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-            html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
-            html = html.replace(/^# (.*$)/gm, '<div class="itinerary-header"><h1>$1</h1></div>');
-
-            // Bold text
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            // Italic text (single asterisks)
-            html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-
-            // Convert list items
-            html = html.replace(/^\s*[\*\-]\s+(.*)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs, '<ul>$1</ul>');
-
-            // Clean up any remaining markdown symbols that weren't processed
-            html = html.replace(/^\s*#+\s*/gm, ''); // Remove lone # at start of lines
-            html = html.replace(/\*{1,2}/g, ''); // Remove any remaining asterisks
-
-            // Process remaining lines
-            const lines = html.split('\n');
+            // Split into lines for processing
+            const lines = markdown.split('\n');
             let result = [];
             let inDayCard = false;
+            let inList = false;
 
-            for (let line of lines) {
-                line = line.trim();
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
                 if (!line) continue;
 
-                // Check if entering a day card
-                if (line.includes('class="day-card"')) {
+                // Skip horizontal rules
+                if (/^[\-\*\_]{3,}$/.test(line)) continue;
+
+                // Check for Day headings (various formats)
+                const dayMatch = line.match(/^#{1,4}\s*\*{0,2}\s*(Day\s*\d+[^*]*)\*{0,2}\s*$/i) ||
+                    line.match(/^\*{0,2}\s*(Day\s*\d+[^*]*)\*{0,2}\s*$/i);
+
+                if (dayMatch) {
+                    // Close previous day card if open
+                    if (inDayCard) {
+                        if (inList) { result.push('</ul>'); inList = false; }
+                        result.push('</div>');
+                    }
+                    // Start new day card
+                    result.push(`<div class="day-card"><h2>${dayMatch[1].trim()}</h2>`);
                     inDayCard = true;
+                    continue;
                 }
 
-                // Detect tip/pro-tip lines
-                if (line.toLowerCase().includes('tip:') || line.toLowerCase().includes('pro tip')) {
-                    line = `<div class="tip-card">${line.replace(/\*\*?(?:Pro )?Tip:?\*\*?/gi, '')}</div>`;
-                }
+                // Convert bold text
+                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                // Convert italic text
+                line = line.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+                // Clean any remaining asterisks
+                line = line.replace(/\*/g, '');
 
-                if (line.startsWith('<') || line.startsWith('</')) {
-                    result.push(line);
-                } else {
-                    result.push('<p>' + line + '</p>');
+                // Check for other headings
+                if (line.startsWith('####')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h4>${line.replace(/^####\s*/, '')}</h4>`);
+                } else if (line.startsWith('###')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h3>${line.replace(/^###\s*/, '')}</h3>`);
+                } else if (line.startsWith('##')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h3>${line.replace(/^##\s*/, '')}</h3>`);
+                } else if (line.startsWith('#')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h2>${line.replace(/^#\s*/, '')}</h2>`);
+                }
+                // Check for list items
+                else if (/^[\*\-]\s+/.test(line)) {
+                    if (!inList) {
+                        result.push('<ul>');
+                        inList = true;
+                    }
+                    result.push(`<li>${line.replace(/^[\*\-]\s+/, '')}</li>`);
+                }
+                // Check for table rows
+                else if (line.startsWith('|') && line.endsWith('|')) {
+                    const cells = line.split('|').filter(c => c.trim());
+                    if (!cells.some(c => c.includes('---'))) {
+                        if (inList) { result.push('</ul>'); inList = false; }
+                        const isHeader = cells.some(c =>
+                            c.toLowerCase().includes('category') ||
+                            c.toLowerCase().includes('budget') ||
+                            c.toLowerCase().includes('item')
+                        );
+                        const tag = isHeader ? 'th' : 'td';
+                        result.push(`<table class="budget-table"><tr>${cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('')}</tr></table>`);
+                    }
+                }
+                // Tip cards
+                else if (line.toLowerCase().includes('tip:') || line.toLowerCase().includes('pro tip')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<div class="tip-card">${line.replace(/\*{0,2}(?:Pro\s*)?Tip:?\*{0,2}/gi, '<strong>💡 Tip:</strong>')}</div>`);
+                }
+                // Regular paragraph
+                else {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    // Clean up any remaining # symbols
+                    line = line.replace(/^#+\s*/, '');
+                    if (line) result.push(`<p>${line}</p>`);
                 }
             }
 
-            // Close any open day cards
-            let finalHtml = result.join('\n');
+            // Close any open elements
+            if (inList) result.push('</ul>');
+            if (inDayCard) result.push('</div>');
 
-            // Clean up empty divs and fix structure
-            finalHtml = finalHtml.replace(/<\/div><div class="day-card">/g, '</div>\n<div class="day-card">');
-            finalHtml = finalHtml.replace(/^<\/div>/, ''); // Remove leading close div
-
-            // Add closing div for last day card if needed
-            const dayCardCount = (finalHtml.match(/<div class="day-card">/g) || []).length;
-            const closeDivCount = (finalHtml.match(/<\/div>/g) || []).length;
-            if (dayCardCount > 0) {
-                finalHtml += '</div>';
-            }
-
-            return finalHtml;
+            return result.join('\n');
         }
 
         function displayFormattedItinerary(content, container) {
