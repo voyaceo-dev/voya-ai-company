@@ -2521,7 +2521,7 @@
                             amenities: escapeHtml(h.amenities_formatted),
                             price: escapeHtml(h.price_formatted),
                             priceNum: h.price ? parseFloat(String(h.price).replace(/[^0-9.]/g, '')) : 0,
-                            image: '🏨',
+                            thumbnail: h.thumbnail || null,
                             link: h.link || null
                         }));
                     }
@@ -2550,12 +2550,20 @@
                 return;
             }
 
-            const html = hotels.map(hotel => `
+            const html = hotels.map(hotel => {
+                const hotelImage = hotel.thumbnail
+                    ? `<img src="${hotel.thumbnail}" alt="${hotel.name}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-right:15px;">`
+                    : `<div style="width:80px;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-right:15px;"><i class="fas fa-hotel" style="font-size:2rem;color:#ccc;"></i></div>`;
+
+                return `
                 <div class="hotel-card">
                     <div class="hotel-header">
-                        <div>
-                            <h3 style="margin:0; color: var(--accent-blue);">${hotel.image} ${hotel.name}</h3>
-                            <p style="margin:5px 0 0 0; color: var(--gray); font-size:0.9rem;"><i class="fas fa-map-marker-alt"></i> ${hotel.location}</p>
+                        <div style="display:flex;align-items:center;">
+                            ${hotelImage}
+                            <div>
+                                <h3 style="margin:0; color: var(--accent-blue);">${hotel.name}</h3>
+                                <p style="margin:5px 0 0 0; color: var(--gray); font-size:0.9rem;"><i class="fas fa-map-marker-alt"></i> ${hotel.location}</p>
+                            </div>
                         </div>
                         <div class="price-tag">${hotel.price}</div>
                     </div>
@@ -2579,7 +2587,7 @@
                     </div>
                     <button class="btn-book" onclick="bookHotel('${encodeURIComponent(hotel.name)}', '${encodeURIComponent(hotel.location)}', '${hotel.link || ''}')">Book Now</button>
                 </div>
-            `).join('');
+            `}).join('');
 
             container.innerHTML = html;
         }
