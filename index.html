@@ -2884,9 +2884,16 @@
             // Bold text
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
+            // Italic text (single asterisks)
+            html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+
             // Convert list items
             html = html.replace(/^\s*[\*\-]\s+(.*)$/gm, '<li>$1</li>');
             html = html.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs, '<ul>$1</ul>');
+
+            // Clean up any remaining markdown symbols that weren't processed
+            html = html.replace(/^\s*#+\s*/gm, ''); // Remove lone # at start of lines
+            html = html.replace(/\*{1,2}/g, ''); // Remove any remaining asterisks
 
             // Process remaining lines
             const lines = html.split('\n');
