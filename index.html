@@ -4455,6 +4455,18 @@
 
             // Initialize map
             initializeItineraryMap(destination, parsedData);
+
+            // Add map filter click handlers
+            document.querySelectorAll('.trip-map-filter').forEach(filter => {
+                filter.addEventListener('click', function () {
+                    const filterType = this.dataset.filter;
+                    // Update active state
+                    document.querySelectorAll('.trip-map-filter').forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    // Apply filter
+                    filterMapMarkers(filterType);
+                });
+            });
         }
 
         // Switch budget tier and update UI with different itinerary content
@@ -4515,6 +4527,14 @@
             }
         }
 
+        // Global storage for categorized markers
+        let categorizedMarkers = {
+            attractions: [],
+            hotels: [],
+            food: []
+        };
+        let routePolylines = [];
+
         // Initialize Leaflet map with markers
         function initializeItineraryMap(destination, parsedData) {
             // Default coordinates (will be geocoded based on destination)
@@ -4534,6 +4554,8 @@
 
             // Clear existing markers
             mapMarkers = [];
+            categorizedMarkers = { attractions: [], hotels: [], food: [] };
+            routePolylines = [];
 
             // Store all coordinates for route drawing
             const allCoords = [];
@@ -4567,7 +4589,8 @@
                     `;
                     marker.bindPopup(popupContent);
 
-                    mapMarkers.push({ marker, activityNum: markerNum, day: dayData.day });
+                    mapMarkers.push({ marker, activityNum: markerNum, day: dayData.day, category: 'attractions' });
+                    categorizedMarkers.attractions.push(marker);
                     allCoords.push([lat, lng]);
                     dayCoords.push([lat, lng]);
                     markerNum++;
@@ -4593,6 +4616,7 @@
                         dashArray: '10, 10',
                         lineJoin: 'round'
                     }).addTo(itineraryMap);
+                    routePolylines.push(polyline);
 
                     // Add arrow decorations using circles at midpoints
                     coords.forEach((coord, i) => {
@@ -4611,11 +4635,91 @@
                 }
             });
 
-            // Fit map to markers if any
-            if (mapMarkers.length > 0) {
-                const group = new L.featureGroup(mapMarkers.map(m => m.marker));
+            // Generate Hotel markers (simulated near destination)
+            const hotelNames = ['Grand Plaza Hotel', 'City Center Inn', 'Riverside Suites', 'Heritage Boutique', 'The Luxury Collection'];
+            for (let i = 0; i < 5; i++) {
+                const offset = () => (Math.random() - 0.5) * 0.06;
+                const lat = defaultCoords[0] + offset();
+                const lng = defaultCoords[1] + offset();
+
+                const hotelIcon = L.divIcon({
+                    className: 'trip-marker hotel-marker',
+                    html: `<div class="trip-marker" style="background:linear-gradient(135deg,#00b894,#00cec9);">🏨</div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const marker = L.marker([lat, lng], { icon: hotelIcon });
+                marker.bindPopup(`
+                    <div class="map-popup-title">🏨 ${hotelNames[i]}</div>
+                    <div class="map-popup-meta">⭐ ${(4 + Math.random()).toFixed(1)} · $${80 + Math.floor(Math.random() * 200)}/night</div>
+                `);
+                categorizedMarkers.hotels.push(marker);
+            }
+
+            // Generate Food/Restaurant markers (simulated near destination)
+            const foodNames = ['Le Petit Café', 'Authentic Local Kitchen', 'Street Food Market', 'Fine Dining Experience', 'Rooftop Bistro', 'Traditional Eatery'];
+            for (let i = 0; i < 6; i++) {
+                const offset = () => (Math.random() - 0.5) * 0.05;
+                const lat = defaultCoords[0] + offset();
+                const lng = defaultCoords[1] + offset();
+
+                const foodIcon = L.divIcon({
+                    className: 'trip-marker food-marker',
+                    html: `<div class="trip-marker" style="background:linear-gradient(135deg,#fd79a8,#e84393);">🍽️</div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const marker = L.marker([lat, lng], { icon: foodIcon });
+                marker.bindPopup(`
+                    <div class="map-popup-title">🍽️ ${foodNames[i]}</div>
+                    <div class="map-popup-meta">⭐ ${(3.5 + Math.random() * 1.5).toFixed(1)} · $${10 + Math.floor(Math.random() * 40)}/person</div>
+                `);
+                categorizedMarkers.food.push(marker);
+            }
+
+            // Fit map to attraction markers by default
+            if (categorizedMarkers.attractions.length > 0) {
+                const group = new L.featureGroup(categorizedMarkers.attractions);
                 itineraryMap.fitBounds(group.getBounds().pad(0.15));
             }
+        }
+
+        // Filter map markers by category
+        function filterMapMarkers(category) {
+            if (!itineraryMap) return;
+
+            // Hide all markers first
+            Object.keys(categorizedMarkers).forEach(cat => {
+                categorizedMarkers[cat].forEach(marker => {
+                    itineraryMap.removeLayer(marker);
+                });
+            });
+
+            // Show/hide route polylines (only for attractions)
+            routePolylines.forEach(polyline => {
+                if (category === 'attractions') {
+                    itineraryMap.addLayer(polyline);
+                } else {
+                    itineraryMap.removeLayer(polyline);
+                }
+            });
+
+            // Show markers for selected category
+            if (categorizedMarkers[category]) {
+                categorizedMarkers[category].forEach(marker => {
+                    itineraryMap.addLayer(marker);
+                });
+
+                // Fit bounds to visible markers
+                if (categorizedMarkers[category].length > 0) {
+                    const group = new L.featureGroup(categorizedMarkers[category]);
+                    itineraryMap.fitBounds(group.getBounds().pad(0.15));
+                }
+            }
+
+            showToast(`Showing ${category === 'attractions' ? '🎭 Attractions' : category === 'hotels' ? '🏨 Hotels' : '🍽️ Restaurants'}`, 'info');
         }
 
         // Get approximate coordinates for popular destinations
