@@ -4601,12 +4601,12 @@
             }
         }
 
-        // Initialize Leaflet map with markers
+        // Initialize Leaflet map with progressive marker loading
         async function initializeItineraryMap(destination, parsedData) {
             // Default coordinates (will be geocoded based on destination)
             const defaultCoords = getDestinationCoordinates(destination);
 
-            // Create map
+            // Create map IMMEDIATELY (don't wait for geocoding)
             if (itineraryMap) {
                 itineraryMap.remove();
             }
@@ -4626,114 +4626,225 @@
             dayPolylines = {};
             currentActiveDay = 0;
 
-            // Show loading indicator
-            showToast('🗺️ Loading map locations...', 'info');
+            // Count total activities for progress
+            const totalActivities = parsedData.reduce((sum, day) => sum + day.activities.length, 0);
 
-            // Batch geocode all activities using backend
-            const geocodedActivities = await batchGeocodeActivities(parsedData, destination);
+            // Show initial loading message
+            showToast(`🗺️ Map ready! Loading ${totalActivities} locations...`, 'info');
+
+            // Start geocoding in background (don't await)
+            geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities);
+        }
+
+        // Progressive marker loading with visual feedback
+        async function geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities) {
+            // Collect all activities for batch geocoding
+            const activities = [];
+            for (const dayData of parsedData) {
+                for (const activity of dayData.activities) {
+                    activities.push({
+                        description: activity.description,
+                        day: dayData.day,
+                        time: activity.time
+                    });
+                }
+            }
+
+            // Start batch geocoding in background
+            const geocodingPromise = fetch(`${API_BASE_URL}/api/geocode`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    activities: activities.map(a => a.description),
+                    destination: destination
+                })
+            }).then(res => res.json());
 
             // Store all coordinates for route drawing
             const allCoords = [];
-            const dayRoutes = {}; // Store routes per day
-
-            // Add markers for each geocoded activity
+            const dayRoutes = {};
             let markerNum = 1;
-            let activityIndex = 0;
+            let loadedCount = 0;
 
+            // Show placeholder markers immediately with loading animation
             for (const dayData of parsedData) {
                 const dayCoords = [];
 
                 for (const activity of dayData.activities) {
-                    const geocoded = geocodedActivities[activityIndex];
-                    let lat, lng;
+                    // Use fallback coordinates immediately
+                    const offset = () => (Math.random() - 0.5) * 0.04;
+                    const lat = defaultCoords[0] + offset();
+                    const lng = defaultCoords[1] + offset();
 
-                    if (geocoded && geocoded.geocode && geocoded.geocode.success && geocoded.geocode.lat && geocoded.geocode.lng) {
-                        lat = geocoded.geocode.lat;
-                        lng = geocoded.geocode.lng;
-                        console.log(`✓ Using geocoded location for "${activity.description.split('.')[0]}"`);
-                    } else {
-                        // Fallback: Generate slightly offset coordinates around destination
-                        const offset = () => (Math.random() - 0.5) * 0.04;
-                        lat = defaultCoords[0] + offset();
-                        lng = defaultCoords[1] + offset();
-                        console.log(`⚠ Using fallback location for "${activity.description.split('.')[0]}"`);
-                    }
-
-                    // Create custom numbered marker
+                    // Create marker with loading state
                     const markerIcon = L.divIcon({
-                        className: 'trip-marker',
-                        html: `<div class="trip-marker">${markerNum}</div>`,
+                        className: 'trip-marker loading',
+                        html: `<div class="trip-marker loading">${markerNum}</div>`,
                         iconSize: [32, 32],
                         iconAnchor: [16, 16]
                     });
 
                     const marker = L.marker([lat, lng], { icon: markerIcon }).addTo(itineraryMap);
 
-                    // Add popup
-                    const popupContent = `
-                        <div class="map-popup-title">${activity.description.split('.')[0]}</div>
-                        <div class="map-popup-meta">Day ${dayData.day} · ${activity.time || 'Flexible'}</div>
-                    `;
-                    marker.bindPopup(popupContent);
+                    // Add temporary popup
+                    marker.bindPopup(`
+                        <div class="map-popup-title">📍 Loading...</div>
+                        <div class="map-popup-meta">Day ${dayData.day}</div>
+                    `);
 
-                    mapMarkers.push({ marker, activityNum: markerNum, day: dayData.day, category: 'attractions' });
+                    // Store marker data
+                    const markerData = {
+                        marker,
+                        activityNum: markerNum,
+                        day: dayData.day,
+                        category: 'attractions',
+                        activity: activity,
+                        tempLat: lat,
+                        tempLng: lng
+                    };
+
+                    mapMarkers.push(markerData);
                     categorizedMarkers.attractions.push(marker);
 
-                    // Store marker by day for day filtering
                     if (!dayMarkers[dayData.day]) dayMarkers[dayData.day] = [];
                     dayMarkers[dayData.day].push(marker);
 
-                    allCoords.push([lat, lng]);
                     dayCoords.push([lat, lng]);
+                    allCoords.push([lat, lng]);
                     markerNum++;
-                    activityIndex++;
                 }
 
-                // Store day coordinates for route
                 if (dayCoords.length > 1) {
                     dayRoutes[dayData.day] = dayCoords;
                 }
             }
 
-            // Day colors for routes
+            // Draw temporary routes
             const dayColors = ['#0060FF', '#f953c6', '#00b894', '#fdcb6e', '#e17055', '#6c5ce7'];
-
-            // Draw route polylines for each day
             Object.keys(dayRoutes).forEach((day, index) => {
                 const coords = dayRoutes[day];
                 if (coords.length >= 2) {
                     const polyline = L.polyline(coords, {
                         color: dayColors[index % dayColors.length],
                         weight: 4,
-                        opacity: 0.7,
+                        opacity: 0.4,
                         dashArray: '10, 10',
                         lineJoin: 'round'
                     }).addTo(itineraryMap);
                     routePolylines.push(polyline);
 
-                    // Store polyline by day for day filtering
                     if (!dayPolylines[day]) dayPolylines[day] = [];
                     dayPolylines[day].push(polyline);
-
-                    // Add arrow decorations using circles at midpoints
-                    coords.forEach((coord, i) => {
-                        if (i < coords.length - 1) {
-                            const midLat = (coord[0] + coords[i + 1][0]) / 2;
-                            const midLng = (coord[1] + coords[i + 1][1]) / 2;
-                            const circleMarker = L.circleMarker([midLat, midLng], {
-                                radius: 4,
-                                fillColor: dayColors[index % dayColors.length],
-                                fillOpacity: 1,
-                                color: 'white',
-                                weight: 2
-                            }).addTo(itineraryMap);
-
-                            // Store circle markers with day polylines
-                            dayPolylines[day].push(circleMarker);
-                        }
-                    });
                 }
             });
+
+            // Fit map to show all markers
+            if (categorizedMarkers.attractions.length > 0) {
+                const group = new L.featureGroup(categorizedMarkers.attractions);
+                itineraryMap.fitBounds(group.getBounds().pad(0.15));
+            }
+
+            // Wait for geocoding to complete
+            try {
+                const geocodeData = await geocodingPromise;
+
+                if (geocodeData.success && geocodeData.results) {
+                    // Update markers with real coordinates progressively
+                    for (let i = 0; i < mapMarkers.length; i++) {
+                        const markerData = mapMarkers[i];
+                        const geocoded = geocodeData.results[i];
+
+                        if (geocoded && geocoded.success && geocoded.lat && geocoded.lng) {
+                            // Update marker position
+                            const newLatLng = L.latLng(geocoded.lat, geocoded.lng);
+                            markerData.marker.setLatLng(newLatLng);
+
+                            // Update marker style (remove loading state)
+                            const updatedIcon = L.divIcon({
+                                className: 'trip-marker',
+                                html: `<div class="trip-marker">${markerData.activityNum}</div>`,
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 16]
+                            });
+                            markerData.marker.setIcon(updatedIcon);
+
+                            // Update popup with real location name
+                            markerData.marker.setPopupContent(`
+                                <div class="map-popup-title">${markerData.activity.description.split('.')[0]}</div>
+                                <div class="map-popup-meta">Day ${markerData.day} · ${markerData.activity.time || 'Flexible'}</div>
+                            `);
+
+                            loadedCount++;
+
+                            // Update progress every 5 markers or at the end
+                            if (loadedCount % 5 === 0 || loadedCount === totalActivities) {
+                                console.log(`✓ Loaded ${loadedCount}/${totalActivities} locations`);
+                            }
+                        }
+
+                        // Small delay for smooth animation (10ms per marker)
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                    }
+
+                    // Redraw routes with updated coordinates
+                    // Remove old routes
+                    routePolylines.forEach(p => itineraryMap.removeLayer(p));
+                    routePolylines = [];
+                    Object.keys(dayPolylines).forEach(day => {
+                        dayPolylines[day].forEach(p => itineraryMap.removeLayer(p));
+                        dayPolylines[day] = [];
+                    });
+
+                    // Draw new routes with real coordinates
+                    const newDayRoutes = {};
+                    mapMarkers.forEach(markerData => {
+                        const day = markerData.day;
+                        if (!newDayRoutes[day]) newDayRoutes[day] = [];
+                        const latlng = markerData.marker.getLatLng();
+                        newDayRoutes[day].push([latlng.lat, latlng.lng]);
+                    });
+
+                    Object.keys(newDayRoutes).forEach((day, index) => {
+                        const coords = newDayRoutes[day];
+                        if (coords.length >= 2) {
+                            const polyline = L.polyline(coords, {
+                                color: dayColors[index % dayColors.length],
+                                weight: 4,
+                                opacity: 0.7,
+                                dashArray: '10, 10',
+                                lineJoin: 'round'
+                            }).addTo(itineraryMap);
+                            routePolylines.push(polyline);
+
+                            if (!dayPolylines[day]) dayPolylines[day] = [];
+                            dayPolylines[day].push(polyline);
+
+                            // Add arrow decorations
+                            coords.forEach((coord, i) => {
+                                if (i < coords.length - 1) {
+                                    const midLat = (coord[0] + coords[i + 1][0]) / 2;
+                                    const midLng = (coord[1] + coords[i + 1][1]) / 2;
+                                    const circleMarker = L.circleMarker([midLat, midLng], {
+                                        radius: 4,
+                                        fillColor: dayColors[index % dayColors.length],
+                                        fillOpacity: 1,
+                                        color: 'white',
+                                        weight: 2
+                                    }).addTo(itineraryMap);
+                                    dayPolylines[day].push(circleMarker);
+                                }
+                            });
+                        }
+                    });
+
+                    showToast(`✅ All ${loadedCount} locations loaded!`, 'success');
+                } else {
+                    showToast('⚠️ Using approximate locations', 'warning');
+                }
+            } catch (err) {
+                console.error('Geocoding error:', err);
+                showToast('⚠️ Using approximate locations', 'warning');
+            }
 
             // Generate Hotel markers (simulated near destination)
             const hotelNames = ['Grand Plaza Hotel', 'City Center Inn', 'Riverside Suites', 'Heritage Boutique', 'The Luxury Collection'];
