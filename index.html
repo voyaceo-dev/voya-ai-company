@@ -4535,6 +4535,11 @@
         };
         let routePolylines = [];
 
+        // Day-specific storage for filtering
+        let dayMarkers = {};  // { 1: [marker, marker], 2: [marker], ... }
+        let dayPolylines = {}; // { 1: [polyline], 2: [polyline], ... }
+        let currentActiveDay = 0; // 0 = overview (all days)
+
         // Initialize Leaflet map with markers
         function initializeItineraryMap(destination, parsedData) {
             // Default coordinates (will be geocoded based on destination)
@@ -4556,6 +4561,9 @@
             mapMarkers = [];
             categorizedMarkers = { attractions: [], hotels: [], food: [] };
             routePolylines = [];
+            dayMarkers = {};
+            dayPolylines = {};
+            currentActiveDay = 0;
 
             // Store all coordinates for route drawing
             const allCoords = [];
@@ -4591,6 +4599,11 @@
 
                     mapMarkers.push({ marker, activityNum: markerNum, day: dayData.day, category: 'attractions' });
                     categorizedMarkers.attractions.push(marker);
+
+                    // Store marker by day for day filtering
+                    if (!dayMarkers[dayData.day]) dayMarkers[dayData.day] = [];
+                    dayMarkers[dayData.day].push(marker);
+
                     allCoords.push([lat, lng]);
                     dayCoords.push([lat, lng]);
                     markerNum++;
@@ -4618,18 +4631,25 @@
                     }).addTo(itineraryMap);
                     routePolylines.push(polyline);
 
+                    // Store polyline by day for day filtering
+                    if (!dayPolylines[day]) dayPolylines[day] = [];
+                    dayPolylines[day].push(polyline);
+
                     // Add arrow decorations using circles at midpoints
                     coords.forEach((coord, i) => {
                         if (i < coords.length - 1) {
                             const midLat = (coord[0] + coords[i + 1][0]) / 2;
                             const midLng = (coord[1] + coords[i + 1][1]) / 2;
-                            L.circleMarker([midLat, midLng], {
+                            const circleMarker = L.circleMarker([midLat, midLng], {
                                 radius: 4,
                                 fillColor: dayColors[index % dayColors.length],
                                 fillOpacity: 1,
                                 color: 'white',
                                 weight: 2
                             }).addTo(itineraryMap);
+
+                            // Store circle markers with day polylines
+                            dayPolylines[day].push(circleMarker);
                         }
                     });
                 }
@@ -4720,6 +4740,79 @@
             }
 
             showToast(`Showing ${category === 'attractions' ? '🎭 Attractions' : category === 'hotels' ? '🏨 Hotels' : '🍽️ Restaurants'}`, 'info');
+        }
+
+        // Filter activities and map by day
+        function filterActivitiesByDay(dayNum) {
+            currentActiveDay = dayNum;
+
+            // Filter activity cards in DOM
+            const activityCards = document.querySelectorAll('.trip-activity-card');
+            activityCards.forEach(card => {
+                const cardDay = parseInt(card.dataset.day);
+                if (dayNum === 0) {
+                    // Overview - show all
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = (cardDay === dayNum) ? 'flex' : 'none';
+                }
+            });
+
+            // Filter map markers and routes
+            if (!itineraryMap) return;
+
+            // First, hide all day markers and polylines
+            Object.keys(dayMarkers).forEach(day => {
+                dayMarkers[day].forEach(marker => {
+                    itineraryMap.removeLayer(marker);
+                });
+            });
+            Object.keys(dayPolylines).forEach(day => {
+                dayPolylines[day].forEach(polyline => {
+                    itineraryMap.removeLayer(polyline);
+                });
+            });
+
+            // Show markers and routes for selected day (or all if overview)
+            if (dayNum === 0) {
+                // Overview - show all
+                Object.keys(dayMarkers).forEach(day => {
+                    dayMarkers[day].forEach(marker => {
+                        itineraryMap.addLayer(marker);
+                    });
+                });
+                Object.keys(dayPolylines).forEach(day => {
+                    dayPolylines[day].forEach(polyline => {
+                        itineraryMap.addLayer(polyline);
+                    });
+                });
+
+                // Fit to all markers
+                if (categorizedMarkers.attractions.length > 0) {
+                    const group = new L.featureGroup(categorizedMarkers.attractions);
+                    itineraryMap.fitBounds(group.getBounds().pad(0.15));
+                }
+            } else {
+                // Specific day - show only that day
+                if (dayMarkers[dayNum]) {
+                    dayMarkers[dayNum].forEach(marker => {
+                        itineraryMap.addLayer(marker);
+                    });
+                }
+                if (dayPolylines[dayNum]) {
+                    dayPolylines[dayNum].forEach(polyline => {
+                        itineraryMap.addLayer(polyline);
+                    });
+                }
+
+                // Fit to day's markers
+                if (dayMarkers[dayNum] && dayMarkers[dayNum].length > 0) {
+                    const group = new L.featureGroup(dayMarkers[dayNum]);
+                    itineraryMap.fitBounds(group.getBounds().pad(0.2));
+                }
+            }
+
+            showToast(dayNum === 0 ? '📋 Showing complete itinerary' : `📅 Day ${dayNum} route`, 'info');
         }
 
         // Get approximate coordinates for popular destinations
