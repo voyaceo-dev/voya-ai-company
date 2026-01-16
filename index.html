@@ -4547,11 +4547,42 @@
         // Geocoding cache to avoid duplicate API calls
         const geocodeCache = new Map();
 
+        // Extract location/landmark name from activity description
+        function extractLocationName(description) {
+            // Remove common action words at the start
+            let cleaned = description
+                .replace(/^(Morning|Afternoon|Evening|Night)[:\s]*/i, '')
+                .replace(/^(Visit|Explore|Tour|See|Experience|Enjoy|Walk|Head to|Go to|Check out|Discover|Spend time at|Stroll through|Wander|Relax at|Admire|Marvel at)\s+/i, '')
+                .replace(/^(the\s+)?/i, '');
+
+            // Try to extract text within quotes (often landmark names)
+            const quotedMatch = cleaned.match(/"([^"]+)"|'([^']+)'/);
+            if (quotedMatch) {
+                return quotedMatch[1] || quotedMatch[2];
+            }
+
+            // Try to extract capitalized proper nouns (likely landmark names)
+            const properNounMatch = cleaned.match(/([A-Z][a-zA-Z\s'-]+(?:Palace|Temple|Museum|Garden|Tower|Cathedral|Church|Mosque|Fort|Castle|Market|Square|Park|Beach|Bridge|Gate|Station|Monument|Memorial|Gallery|Center|Centre|Building|Library|Zoo|Aquarium|Stadium|Arena|Hall|House|Mansion|Villa|Resort|Hotel))/);
+            if (properNounMatch) {
+                return properNounMatch[1].trim();
+            }
+
+            // Try to find "at the [Place]" or "to [Place]" patterns
+            const atPlaceMatch = cleaned.match(/(?:at|to|in)\s+(?:the\s+)?([A-Z][a-zA-Z\s'-]+)/);
+            if (atPlaceMatch) {
+                return atPlaceMatch[1].trim();
+            }
+
+            // Just take the first sentence/phrase, limit to first 50 chars
+            const firstPart = cleaned.split(/[,.!?]|for|and|which|where/i)[0].trim();
+            return firstPart.slice(0, 50);
+        }
+
         // Geocode an activity/place using Nominatim (OpenStreetMap free API)
-        async function geocodeActivity(activityName, destination) {
-            // Extract the main location name from the activity description
-            const locationName = activityName.split('.')[0].replace(/^(Visit|Explore|Tour|See|Experience|Enjoy)\s+/i, '').trim();
-            const cacheKey = `${locationName}-${destination}`;
+        async function geocodeActivity(activityDescription, destination) {
+            // Extract the location name from the activity description
+            const locationName = extractLocationName(activityDescription);
+            const cacheKey = `${locationName.toLowerCase()}-${destination.toLowerCase()}`;
 
             // Check cache first
             if (geocodeCache.has(cacheKey)) {
@@ -4560,28 +4591,45 @@
 
             try {
                 // Use Nominatim API (free, no API key required, rate limited to 1 req/sec)
-                const searchQuery = `${locationName}, ${destination}`;
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`;
+                // Try multiple search strategies
+                const searchQueries = [
+                    `${locationName}, ${destination}`,              // Full context
+                    `${locationName} tourist attraction ${destination}`,  // As tourist spot
+                    locationName                                     // Just the name
+                ];
 
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': 'VOYATravel/1.0'  // Required by Nominatim
-                    }
-                });
+                for (const searchQuery of searchQueries) {
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data && data.length > 0) {
-                        const result = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-                        geocodeCache.set(cacheKey, result);
-                        return result;
+                    const response = await fetch(url, {
+                        headers: {
+                            'User-Agent': 'VOYATravel/1.0'  // Required by Nominatim
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data && data.length > 0) {
+                            const result = {
+                                lat: parseFloat(data[0].lat),
+                                lng: parseFloat(data[0].lon),
+                                name: data[0].display_name?.split(',')[0] || locationName
+                            };
+                            geocodeCache.set(cacheKey, result);
+                            console.log(`✓ Geocoded "${locationName}" → ${result.name}`);
+                            return result;
+                        }
                     }
+
+                    // Small delay between retry attempts
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
             } catch (err) {
-                console.log(`Geocoding failed for "${locationName}":`, err.message);
+                console.log(`✗ Geocoding failed for "${locationName}":`, err.message);
             }
 
             // Return null if geocoding fails
+            console.log(`✗ Could not geocode: "${locationName}"`);
             return null;
         }
 
@@ -4802,6 +4850,34 @@
             showToast(`Showing ${category === 'attractions' ? '🎭 Attractions' : category === 'hotels' ? '🏨 Hotels' : '🍽️ Restaurants'}`, 'info');
         }
 
+        // Focus map on a specific activity when its card is clicked
+        function focusMapOnActivity(activityNum) {
+            if (!itineraryMap) return;
+
+            // Find the marker for this activity
+            const markerData = mapMarkers.find(m => m.activityNum === activityNum);
+            if (markerData && markerData.marker) {
+                // Center map on this marker
+                const latlng = markerData.marker.getLatLng();
+                itineraryMap.setView(latlng, 15, { animate: true });
+
+                // Open the popup
+                markerData.marker.openPopup();
+
+                // Highlight the marker briefly
+                const markerEl = markerData.marker.getElement();
+                if (markerEl) {
+                    markerEl.style.transform = 'scale(1.3)';
+                    markerEl.style.transition = 'transform 0.3s ease';
+                    setTimeout(() => {
+                        markerEl.style.transform = 'scale(1)';
+                    }, 500);
+                }
+
+                showToast(`📍 Showing activity ${activityNum} on map`, 'info');
+            }
+        }
+
         // Filter activities and map by day
         function filterActivitiesByDay(dayNum) {
             currentActiveDay = dayNum;
@@ -4973,7 +5049,7 @@
                     const showBestBadge = Math.random() > 0.6;
 
                     html += `
-                        <div class="trip-activity-card">
+                        <div class="trip-activity-card" data-activity-num="${activityNum}" data-day="${dayData.day}" onclick="focusMapOnActivity(${activityNum})">
                             <div class="trip-activity-number">${activityNum}</div>
                             <div class="trip-activity-image">
                                 <div class="trip-activity-placeholder">${icon}</div>
