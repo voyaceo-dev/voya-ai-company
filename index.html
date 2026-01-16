@@ -4079,7 +4079,8 @@
                         body: JSON.stringify({
                             destination: dest,
                             duration: days || '5 days',
-                            preferences: prompt
+                            preferences: prompt,
+                            tier: tier  // Pass tier to backend for dedicated API key routing
                         })
                     });
 
@@ -4543,8 +4544,49 @@
         let dayPolylines = {}; // { 1: [polyline], 2: [polyline], ... }
         let currentActiveDay = 0; // 0 = overview (all days)
 
+        // Geocoding cache to avoid duplicate API calls
+        const geocodeCache = new Map();
+
+        // Geocode an activity/place using Nominatim (OpenStreetMap free API)
+        async function geocodeActivity(activityName, destination) {
+            // Extract the main location name from the activity description
+            const locationName = activityName.split('.')[0].replace(/^(Visit|Explore|Tour|See|Experience|Enjoy)\s+/i, '').trim();
+            const cacheKey = `${locationName}-${destination}`;
+
+            // Check cache first
+            if (geocodeCache.has(cacheKey)) {
+                return geocodeCache.get(cacheKey);
+            }
+
+            try {
+                // Use Nominatim API (free, no API key required, rate limited to 1 req/sec)
+                const searchQuery = `${locationName}, ${destination}`;
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'VOYATravel/1.0'  // Required by Nominatim
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        const result = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+                        geocodeCache.set(cacheKey, result);
+                        return result;
+                    }
+                }
+            } catch (err) {
+                console.log(`Geocoding failed for "${locationName}":`, err.message);
+            }
+
+            // Return null if geocoding fails
+            return null;
+        }
+
         // Initialize Leaflet map with markers
-        function initializeItineraryMap(destination, parsedData) {
+        async function initializeItineraryMap(destination, parsedData) {
             // Default coordinates (will be geocoded based on destination)
             const defaultCoords = getDestinationCoordinates(destination);
 
@@ -4572,16 +4614,28 @@
             const allCoords = [];
             const dayRoutes = {}; // Store routes per day
 
-            // Add markers for each activity
+            // Add markers for each activity with geocoding
             let markerNum = 1;
             for (const dayData of parsedData) {
                 const dayCoords = [];
 
                 for (const activity of dayData.activities) {
-                    // Generate slightly offset coordinates around destination
-                    const offset = () => (Math.random() - 0.5) * 0.04;
-                    const lat = defaultCoords[0] + offset();
-                    const lng = defaultCoords[1] + offset();
+                    let lat, lng;
+
+                    // Try to geocode the activity location
+                    const geocodeResult = await geocodeActivity(activity.description, destination);
+
+                    if (geocodeResult) {
+                        lat = geocodeResult.lat;
+                        lng = geocodeResult.lng;
+                        console.log(`Geocoded "${activity.description.split('.')[0]}" to [${lat}, ${lng}]`);
+                    } else {
+                        // Fallback: Generate slightly offset coordinates around destination
+                        const offset = () => (Math.random() - 0.5) * 0.04;
+                        lat = defaultCoords[0] + offset();
+                        lng = defaultCoords[1] + offset();
+                        console.log(`Using random offset for "${activity.description.split('.')[0]}"`);
+                    }
 
                     // Create custom numbered marker
                     const markerIcon = L.divIcon({
@@ -4610,6 +4664,9 @@
                     allCoords.push([lat, lng]);
                     dayCoords.push([lat, lng]);
                     markerNum++;
+
+                    // Rate limiting: wait 200ms between geocode requests (Nominatim allows 1 req/sec)
+                    await new Promise(resolve => setTimeout(resolve, 200));
                 }
 
                 // Store day coordinates for route
