@@ -7,6 +7,9 @@
     <title>VOYA 🌍 AI | Travel Smarter</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Leaflet.js for Interactive Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
             --primary-bg: #1a1a1a;
@@ -863,28 +866,68 @@
             border-radius: 50%;
         }
 
+        /* Budget Box Container */
+        .budget-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 3px;
+            margin: 25px 0;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.25);
+        }
+
+        .budget-title {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            margin: 0;
+            padding: 18px 24px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         /* Budget Table */
-        .budget-table {
+        .budget-box .budget-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin: 25px 0;
-            border-radius: 14px;
+            margin: 0;
+            border-radius: 0 0 14px 14px;
             overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
 
         .budget-table thead {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
             color: white;
         }
 
         .budget-table th {
-            padding: 18px 20px;
+            padding: 16px 20px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .budget-table th:first-child {
             text-align: left;
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .budget-table th:nth-child(2) {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .budget-table th:nth-child(3) {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #1a1a2e;
+        }
+
+        .budget-table th:nth-child(4) {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
         }
 
         .budget-table td {
@@ -892,11 +935,55 @@
             border-bottom: 1px solid #f0f0f5;
             background: white;
             color: #333;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .budget-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #1a1a2e;
+            background: #f8f9ff;
         }
 
         .budget-table tr:last-child td {
             border-bottom: none;
+        }
+
+        .budget-table tr:last-child td:first-child {
+            border-bottom-left-radius: 14px;
+        }
+
+        .budget-table tr:last-child td:last-child {
+            border-bottom-right-radius: 14px;
+        }
+
+        /* Price column colors */
+        .budget-table .price-budget {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            font-weight: 700;
+        }
+
+        .budget-table .price-midrange {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            color: #856404;
+            font-weight: 700;
+        }
+
+        .budget-table .price-luxury {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            font-weight: 700;
+        }
+
+        .budget-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .budget-table tbody tr:hover td {
+            filter: brightness(0.98);
         }
 
         .budget-table tbody tr {
@@ -925,6 +1012,607 @@
             display: flex;
             align-items: center;
             gap: 12px;
+        }
+
+        /* ========== Trip.com Style Itinerary Layout ========== */
+
+        /* Main 2-Column Layout */
+        .trip-itinerary-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            margin-top: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .trip-itinerary-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Budget Sidebar */
+        .trip-budget-sidebar {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            border: 1px solid #e8ecf3;
+        }
+
+        .trip-budget-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f5;
+        }
+
+        .trip-budget-header svg {
+            width: 24px;
+            height: 24px;
+            color: #0060FF;
+        }
+
+        .trip-budget-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .trip-budget-total {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .trip-budget-total .label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .trip-budget-total .amount {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .trip-budget-total .per-person {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        /* Budget Progress Bar */
+        .trip-budget-progress {
+            height: 8px;
+            background: #f0f0f5;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .trip-budget-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #00b4d8 100%);
+            border-radius: 10px;
+            width: 75%;
+        }
+
+        /* Budget Items */
+        .trip-budget-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .trip-budget-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .trip-budget-item .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .trip-budget-item.transport .icon {
+            background: linear-gradient(135deg, #e8f4fd 0%, #d0e8ff 100%);
+        }
+
+        .trip-budget-item.attractions .icon {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        }
+
+        .trip-budget-item.stay .icon {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+
+        .trip-budget-item .details {
+            flex: 1;
+        }
+
+        .trip-budget-item .category {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .trip-budget-item .price {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        /* AI Assistant Note */
+        .trip-ai-note {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .trip-ai-note strong {
+            color: #0060FF;
+        }
+
+        /* Main Content Area */
+        .trip-itinerary-main {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid #e8ecf3;
+        }
+
+        /* Day Tabs Navigation */
+        .trip-day-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 16px 20px;
+            background: #f8f9ff;
+            border-bottom: 1px solid #e8ecf3;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .trip-day-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .trip-day-tab {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            background: white;
+            border: 1px solid #e8ecf3;
+            color: #666;
+        }
+
+        .trip-day-tab:hover {
+            background: #f0f0f5;
+            border-color: #d0d0d5;
+        }
+
+        .trip-day-tab.active {
+            background: #0060FF;
+            color: white;
+            border-color: #0060FF;
+        }
+
+        /* Itinerary Title Bar */
+        .trip-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f5;
+        }
+
+        .trip-title-bar h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trip-year-badge {
+            background: linear-gradient(135deg, #0060FF 0%, #00b4d8 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Activity Cards */
+        .trip-activities {
+            padding: 0 20px 20px;
+        }
+
+        .trip-activity-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid #f0f0f5;
+            position: relative;
+        }
+
+        .trip-activity-card:last-child {
+            border-bottom: none;
+        }
+
+        .trip-activity-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0060FF 0%, #00b4d8 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .trip-activity-image {
+            width: 120px;
+            height: 90px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .trip-activity-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .trip-activity-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .trip-activity-content {
+            flex: 1;
+        }
+
+        .trip-activity-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .trip-activity-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+
+        .trip-best-badge {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trip-rating {
+            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+            color: #1a1a2e;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .trip-activity-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .trip-activity-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trip-activity-description {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Transportation Connector */
+        .trip-transport {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 0 12px 46px;
+            font-size: 0.85rem;
+            color: #888;
+            position: relative;
+        }
+
+        .trip-transport::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e8ecf3;
+        }
+
+        .trip-transport-icon {
+            width: 28px;
+            height: 28px;
+            background: white;
+            border: 2px solid #e8ecf3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+
+        .trip-transport-text {
+            color: #0060FF;
+            font-weight: 500;
+        }
+
+        /* Empty Day Message */
+        .trip-empty-day {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+
+        .trip-empty-day svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            color: #ccc;
+        }
+
+        /* ========== Budget Tier Tabs ========== */
+        .trip-tier-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .trip-tier-tab {
+            flex: 1;
+            padding: 12px 10px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #e8ecf3;
+            background: #f8f9ff;
+            color: #666;
+        }
+
+        .trip-tier-tab:hover {
+            border-color: #0060FF;
+            background: white;
+        }
+
+        .trip-tier-tab.active {
+            border-color: #0060FF;
+            background: linear-gradient(135deg, #0060FF 0%, #00b4d8 100%);
+            color: white;
+        }
+
+        .trip-tier-tab .tier-icon {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .trip-tier-tab .tier-price {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* ========== 3-Column Layout with Map ========== */
+        .trip-itinerary-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 350px;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        @media (max-width: 1200px) {
+            .trip-itinerary-layout {
+                grid-template-columns: 250px 1fr;
+            }
+
+            .trip-map-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .trip-itinerary-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .trip-budget-sidebar {
+                order: -1;
+            }
+        }
+
+        /* ========== Map Panel ========== */
+        .trip-map-panel {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8ecf3;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+            position: sticky;
+            top: 90px;
+        }
+
+        .trip-map-header {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .trip-map-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trip-map-filters {
+            display: flex;
+            gap: 6px;
+        }
+
+        .trip-map-filter {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #e8ecf3;
+            background: white;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .trip-map-filter.active {
+            background: #0060FF;
+            color: white;
+            border-color: #0060FF;
+        }
+
+        .trip-map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #itinerary-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Custom Leaflet Marker Styles */
+        .trip-marker {
+            background: linear-gradient(135deg, #0060FF 0%, #00b4d8 100%);
+            color: white;
+            border-radius: 50%;
+            width: 32px !important;
+            height: 32px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0, 96, 255, 0.4);
+            margin-left: -16px !important;
+            margin-top: -16px !important;
+        }
+
+        .trip-marker.highlighted {
+            transform: scale(1.3);
+            box-shadow: 0 6px 20px rgba(0, 96, 255, 0.6);
+            z-index: 1000 !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .leaflet-popup-content {
+            margin: 12px 16px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .map-popup-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .map-popup-meta {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        /* Map Time Badges (like Trip.com) */
+        .map-time-badge {
+            background: #0060FF;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         /* Action Buttons */
@@ -3294,6 +3982,8 @@
             let result = [];
             let inDayCard = false;
             let inList = false;
+            let inTable = false;
+            let tableRows = [];
 
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
@@ -3307,6 +3997,12 @@
                     line.match(/^\*{0,2}\s*(Day\s*\d+[^*]*)\*{0,2}\s*$/i);
 
                 if (dayMatch) {
+                    // Close table if open
+                    if (inTable && tableRows.length > 0) {
+                        result.push(buildBudgetTable(tableRows));
+                        tableRows = [];
+                        inTable = false;
+                    }
                     // Close previous day card if open
                     if (inDayCard) {
                         if (inList) { result.push('</ul>'); inList = false; }
@@ -3316,6 +4012,25 @@
                     result.push(`<div class="day-card"><h2>${dayMatch[1].trim()}</h2>`);
                     inDayCard = true;
                     continue;
+                }
+
+                // Check for table rows
+                if (line.startsWith('|') && line.endsWith('|')) {
+                    const cells = line.split('|').filter(c => c.trim());
+                    // Skip separator rows (|---|---|---|)
+                    if (cells.some(c => /^[\s\-:]+$/.test(c))) continue;
+
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    inTable = true;
+                    tableRows.push(cells.map(c => c.trim()));
+                    continue;
+                }
+
+                // If we were in a table but hit a non-table line, close the table
+                if (inTable && tableRows.length > 0) {
+                    result.push(buildBudgetTable(tableRows));
+                    tableRows = [];
+                    inTable = false;
                 }
 
                 // Convert bold text
@@ -3347,20 +4062,6 @@
                     }
                     result.push(`<li>${line.replace(/^[\*\-]\s+/, '')}</li>`);
                 }
-                // Check for table rows
-                else if (line.startsWith('|') && line.endsWith('|')) {
-                    const cells = line.split('|').filter(c => c.trim());
-                    if (!cells.some(c => c.includes('---'))) {
-                        if (inList) { result.push('</ul>'); inList = false; }
-                        const isHeader = cells.some(c =>
-                            c.toLowerCase().includes('category') ||
-                            c.toLowerCase().includes('budget') ||
-                            c.toLowerCase().includes('item')
-                        );
-                        const tag = isHeader ? 'th' : 'td';
-                        result.push(`<table class="budget-table"><tr>${cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('')}</tr></table>`);
-                    }
-                }
                 // Tip cards
                 else if (line.toLowerCase().includes('tip:') || line.toLowerCase().includes('pro tip')) {
                     if (inList) { result.push('</ul>'); inList = false; }
@@ -3376,40 +4077,512 @@
             }
 
             // Close any open elements
+            if (inTable && tableRows.length > 0) {
+                result.push(buildBudgetTable(tableRows));
+            }
             if (inList) result.push('</ul>');
             if (inDayCard) result.push('</div>');
 
             return result.join('\n');
         }
 
+        // Build a proper budget comparison table with 3 columns
+        function buildBudgetTable(rows) {
+            if (rows.length === 0) return '';
+
+            let html = '<div class="budget-box"><h3 class="budget-title">💰 Budget Breakdown</h3>';
+            html += '<table class="budget-table"><thead><tr>';
+
+            // First row is header
+            const headers = rows[0];
+            // Ensure we have 4 columns: Category, Budget, Mid-Range, Luxury
+            const columnHeaders = ['Category', 'Budget', 'Mid-Range', 'Luxury'];
+
+            for (let i = 0; i < columnHeaders.length; i++) {
+                const headerText = headers[i] || columnHeaders[i];
+                html += `<th>${headerText}</th>`;
+            }
+            html += '</tr></thead><tbody>';
+
+            // Data rows
+            for (let i = 1; i < rows.length; i++) {
+                html += '<tr>';
+                for (let j = 0; j < 4; j++) {
+                    const cellValue = rows[i][j] || '-';
+                    // Add color coding for price cells
+                    if (j === 1) {
+                        html += `<td class="price-budget">${cellValue}</td>`;
+                    } else if (j === 2) {
+                        html += `<td class="price-midrange">${cellValue}</td>`;
+                    } else if (j === 3) {
+                        html += `<td class="price-luxury">${cellValue}</td>`;
+                    } else {
+                        html += `<td>${cellValue}</td>`;
+                    }
+                }
+                html += '</tr>';
+            }
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        // Global state for itinerary
+        let currentTier = 'midrange';
+        let itineraryMap = null;
+        let mapMarkers = [];
+
+        // Tier-based pricing multipliers
+        const tierPricing = {
+            budget: { transport: 25, attractions: 40, stay: 50, total: 115 },
+            midrange: { transport: 45, attractions: 80, stay: 120, total: 245 },
+            luxury: { transport: 100, attractions: 150, stay: 300, total: 550 }
+        };
+
         function displayFormattedItinerary(content, container) {
-            const htmlContent = convertMarkdownToHTML(content);
             const destination = document.getElementById('ai-dest').value.trim() || 'Your Destination';
-            const duration = document.getElementById('ai-days').value.trim() || '5 days';
+            const duration = document.getElementById('ai-days').value.trim() || '5';
+            const daysNum = parseInt(duration) || 5;
+
+            // Store content globally for tier switching
+            window.currentItineraryContent = content;
+            window.currentDaysNum = daysNum;
+            window.currentDestination = destination;
+
+            // Parse the markdown to extract days and activities
+            const parsedData = parseItineraryContent(content);
+            window.parsedItineraryData = parsedData;
+
+            // Generate day tabs
+            let dayTabsHTML = '<div class="trip-day-tab active" data-day="0">Overview</div>';
+            for (let i = 1; i <= daysNum; i++) {
+                dayTabsHTML += `<div class="trip-day-tab" data-day="${i}">Day ${i}</div>`;
+            }
+
+            // Generate activities HTML
+            const activitiesHTML = generateTripActivities(parsedData, daysNum);
+
+            // Get current tier pricing
+            const prices = tierPricing[currentTier];
 
             container.innerHTML = `
                 <div class="itinerary-container">
                     <div class="itinerary-header">
-                        <h1>🌍 ${destination} Adventure</h1>
-                        <p>📅 ${duration} • ✨ Personalized Itinerary</p>
+                        <h1>✈️ ${destination}</h1>
+                        <p>
+                            <span class="meta-badge">📅 ${duration} Days</span>
+                            <span class="meta-badge">✨ AI Generated</span>
+                            <span class="meta-badge">🎯 Personalized</span>
+                        </p>
                     </div>
-                    ${htmlContent}
+                    
+                    <div class="trip-itinerary-layout">
+                        <!-- Budget Sidebar -->
+                        <div class="trip-budget-sidebar">
+                            <div class="trip-budget-header">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <h3>AI Assistant</h3>
+                            </div>
+                            
+                            <!-- Budget Tier Tabs -->
+                            <div class="trip-tier-tabs">
+                                <div class="trip-tier-tab ${currentTier === 'budget' ? 'active' : ''}" data-tier="budget">
+                                    <span class="tier-icon">💰</span>
+                                    Budget
+                                    <span class="tier-price">~$${(tierPricing.budget.total * daysNum).toLocaleString()}</span>
+                                </div>
+                                <div class="trip-tier-tab ${currentTier === 'midrange' ? 'active' : ''}" data-tier="midrange">
+                                    <span class="tier-icon">💎</span>
+                                    Mid-Range
+                                    <span class="tier-price">~$${(tierPricing.midrange.total * daysNum).toLocaleString()}</span>
+                                </div>
+                                <div class="trip-tier-tab ${currentTier === 'luxury' ? 'active' : ''}" data-tier="luxury">
+                                    <span class="tier-icon">👑</span>
+                                    Luxury
+                                    <span class="tier-price">~$${(tierPricing.luxury.total * daysNum).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="trip-budget-total" id="trip-budget-total">
+                                <div class="label">Estimated Total</div>
+                                <div class="amount">≈ $${(prices.total * daysNum).toLocaleString()}</div>
+                                <div class="per-person">1 traveler</div>
+                            </div>
+                            <div class="trip-budget-progress">
+                                <div class="trip-budget-progress-bar"></div>
+                            </div>
+                            <div class="trip-budget-items" id="trip-budget-items">
+                                <div class="trip-budget-item transport">
+                                    <div class="icon">🚗</div>
+                                    <div class="details">
+                                        <div class="category">Transportation</div>
+                                        <div class="price">$${(prices.transport * daysNum).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div class="trip-budget-item attractions">
+                                    <div class="icon">🎭</div>
+                                    <div class="details">
+                                        <div class="category">Attractions</div>
+                                        <div class="price">$${(prices.attractions * daysNum).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div class="trip-budget-item stay">
+                                    <div class="icon">🏨</div>
+                                    <div class="details">
+                                        <div class="category">Accommodation</div>
+                                        <div class="price">$${(prices.stay * daysNum).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="trip-ai-note">
+                                <strong>ℹ️</strong> This content is generated by AI. Costs are estimated. Please confirm at the time of booking.
+                            </div>
+                        </div>
+                        
+                        <!-- Main Itinerary Content -->
+                        <div class="trip-itinerary-main">
+                            <div class="trip-day-tabs">
+                                ${dayTabsHTML}
+                            </div>
+                            <div class="trip-title-bar">
+                                <h2>
+                                    <span class="trip-year-badge">🗓️ 2026</span>
+                                    ${destination} Immersion
+                                </h2>
+                            </div>
+                            <div class="trip-activities" id="trip-activities-container">
+                                ${activitiesHTML}
+                            </div>
+                        </div>
+                        
+                        <!-- Map Panel -->
+                        <div class="trip-map-panel">
+                            <div class="trip-map-header">
+                                <h3>📍 ${destination}</h3>
+                                <div class="trip-map-filters">
+                                    <div class="trip-map-filter active" data-filter="attractions">🎭 Attractions</div>
+                                    <div class="trip-map-filter" data-filter="hotels">🏨 Hotels</div>
+                                    <div class="trip-map-filter" data-filter="food">🍽️ Food</div>
+                                </div>
+                            </div>
+                            <div class="trip-map-container">
+                                <div id="itinerary-map"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="itinerary-actions">
                         <button class="btn-outline" onclick="copyItinerary()">
                             <i class="fas fa-copy"></i> Copy
                         </button>
                         <button class="btn-outline" onclick="downloadItinerary()">
-                            <i class="fas fa-download"></i> Download
+                            <i class="fas fa-file-pdf"></i> Download PDF
                         </button>
                         <button class="btn-outline" onclick="printItinerary()">
                             <i class="fas fa-print"></i> Print
                         </button>
                         <button class="btn-main" onclick="generateAITrip()">
-                            <i class="fas fa-sync"></i> Generate New
+                            <i class="fas fa-magic"></i> Regenerate
                         </button>
                     </div>
                 </div>
             `;
+
+            // Add day tab click handlers
+            document.querySelectorAll('.trip-day-tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    document.querySelectorAll('.trip-day-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const dayNum = parseInt(this.dataset.day);
+                    filterActivitiesByDay(dayNum);
+                });
+            });
+
+            // Add tier tab click handlers
+            document.querySelectorAll('.trip-tier-tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    const tier = this.dataset.tier;
+                    switchBudgetTier(tier);
+                });
+            });
+
+            // Initialize map
+            initializeItineraryMap(destination, parsedData);
+        }
+
+        // Switch budget tier and update UI
+        function switchBudgetTier(tier) {
+            currentTier = tier;
+            const daysNum = window.currentDaysNum || 5;
+            const prices = tierPricing[tier];
+
+            // Update tier tab active states
+            document.querySelectorAll('.trip-tier-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tier === tier);
+            });
+
+            // Update budget total
+            const totalDiv = document.getElementById('trip-budget-total');
+            if (totalDiv) {
+                totalDiv.innerHTML = `
+                    <div class="label">Estimated Total</div>
+                    <div class="amount">≈ $${(prices.total * daysNum).toLocaleString()}</div>
+                    <div class="per-person">1 traveler</div>
+                `;
+            }
+
+            // Update budget items
+            const itemsDiv = document.getElementById('trip-budget-items');
+            if (itemsDiv) {
+                itemsDiv.innerHTML = `
+                    <div class="trip-budget-item transport">
+                        <div class="icon">🚗</div>
+                        <div class="details">
+                            <div class="category">Transportation</div>
+                            <div class="price">$${(prices.transport * daysNum).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="trip-budget-item attractions">
+                        <div class="icon">🎭</div>
+                        <div class="details">
+                            <div class="category">Attractions</div>
+                            <div class="price">$${(prices.attractions * daysNum).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="trip-budget-item stay">
+                        <div class="icon">🏨</div>
+                        <div class="details">
+                            <div class="category">Accommodation</div>
+                            <div class="price">$${(prices.stay * daysNum).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Regenerate itinerary with new tier (optional - for now just update prices)
+            showToast(`Switched to ${tier.charAt(0).toUpperCase() + tier.slice(1)} tier! 💰`, 'success');
+        }
+
+        // Initialize Leaflet map with markers
+        function initializeItineraryMap(destination, parsedData) {
+            // Default coordinates (will be geocoded based on destination)
+            const defaultCoords = getDestinationCoordinates(destination);
+
+            // Create map
+            if (itineraryMap) {
+                itineraryMap.remove();
+            }
+
+            itineraryMap = L.map('itinerary-map').setView(defaultCoords, 13);
+
+            // Add tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(itineraryMap);
+
+            // Clear existing markers
+            mapMarkers = [];
+
+            // Add markers for each activity
+            let markerNum = 1;
+            for (const dayData of parsedData) {
+                for (const activity of dayData.activities) {
+                    // Generate slightly offset coordinates around destination
+                    const offset = () => (Math.random() - 0.5) * 0.05;
+                    const lat = defaultCoords[0] + offset();
+                    const lng = defaultCoords[1] + offset();
+
+                    // Create custom numbered marker
+                    const markerIcon = L.divIcon({
+                        className: 'trip-marker',
+                        html: `<div class="trip-marker">${markerNum}</div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+
+                    const marker = L.marker([lat, lng], { icon: markerIcon }).addTo(itineraryMap);
+
+                    // Add popup
+                    const popupContent = `
+                        <div class="map-popup-title">${activity.description.split('.')[0]}</div>
+                        <div class="map-popup-meta">Day ${dayData.day} · ${activity.time || 'Flexible'}</div>
+                    `;
+                    marker.bindPopup(popupContent);
+
+                    mapMarkers.push({ marker, activityNum: markerNum });
+                    markerNum++;
+                }
+            }
+
+            // Fit map to markers if any
+            if (mapMarkers.length > 0) {
+                const group = new L.featureGroup(mapMarkers.map(m => m.marker));
+                itineraryMap.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Get approximate coordinates for popular destinations
+        function getDestinationCoordinates(destination) {
+            const coords = {
+                'paris': [48.8566, 2.3522],
+                'london': [51.5074, -0.1278],
+                'new york': [40.7128, -74.0060],
+                'tokyo': [35.6762, 139.6503],
+                'rome': [41.9028, 12.4964],
+                'barcelona': [41.3851, 2.1734],
+                'dubai': [25.2048, 55.2708],
+                'singapore': [1.3521, 103.8198],
+                'bangkok': [13.7563, 100.5018],
+                'mumbai': [19.0760, 72.8777],
+                'delhi': [28.6139, 77.2090],
+                'jaipur': [26.9124, 75.7873],
+                'goa': [15.2993, 74.1240],
+                'bali': [-8.3405, 115.0920],
+                'sydney': [-33.8688, 151.2093],
+                'amsterdam': [52.3676, 4.9041],
+                'berlin': [52.5200, 13.4050],
+                'venice': [45.4408, 12.3155],
+                'los angeles': [34.0522, -118.2437],
+                'las vegas': [36.1699, -115.1398]
+            };
+
+            const key = destination.toLowerCase();
+            for (const [city, coord] of Object.entries(coords)) {
+                if (key.includes(city)) {
+                    return coord;
+                }
+            }
+            // Default to Paris if not found
+            return [48.8566, 2.3522];
+        }
+
+        // Parse itinerary content to extract structured data
+        function parseItineraryContent(content) {
+            const days = [];
+            const lines = content.split('\n');
+            let currentDay = null;
+            let currentActivities = [];
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+
+                // Check for day headings
+                const dayMatch = trimmed.match(/^#{1,4}\s*\*{0,2}\s*Day\s*(\d+)[:\s-]*(.*?)\*{0,2}\s*$/i) ||
+                    trimmed.match(/^\*{0,2}\s*Day\s*(\d+)[:\s-]*(.*?)\*{0,2}\s*$/i);
+
+                if (dayMatch) {
+                    if (currentDay !== null) {
+                        days.push({ day: currentDay.day, title: currentDay.title, activities: currentActivities });
+                    }
+                    currentDay = { day: parseInt(dayMatch[1]), title: dayMatch[2] || '' };
+                    currentActivities = [];
+                    continue;
+                }
+
+                // Check for activities (list items or time-based entries)
+                if (currentDay !== null && /^[\*\-]\s+/.test(trimmed)) {
+                    const activityText = trimmed.replace(/^[\*\-]\s+/, '').replace(/\*\*/g, '');
+                    const timeMatch = activityText.match(/^(Morning|Afternoon|Evening|Night|[\d:]+\s*(AM|PM)?)[:\s]*/i);
+                    const time = timeMatch ? timeMatch[1] : '';
+                    const description = timeMatch ? activityText.replace(timeMatch[0], '') : activityText;
+
+                    currentActivities.push({
+                        time: time,
+                        description: description,
+                        rating: (7.5 + Math.random() * 2).toFixed(1) // Random rating 7.5-9.5
+                    });
+                }
+            }
+
+            // Push last day
+            if (currentDay !== null) {
+                days.push({ day: currentDay.day, title: currentDay.title, activities: currentActivities });
+            }
+
+            return days;
+        }
+
+        // Generate Trip.com-style activity cards
+        function generateTripActivities(parsedData, totalDays) {
+            let html = '';
+            let activityNum = 1;
+            const icons = ['🏛️', '🎨', '🍽️', '🚶', '🌳', '🎭', '🛍️', '🌅', '☕', '🏰'];
+
+            for (const dayData of parsedData) {
+                html += `<div class="trip-day-section" data-day="${dayData.day}">`;
+                html += `<h3 style="font-size:1rem; color:#1a1a2e; margin:20px 0 10px; font-weight:700;">Day ${dayData.day}: ${dayData.title || 'Exploration'}</h3>`;
+
+                for (let i = 0; i < dayData.activities.length; i++) {
+                    const activity = dayData.activities[i];
+                    const icon = icons[activityNum % icons.length];
+                    const showBestBadge = Math.random() > 0.6;
+
+                    html += `
+                        <div class="trip-activity-card">
+                            <div class="trip-activity-number">${activityNum}</div>
+                            <div class="trip-activity-image">
+                                <div class="trip-activity-placeholder">${icon}</div>
+                            </div>
+                            <div class="trip-activity-content">
+                                <div class="trip-activity-header">
+                                    <h4 class="trip-activity-title">${activity.description.split('.')[0] || activity.description}</h4>
+                                    ${showBestBadge ? '<span class="trip-best-badge">🔥 Trip.Best</span>' : ''}
+                                    <span class="trip-rating">⭐ ${activity.rating}</span>
+                                </div>
+                                <div class="trip-activity-meta">
+                                    ${activity.time ? `<span>🕐 ${activity.time}</span>` : '<span>🕐 Flexible</span>'}
+                                    <span>⏱️ Suggested: 1-2 hours</span>
+                                </div>
+                                <p class="trip-activity-description">${activity.description}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Add transportation connector between activities (not after last one)
+                    if (i < dayData.activities.length - 1) {
+                        const walkTime = Math.floor(5 + Math.random() * 15);
+                        html += `
+                            <div class="trip-transport">
+                                <div class="trip-transport-icon">🚶</div>
+                                <span class="trip-transport-text">${walkTime} minutes · ${(walkTime * 80)}m</span>
+                            </div>
+                        `;
+                    }
+
+                    activityNum++;
+                }
+
+                html += '</div>';
+            }
+
+            // If no parsed data, show placeholder
+            if (parsedData.length === 0) {
+                html = `
+                    <div class="trip-empty-day">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <p>Your itinerary is being generated...</p>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        // Filter activities by day when tab is clicked
+        function filterActivitiesByDay(dayNum) {
+            const sections = document.querySelectorAll('.trip-day-section');
+            sections.forEach(section => {
+                if (dayNum === 0) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = section.dataset.day == dayNum ? 'block' : 'none';
+                }
+            });
         }
 
         function printItinerary() {
