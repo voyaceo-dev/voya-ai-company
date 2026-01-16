@@ -1066,27 +1066,38 @@
 
         .trip-budget-total {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            padding: 20px 16px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
         }
 
         .trip-budget-total .label {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 5px;
+            font-size: 0.82rem;
+            color: #888;
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .trip-budget-total .amount {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 2.4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f953c6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 6px;
         }
 
         .trip-budget-total .per-person {
             font-size: 0.8rem;
             color: #999;
+            font-weight: 500;
         }
 
         /* Budget Progress Bar */
@@ -1105,42 +1116,55 @@
             width: 75%;
         }
 
-        /* Budget Items */
+        /* Budget Items (Enhanced) */
         .trip-budget-items {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .trip-budget-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #f8f9ff;
-            border-radius: 10px;
+            gap: 14px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            border-radius: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(102, 126, 234, 0.08);
+            cursor: default;
+        }
+
+        .trip-budget-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.12);
+            border-color: rgba(102, 126, 234, 0.15);
         }
 
         .trip-budget-item .icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
         .trip-budget-item.transport .icon {
-            background: linear-gradient(135deg, #e8f4fd 0%, #d0e8ff 100%);
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
         }
 
         .trip-budget-item.attractions .icon {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
         }
 
         .trip-budget-item.stay .icon {
             background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
         }
 
         .trip-budget-item .details {
@@ -1148,14 +1172,17 @@
         }
 
         .trip-budget-item .category {
-            font-size: 0.85rem;
-            color: #666;
+            font-size: 0.82rem;
+            color: #888;
+            font-weight: 500;
+            margin-bottom: 2px;
         }
 
         .trip-budget-item .price {
-            font-size: 1rem;
-            font-weight: 700;
+            font-size: 1.05rem;
+            font-weight: 800;
             color: #1a1a2e;
+            letter-spacing: -0.3px;
         }
 
         /* AI Assistant Note */
@@ -1249,64 +1276,101 @@
             font-weight: 600;
         }
 
-        /* Activity Cards */
+        /* Activity Cards (Premium Design) */
         .trip-activities {
-            padding: 0 20px 20px;
+            padding: 0 24px 24px;
         }
 
         .trip-activity-card {
             display: flex;
-            gap: 16px;
-            padding: 20px 0;
-            border-bottom: 1px solid #f0f0f5;
+            gap: 18px;
+            padding: 22px;
+            margin: 12px 0;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(102, 126, 234, 0.08);
             position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .trip-activity-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.2);
         }
 
         .trip-activity-card:last-child {
-            border-bottom: none;
+            margin-bottom: 0;
         }
 
         .trip-activity-number {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, #0060FF 0%, #00b4d8 100%);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
+            font-weight: 800;
+            font-size: 0.95rem;
             flex-shrink: 0;
+            box-shadow: 0 6px 20px rgba(0, 96, 255, 0.35);
+            transition: transform 0.3s ease;
+        }
+
+        .trip-activity-card:hover .trip-activity-number {
+            transform: scale(1.1);
         }
 
         .trip-activity-image {
-            width: 120px;
-            height: 90px;
-            border-radius: 12px;
+            width: 130px;
+            height: 95px;
+            border-radius: 14px;
             overflow: hidden;
             flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .trip-activity-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .trip-activity-card:hover .trip-activity-image img {
+            transform: scale(1.05);
         }
 
         .trip-activity-placeholder {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f953c6 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 2rem;
+            font-size: 2.2rem;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
         }
 
         .trip-activity-content {
             flex: 1;
+            min-width: 0;
         }
 
         .trip-activity-header {
@@ -1422,47 +1486,93 @@
             color: #ccc;
         }
 
-        /* ========== Budget Tier Tabs ========== */
+        /* ========== Budget Tier Tabs (Premium Design) ========== */
         .trip-tier-tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 24px;
+            padding: 4px;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8ecf8 100%);
+            border-radius: 16px;
         }
 
         .trip-tier-tab {
             flex: 1;
-            padding: 12px 10px;
+            padding: 14px 12px;
             text-align: center;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            transition: all 0.3s ease;
-            border: 2px solid #e8ecf3;
-            background: #f8f9ff;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+            background: transparent;
             color: #666;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trip-tier-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            border-radius: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .trip-tier-tab:hover::before {
+            opacity: 1;
         }
 
         .trip-tier-tab:hover {
-            border-color: #0060FF;
-            background: white;
+            transform: translateY(-2px);
+            color: #0060FF;
         }
 
         .trip-tier-tab.active {
-            border-color: #0060FF;
             background: linear-gradient(135deg, #0060FF 0%, #00b4d8 100%);
             color: white;
+            box-shadow: 0 8px 25px rgba(0, 96, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .trip-tier-tab.active::before {
+            display: none;
         }
 
         .trip-tier-tab .tier-icon {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .trip-tier-tab .tier-name {
+            display: block;
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            margin-bottom: 2px;
         }
 
         .trip-tier-tab .tier-price {
-            font-size: 0.75rem;
-            opacity: 0.8;
+            font-size: 0.72rem;
+            opacity: 0.75;
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
+        }
+
+        .trip-tier-tab.active .tier-price {
+            opacity: 0.9;
         }
 
         /* ========== 3-Column Layout with Map ========== */
