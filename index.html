@@ -575,238 +575,546 @@
             }
         }
 
-        /* Itinerary Premium Card Styling */
+        /* ==================== PREMIUM ITINERARY STYLES ==================== */
+
         .itinerary-container {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 16px;
-            padding: 30px;
-            margin-top: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f953c6 100%);
+            border-radius: 24px;
+            padding: 4px;
+            margin-top: 30px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .itinerary-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.1),
+                    transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .itinerary-inner {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 22px;
+            padding: 35px;
+            position: relative;
         }
 
         .itinerary-header {
             text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #003580 0%, #1a73e8 100%);
-            border-radius: 12px;
-            margin-bottom: 25px;
+            padding: 35px 25px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 16px;
+            margin-bottom: 30px;
             color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .itinerary-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
         }
 
         .itinerary-header h1 {
             margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            position: relative;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .itinerary-header p {
-            margin: 8px 0 0;
+            margin: 12px 0 0;
             opacity: 0.9;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 400;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .itinerary-header .meta-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Day Cards with Timeline */
+        .day-cards-container {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .day-cards-container::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f953c6 100%);
+            border-radius: 3px;
         }
 
         .day-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border-left: 5px solid #003580;
-            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .day-card::before {
+            content: '';
+            position: absolute;
+            left: -33px;
+            top: 30px;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
         }
 
         .day-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.3);
         }
 
         .day-card h2 {
-            color: #003580;
-            font-size: 1.3rem;
-            margin: 0 0 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            color: #1a1a2e;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 18px 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, #667eea, #764ba2, transparent) 1;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .day-card h2::before {
-            content: '📅';
-            font-size: 1.2rem;
+            content: '';
+            display: none;
+        }
+
+        .day-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .day-card h3 {
-            color: #1a73e8;
-            font-size: 1.1rem;
-            margin: 15px 0 10px;
+            color: #667eea;
+            font-size: 1.15rem;
+            margin: 20px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .day-card h3::before {
+            content: '◆';
+            color: #764ba2;
+            font-size: 0.7rem;
+        }
+
+        .day-card h4 {
+            color: #16213e;
+            font-size: 1rem;
+            margin: 16px 0 8px 0;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .activity-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin: 10px 0;
-            border-left: 3px solid #28a745;
+        .day-card h4::before {
+            content: '›';
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Activity Items */
+        .itinerary-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+            display: grid;
+            gap: 12px;
+        }
+
+        .itinerary-container li {
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
             display: flex;
             align-items: flex-start;
             gap: 12px;
         }
 
-        .activity-item::before {
+        .itinerary-container li::before {
             content: '✓';
-            color: #28a745;
+            color: white;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
             font-weight: bold;
-            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
         }
 
-        .activity-item p {
-            margin: 0;
-            color: #333;
-            line-height: 1.5;
+        .itinerary-container li:hover {
+            transform: translateX(5px);
+            border-left-color: #764ba2;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
         }
 
+        .itinerary-container p {
+            color: #444;
+            line-height: 1.8;
+            margin: 12px 0;
+            font-size: 0.95rem;
+        }
+
+        /* Tip Cards */
         .tip-card {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-left: 4px solid #ffc107;
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-left: 5px solid #ffc107;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
         }
 
         .tip-card::before {
-            content: '💡 Pro Tip: ';
-            font-weight: bold;
-            color: #856404;
+            content: '💡';
+            font-size: 1.5rem;
+            margin-right: 10px;
         }
 
+        .tip-card::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: -20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 193, 7, 0.15);
+            border-radius: 50%;
+        }
+
+        /* Budget Table */
         .budget-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin: 20px 0;
-            border-radius: 10px;
+            margin: 25px 0;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
 
         .budget-table thead {
-            background: linear-gradient(135deg, #003580 0%, #1a73e8 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
         }
 
         .budget-table th {
-            padding: 15px;
+            padding: 18px 20px;
             text-align: left;
             font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
         }
 
         .budget-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f5;
             background: white;
+            color: #333;
+            font-size: 0.9rem;
         }
 
         .budget-table tr:last-child td {
             border-bottom: none;
         }
 
-        .budget-table tr:hover td {
-            background: #f8f9fa;
+        .budget-table tbody tr {
+            transition: all 0.3s ease;
         }
 
+        .budget-table tbody tr:hover td {
+            background: #f8f9ff;
+        }
+
+        /* Section Styling */
+        .itinerary-section {
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .itinerary-section h2 {
+            color: #1a1a2e;
+            margin: 0 0 20px 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Action Buttons */
+        .itinerary-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 35px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f5;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-outline:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-outline i {
+            font-size: 1rem;
+        }
+
+        .itinerary-actions .btn-main {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .itinerary-actions .btn-main:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Loader Premium Style */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            margin-top: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        .loader p {
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .loader-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .loader-dots span {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loader-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loader-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        .loader-dots span:nth-child(3) {
+            animation-delay: 0;
+        }
+
+        /* Activity Item Enhanced */
+        .activity-item {
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border-left: 4px solid #28a745;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .activity-item::before {
+            content: '✓';
+            color: white;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .activity-item p {
+            margin: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Budget Badges */
         .budget-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
         }
 
         .budget-badge.budget {
-            background: #d4edda;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             color: #155724;
         }
 
         .budget-badge.midrange {
-            background: #fff3cd;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
             color: #856404;
         }
 
         .budget-badge.luxury {
-            background: #f8d7da;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             color: #721c24;
-        }
-
-        .itinerary-section {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .itinerary-section h2 {
-            color: #003580;
-            margin: 0 0 15px 0;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .itinerary-container ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .itinerary-container li {
-            background: #f8f9fa;
-            padding: 10px 15px;
-            margin: 8px 0;
-            border-radius: 8px;
-            border-left: 3px solid #1a73e8;
-            color: #333;
-        }
-
-        .itinerary-container p {
-            color: #555;
-            line-height: 1.7;
-            margin: 10px 0;
-        }
-
-        .itinerary-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-        }
-
-        .btn-outline {
-            background: white;
-            border: 2px solid var(--accent-blue);
-            color: var(--accent-blue);
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-outline:hover {
-            background: var(--accent-blue);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 53, 128, 0.3);
         }
 
         /* Full-Page Search Overlay - Trip.com/Skyscanner Style */
@@ -3148,104 +3456,142 @@
                 return;
             }
 
-            // Create a clone for PDF generation with enhanced styling
+            // Show loading state
+            showToast('Generating PDF...', 'info');
+
+            // Get destination for filename and header
+            const destination = document.getElementById('ai-dest').value.trim() || 'Travel';
+            const duration = document.getElementById('ai-days').value.trim() || '';
+            const filename = `VOYA-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
+
+            // Create a complete standalone HTML document for PDF generation
             const pdfContent = document.createElement('div');
-            pdfContent.innerHTML = `
-                <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: #fff;">
-                    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #003580;">
-                        <h1 style="color: #003580; font-size: 28px; margin: 0 0 10px 0;">VOYA AI Travel Itinerary</h1>
-                        <p style="color: #666; font-size: 14px; margin: 0;">Your personalized travel plan</p>
+            pdfContent.id = 'pdf-export-container';
+
+            // Build clean HTML content with all styles inline
+            let cleanHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 25px; background: #ffffff; color: #333333; min-height: 100%;">
+                    <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #003580;">
+                        <h1 style="color: #003580; font-size: 24px; margin: 0 0 8px 0; font-weight: bold;">VOYA AI Travel Itinerary</h1>
+                        <p style="color: #666; font-size: 14px; margin: 0;">Your personalized travel plan for ${destination}${duration ? ' • ' + duration : ''}</p>
                     </div>
-                    ${container.innerHTML}
-                </div>
             `;
 
-            // Hide action buttons in PDF
-            const actions = pdfContent.querySelector('.itinerary-actions');
-            if (actions) actions.style.display = 'none';
+            // Clone the container content and process it
+            const contentClone = container.cloneNode(true);
 
-            // Style day cards for PDF
-            pdfContent.querySelectorAll('.day-card').forEach(card => {
-                card.style.cssText = 'background: #f8f9fa; border-left: 4px solid #003580; padding: 15px; margin: 15px 0; border-radius: 8px; page-break-inside: avoid;';
+            // Remove action buttons from the clone
+            const actions = contentClone.querySelector('.itinerary-actions');
+            if (actions) actions.remove();
+
+            // Remove the header from clone (we're adding our own)
+            const headerClone = contentClone.querySelector('.itinerary-header');
+            if (headerClone) headerClone.remove();
+
+            // Process day cards
+            const dayCards = contentClone.querySelectorAll('.day-card');
+            dayCards.forEach((card, index) => {
+                // Extract the day title
+                const h2 = card.querySelector('h2');
+                const dayTitle = h2 ? h2.textContent.replace('📅', '').trim() : `Day ${index + 1}`;
+
+                // Get all content except the h2
+                let cardContent = '';
+                Array.from(card.children).forEach(child => {
+                    if (child.tagName !== 'H2') {
+                        cardContent += child.outerHTML;
+                    }
+                });
+
+                cleanHTML += `
+                    <div style="background: #f8f9fa; border-left: 4px solid #003580; padding: 15px 20px; margin: 15px 0; border-radius: 6px; page-break-inside: avoid;">
+                        <h2 style="color: #003580; font-size: 16px; margin: 0 0 12px 0; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 8px;">📅 ${dayTitle}</h2>
+                        ${cardContent}
+                    </div>
+                `;
             });
 
-            // Style headings
-            pdfContent.querySelectorAll('h1').forEach(h => {
-                h.style.cssText = 'color: #003580; font-size: 22px; margin: 0 0 15px 0;';
-            });
-            pdfContent.querySelectorAll('h2').forEach(h => {
-                h.style.cssText = 'color: #1a73e8; font-size: 18px; margin: 15px 0 10px 0; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px;';
-            });
+            // If no day cards found, just use the raw content
+            if (dayCards.length === 0) {
+                cleanHTML += contentClone.innerHTML;
+            }
+
+            cleanHTML += '</div>';
+            pdfContent.innerHTML = cleanHTML;
+
+            // Apply inline styles to all elements for PDF compatibility
             pdfContent.querySelectorAll('h3').forEach(h => {
-                h.style.cssText = 'color: #333; font-size: 15px; margin: 12px 0 8px 0;';
+                h.style.cssText = 'color: #1a73e8; font-size: 14px; margin: 12px 0 8px 0; font-weight: bold;';
             });
-
-            // Style lists
+            pdfContent.querySelectorAll('h4').forEach(h => {
+                h.style.cssText = 'color: #333; font-size: 13px; margin: 10px 0 6px 0; font-weight: bold;';
+            });
             pdfContent.querySelectorAll('ul').forEach(ul => {
-                ul.style.cssText = 'margin: 10px 0; padding-left: 20px;';
+                ul.style.cssText = 'margin: 8px 0; padding-left: 25px; list-style-type: disc;';
             });
             pdfContent.querySelectorAll('li').forEach(li => {
-                li.style.cssText = 'margin: 6px 0; color: #444; line-height: 1.6;';
+                li.style.cssText = 'margin: 4px 0; color: #444; line-height: 1.5; font-size: 12px; background: none; border: none; padding: 2px 0;';
             });
-
-            // Style paragraphs
             pdfContent.querySelectorAll('p').forEach(p => {
-                p.style.cssText = 'margin: 8px 0; color: #555; line-height: 1.6;';
+                p.style.cssText = 'margin: 6px 0; color: #555; line-height: 1.5; font-size: 12px;';
             });
-
-            // Style tip cards
             pdfContent.querySelectorAll('.tip-card').forEach(tip => {
-                tip.style.cssText = 'background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 10px 0; border-radius: 6px;';
+                tip.style.cssText = 'background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 10px 0; border-radius: 4px; font-size: 12px;';
             });
-
-            // Style tables
             pdfContent.querySelectorAll('table').forEach(table => {
-                table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px;';
-            });
-            pdfContent.querySelectorAll('th, td').forEach(cell => {
-                cell.style.cssText = 'border: 1px solid #ddd; padding: 10px; text-align: left;';
+                table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px;';
             });
             pdfContent.querySelectorAll('th').forEach(th => {
-                th.style.cssText += 'background: #003580; color: white;';
+                th.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left; background: #003580; color: white; font-weight: bold;';
             });
-
-            // Style strong/bold text
+            pdfContent.querySelectorAll('td').forEach(td => {
+                td.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left;';
+            });
             pdfContent.querySelectorAll('strong').forEach(s => {
-                s.style.cssText = 'color: #003580;';
+                s.style.cssText = 'color: #003580; font-weight: bold;';
             });
-
-            // Style em/italic text
             pdfContent.querySelectorAll('em').forEach(e => {
                 e.style.cssText = 'color: #1a73e8; font-style: italic;';
             });
 
-            // Get destination for filename
-            const destination = document.getElementById('ai-dest').value.trim() || 'Travel';
-            const filename = `VOYA-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
-
-            // Temporarily append to DOM (required for html2canvas to work properly)
-            pdfContent.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; background: white;';
+            // Position the content visibly but off-screen (visibility approach for better rendering)
+            pdfContent.style.cssText = 'position: fixed; top: 0; left: 0; width: 210mm; background: white; z-index: -9999; visibility: visible;';
             document.body.appendChild(pdfContent);
 
-            // PDF options
+            // PDF options with better settings for capturing
             const opt = {
-                margin: [10, 10, 10, 10],
+                margin: [15, 15, 15, 15],
                 filename: filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    windowWidth: pdfContent.scrollWidth,
+                    windowHeight: pdfContent.scrollHeight,
+                    x: 0,
+                    y: 0
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            // Generate PDF
-            html2pdf().set(opt).from(pdfContent).save().then(() => {
-                document.body.removeChild(pdfContent);
-                showToast('PDF downloaded successfully!', 'success');
-            }).catch(err => {
-                document.body.removeChild(pdfContent);
-                console.error('PDF generation error:', err);
-                alert('Failed to generate PDF. Please try again.');
-            });
+            // Wait a moment for styles to apply, then generate PDF
+            setTimeout(() => {
+                html2pdf().set(opt).from(pdfContent).save().then(() => {
+                    document.body.removeChild(pdfContent);
+                    showToast('PDF downloaded successfully!', 'success');
+                }).catch(err => {
+                    if (document.body.contains(pdfContent)) {
+                        document.body.removeChild(pdfContent);
+                    }
+                    console.error('PDF generation error:', err);
+                    // Fallback: Try direct print
+                    alert('PDF generation encountered an issue. Opening print dialog instead.');
+                    printItinerary();
+                });
+            }, 100);
         }
     </script>
 </body>
