@@ -4544,93 +4544,61 @@
         let dayPolylines = {}; // { 1: [polyline], 2: [polyline], ... }
         let currentActiveDay = 0; // 0 = overview (all days)
 
-        // Geocoding cache to avoid duplicate API calls
-        const geocodeCache = new Map();
-
-        // Extract location/landmark name from activity description
-        function extractLocationName(description) {
-            // Remove common action words at the start
-            let cleaned = description
-                .replace(/^(Morning|Afternoon|Evening|Night)[:\s]*/i, '')
-                .replace(/^(Visit|Explore|Tour|See|Experience|Enjoy|Walk|Head to|Go to|Check out|Discover|Spend time at|Stroll through|Wander|Relax at|Admire|Marvel at)\s+/i, '')
-                .replace(/^(the\s+)?/i, '');
-
-            // Try to extract text within quotes (often landmark names)
-            const quotedMatch = cleaned.match(/"([^"]+)"|'([^']+)'/);
-            if (quotedMatch) {
-                return quotedMatch[1] || quotedMatch[2];
+        // Batch geocode all activities using backend API
+        async function batchGeocodeActivities(parsedData, destination) {
+            // Collect all activity descriptions
+            const activities = [];
+            for (const dayData of parsedData) {
+                for (const activity of dayData.activities) {
+                    activities.push({
+                        description: activity.description,
+                        day: dayData.day,
+                        time: activity.time
+                    });
+                }
             }
 
-            // Try to extract capitalized proper nouns (likely landmark names)
-            const properNounMatch = cleaned.match(/([A-Z][a-zA-Z\s'-]+(?:Palace|Temple|Museum|Garden|Tower|Cathedral|Church|Mosque|Fort|Castle|Market|Square|Park|Beach|Bridge|Gate|Station|Monument|Memorial|Gallery|Center|Centre|Building|Library|Zoo|Aquarium|Stadium|Arena|Hall|House|Mansion|Villa|Resort|Hotel))/);
-            if (properNounMatch) {
-                return properNounMatch[1].trim();
-            }
-
-            // Try to find "at the [Place]" or "to [Place]" patterns
-            const atPlaceMatch = cleaned.match(/(?:at|to|in)\s+(?:the\s+)?([A-Z][a-zA-Z\s'-]+)/);
-            if (atPlaceMatch) {
-                return atPlaceMatch[1].trim();
-            }
-
-            // Just take the first sentence/phrase, limit to first 50 chars
-            const firstPart = cleaned.split(/[,.!?]|for|and|which|where/i)[0].trim();
-            return firstPart.slice(0, 50);
-        }
-
-        // Geocode an activity/place using Nominatim (OpenStreetMap free API)
-        async function geocodeActivity(activityDescription, destination) {
-            // Extract the location name from the activity description
-            const locationName = extractLocationName(activityDescription);
-            const cacheKey = `${locationName.toLowerCase()}-${destination.toLowerCase()}`;
-
-            // Check cache first
-            if (geocodeCache.has(cacheKey)) {
-                return geocodeCache.get(cacheKey);
+            if (activities.length === 0) {
+                return [];
             }
 
             try {
-                // Use Nominatim API (free, no API key required, rate limited to 1 req/sec)
-                // Try multiple search strategies
-                const searchQueries = [
-                    `${locationName}, ${destination}`,              // Full context
-                    `${locationName} tourist attraction ${destination}`,  // As tourist spot
-                    locationName                                     // Just the name
-                ];
+                // Call backend geocoding API
+                const response = await fetch(`${API_BASE_URL}/api/geocode`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        activities: activities.map(a => a.description),
+                        destination: destination
+                    })
+                });
 
-                for (const searchQuery of searchQueries) {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`;
-
-                    const response = await fetch(url, {
-                        headers: {
-                            'User-Agent': 'VOYATravel/1.0'  // Required by Nominatim
-                        }
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data && data.length > 0) {
-                            const result = {
-                                lat: parseFloat(data[0].lat),
-                                lng: parseFloat(data[0].lon),
-                                name: data[0].display_name?.split(',')[0] || locationName
-                            };
-                            geocodeCache.set(cacheKey, result);
-                            console.log(`✓ Geocoded "${locationName}" → ${result.name}`);
-                            return result;
-                        }
-                    }
-
-                    // Small delay between retry attempts
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                if (!response.ok) {
+                    throw new Error(`Geocoding failed: ${response.status}`);
                 }
-            } catch (err) {
-                console.log(`✗ Geocoding failed for "${locationName}":`, err.message);
-            }
 
-            // Return null if geocoding fails
-            console.log(`✗ Could not geocode: "${locationName}"`);
-            return null;
+                const data = await response.json();
+
+                if (data.success && data.results) {
+                    // Map results back to activities with day info
+                    return activities.map((activity, index) => ({
+                        ...activity,
+                        geocode: data.results[index]
+                    }));
+                }
+
+                throw new Error('Invalid geocoding response');
+            } catch (err) {
+                console.error('Batch geocoding error:', err);
+                showToast('⚠️ Could not geocode some locations', 'warning');
+                // Return activities with null geocodes
+                return activities.map(activity => ({
+                    ...activity,
+                    geocode: { lat: null, lng: null, success: false }
+                }));
+            }
         }
 
         // Initialize Leaflet map with markers
@@ -4658,31 +4626,37 @@
             dayPolylines = {};
             currentActiveDay = 0;
 
+            // Show loading indicator
+            showToast('🗺️ Loading map locations...', 'info');
+
+            // Batch geocode all activities using backend
+            const geocodedActivities = await batchGeocodeActivities(parsedData, destination);
+
             // Store all coordinates for route drawing
             const allCoords = [];
             const dayRoutes = {}; // Store routes per day
 
-            // Add markers for each activity with geocoding
+            // Add markers for each geocoded activity
             let markerNum = 1;
+            let activityIndex = 0;
+
             for (const dayData of parsedData) {
                 const dayCoords = [];
 
                 for (const activity of dayData.activities) {
+                    const geocoded = geocodedActivities[activityIndex];
                     let lat, lng;
 
-                    // Try to geocode the activity location
-                    const geocodeResult = await geocodeActivity(activity.description, destination);
-
-                    if (geocodeResult) {
-                        lat = geocodeResult.lat;
-                        lng = geocodeResult.lng;
-                        console.log(`Geocoded "${activity.description.split('.')[0]}" to [${lat}, ${lng}]`);
+                    if (geocoded && geocoded.geocode && geocoded.geocode.success && geocoded.geocode.lat && geocoded.geocode.lng) {
+                        lat = geocoded.geocode.lat;
+                        lng = geocoded.geocode.lng;
+                        console.log(`✓ Using geocoded location for "${activity.description.split('.')[0]}"`);
                     } else {
                         // Fallback: Generate slightly offset coordinates around destination
                         const offset = () => (Math.random() - 0.5) * 0.04;
                         lat = defaultCoords[0] + offset();
                         lng = defaultCoords[1] + offset();
-                        console.log(`Using random offset for "${activity.description.split('.')[0]}"`);
+                        console.log(`⚠ Using fallback location for "${activity.description.split('.')[0]}"`);
                     }
 
                     // Create custom numbered marker
@@ -4712,9 +4686,7 @@
                     allCoords.push([lat, lng]);
                     dayCoords.push([lat, lng]);
                     markerNum++;
-
-                    // Rate limiting: wait 200ms between geocode requests (Nominatim allows 1 req/sec)
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    activityIndex++;
                 }
 
                 // Store day coordinates for route
@@ -4825,7 +4797,31 @@
                 });
             });
 
-            // Show/hide route polylines (only for attractions)
+            // Handle "overall" filter - show all markers and routes
+            if (category === 'overall') {
+                // Show all markers from all categories
+                Object.keys(categorizedMarkers).forEach(cat => {
+                    categorizedMarkers[cat].forEach(marker => {
+                        itineraryMap.addLayer(marker);
+                    });
+                });
+
+                // Show all route polylines
+                routePolylines.forEach(polyline => {
+                    itineraryMap.addLayer(polyline);
+                });
+
+                // Fit bounds to all attraction markers (main route)
+                if (categorizedMarkers.attractions.length > 0) {
+                    const group = new L.featureGroup(categorizedMarkers.attractions);
+                    itineraryMap.fitBounds(group.getBounds().pad(0.15));
+                }
+
+                showToast('🗺️ Showing complete overview', 'info');
+                return;
+            }
+
+            // Show/hide route polylines (only for attractions and overall)
             routePolylines.forEach(polyline => {
                 if (category === 'attractions') {
                     itineraryMap.addLayer(polyline);
