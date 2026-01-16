@@ -1279,6 +1279,8 @@
         /* Activity Cards (Premium Design) */
         .trip-activities {
             padding: 0 24px 24px;
+            min-height: 400px;
+            overflow-y: auto;
         }
 
         .trip-activity-card {
@@ -4407,7 +4409,8 @@
                             <div class="trip-map-header">
                                 <h3>📍 ${destination}</h3>
                                 <div class="trip-map-filters">
-                                    <div class="trip-map-filter active" data-filter="attractions">🎭 Attractions</div>
+                                    <div class="trip-map-filter active" data-filter="overall">🗺️ Overall</div>
+                                    <div class="trip-map-filter" data-filter="attractions">🎭 Attractions</div>
                                     <div class="trip-map-filter" data-filter="hotels">🏨 Hotels</div>
                                     <div class="trip-map-filter" data-filter="food">🍽️ Food</div>
                                 </div>
@@ -4967,6 +4970,9 @@
 
         // Filter activities by day when tab is clicked
         function filterActivitiesByDay(dayNum) {
+            // Store current scroll position to prevent page jumping
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
             const sections = document.querySelectorAll('.trip-day-section');
             sections.forEach(section => {
                 if (dayNum === 0) {
@@ -4974,6 +4980,11 @@
                 } else {
                     section.style.display = section.dataset.day == dayNum ? 'block' : 'none';
                 }
+            });
+
+            // Restore scroll position to prevent jumping
+            requestAnimationFrame(() => {
+                window.scrollTo(0, scrollTop);
             });
         }
 
