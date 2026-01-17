@@ -675,6 +675,289 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        /* ==================== ANIMATED DESTINATION TITLE CARD ==================== */
+
+        .destination-title-card {
+            position: relative;
+            height: 400px;
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .destination-title-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f953c6 50%, #667eea 75%, #764ba2 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: 1;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .destination-title-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .destination-title-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%);
+            z-index: 3;
+        }
+
+        .destination-title-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 4;
+            width: 90%;
+        }
+
+        .destination-title-content h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            color: white;
+            margin: 0 0 20px 0;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            letter-spacing: -2px;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .destination-title-content .subtitle {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 500;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .destination-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: particleFloat 10s infinite ease-in-out;
+        }
+
+        @keyframes particleFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.6;
+            }
+
+            90% {
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: translateY(-400px) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* ==================== FULL-PAGE ITINERARY VIEW ==================== */
+
+        .itinerary-fullpage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f7fa;
+            z-index: 9999;
+            overflow-y: auto;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .itinerary-fullpage.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .itinerary-fullpage-nav {
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .itinerary-fullpage-nav .back-btn {
+            background: transparent;
+            border: 2px solid #003580;
+            color: #003580;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .itinerary-fullpage-nav .back-btn:hover {
+            background: #003580;
+            color: white;
+            transform: translateX(-5px);
+        }
+
+        .itinerary-fullpage-nav .nav-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .itinerary-fullpage-nav .nav-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .itinerary-fullpage-nav .nav-actions button {
+            background: #003580;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .itinerary-fullpage-nav .nav-actions button:hover {
+            background: #002a66;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 53, 128, 0.3);
+        }
+
+        .itinerary-fullpage-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* Map stabilization improvements */
+        .itinerary-map-container {
+            position: relative;
+            min-height: 400px;
+            background: #f0f0f0;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .map-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .map-loading-overlay.hidden {
+            display: none;
+        }
+
+        .map-error-message {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px;
+            text-align: center;
+        }
+
+
         /* Day Cards with Timeline */
         .day-cards-container {
             position: relative;
@@ -2783,6 +3066,63 @@
         </div>
     </div>
 
+    <!-- Full-Page Itinerary View -->
+    <div id="itinerary-fullpage" class="itinerary-fullpage">
+        <div class="itinerary-fullpage-nav">
+            <button class="back-btn" onclick="closeFullPageItinerary()">
+                <i class="fas fa-arrow-left"></i> Back to Search
+            </button>
+            <div class="nav-title" id="itinerary-nav-title">Your Itinerary</div>
+            <div class="nav-actions">
+                <button onclick="downloadItineraryPDF()">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+                <button onclick="shareItinerary()">
+                    <i class="fas fa-share-alt"></i> Share
+                </button>
+            </div>
+        </div>
+        <div class="itinerary-fullpage-content" id="itinerary-fullpage-content">
+            <!-- Itinerary content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Full-Page Flights View -->
+    <div id="flights-fullpage" class="itinerary-fullpage">
+        <div class="itinerary-fullpage-nav">
+            <button class="back-btn" onclick="closeFullPageFlights()">
+                <i class="fas fa-arrow-left"></i> Back to Search
+            </button>
+            <div class="nav-title" id="flights-nav-title">Flight Results</div>
+            <div class="nav-actions">
+                <button onclick="window.print()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+        <div class="itinerary-fullpage-content" id="flights-fullpage-content">
+            <!-- Flight results will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Full-Page Hotels View -->
+    <div id="hotels-fullpage" class="itinerary-fullpage">
+        <div class="itinerary-fullpage-nav">
+            <button class="back-btn" onclick="closeFullPageHotels()">
+                <i class="fas fa-arrow-left"></i> Back to Search
+            </button>
+            <div class="nav-title" id="hotels-nav-title">Hotel Results</div>
+            <div class="nav-actions">
+                <button onclick="window.print()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+        <div class="itinerary-fullpage-content" id="hotels-fullpage-content">
+            <!-- Hotel results will be dynamically inserted here -->
+        </div>
+    </div>
+
     <script>
         // ====================================================================================
         // VOYA AI Frontend - Security Hardened
@@ -3441,6 +3781,11 @@
 
             hideSearchOverlay();
             displayFlights(flights, resultsDiv);
+
+            // Automatically open full-page view after a short delay
+            setTimeout(() => {
+                openFullPageFlights(from, to);
+            }, 500);
 
             searchAbortController = null;
         }
@@ -4109,6 +4454,11 @@
                 // Display the currently selected tier (default: midrange)
                 displayFormattedItinerary(window.tierItineraries[currentTier], resultsDiv);
 
+                // Automatically open full-page itinerary view
+                setTimeout(() => {
+                    openFullPageItinerary();
+                }, 500);
+
                 showToast('✨ Generated 3 itineraries! Switch tiers to explore different options.', 'success');
 
             } catch (error) {
@@ -4529,6 +4879,300 @@
                 }
                 showToast(`Switched to ${tier.charAt(0).toUpperCase() + tier.slice(1)} tier! Generate itinerary to see tier-specific activities.`, 'info');
             }
+        }
+
+        // ==================== FULL-PAGE ITINERARY VIEW FUNCTIONS ====================
+
+        function openFullPageItinerary() {
+            const fullPageDiv = document.getElementById('itinerary-fullpage');
+            const contentDiv = document.getElementById('itinerary-fullpage-content');
+            const navTitle = document.getElementById('itinerary-nav-title');
+            const resultsDiv = document.getElementById('ai-results');
+
+            if (!fullPageDiv || !contentDiv) return;
+
+            // Set navigation title
+            const destination = window.currentDestination || 'Your Destination';
+            navTitle.textContent = `${destination} Itinerary`;
+
+            // Create animated title card
+            const titleCardHTML = createAnimatedTitleCard(destination);
+
+            // Copy itinerary content from results div
+            const itineraryContent = resultsDiv.innerHTML;
+
+            // Insert into full-page view with title card
+            contentDiv.innerHTML = titleCardHTML + itineraryContent;
+
+            // Show full-page view
+            fullPageDiv.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+            // Re-initialize map in full-page view
+            setTimeout(() => {
+                if (window.parsedItineraryData && window.currentDestination) {
+                    initializeItineraryMap(window.currentDestination, window.parsedItineraryData);
+                }
+            }, 300);
+
+            // Re-attach event listeners
+            attachItineraryEventListeners();
+        }
+
+        function closeFullPageItinerary() {
+            const fullPageDiv = document.getElementById('itinerary-fullpage');
+            if (fullPageDiv) {
+                fullPageDiv.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+        }
+
+        function createAnimatedTitleCard(destination) {
+            // Create particles HTML
+            let particlesHTML = '';
+            for (let i = 0; i < 20; i++) {
+                const left = Math.random() * 100;
+                const delay = Math.random() * 10;
+                const duration = 8 + Math.random() * 4;
+                particlesHTML += `<div class="particle" style="left: ${left}%; animation-delay: ${delay}s; animation-duration: ${duration}s;"></div>`;
+            }
+
+            return `
+                <div class="destination-title-card">
+                    <div class="destination-particles">${particlesHTML}</div>
+                    <div class="destination-title-overlay"></div>
+                    <div class="destination-title-content">
+                        <h1>${destination}</h1>
+                        <div class="subtitle">Your AI-Powered Journey Awaits</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachItineraryEventListeners() {
+            // Re-attach tier tab listeners
+            document.querySelectorAll('.trip-tier-tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    const tier = this.getAttribute('data-tier');
+                    if (tier && window.tierItineraries[tier]) {
+                        switchTier(tier);
+                        // Refresh full-page view
+                        setTimeout(() => openFullPageItinerary(), 100);
+                    }
+                });
+            });
+
+            // Re-attach day tab listeners
+            document.querySelectorAll('.trip-day-tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    document.querySelectorAll('.trip-day-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const day = parseInt(this.getAttribute('data-day'));
+                    filterMapByDay(day);
+                });
+            });
+
+            // Re-attach map filter listeners
+            document.querySelectorAll('.trip-map-filter').forEach(filter => {
+                filter.addEventListener('click', function () {
+                    document.querySelectorAll('.trip-map-filter').forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    const filterType = this.getAttribute('data-filter');
+                    filterMapMarkers(filterType);
+                });
+            });
+        }
+
+        function downloadItineraryPDF() {
+            const element = document.getElementById('itinerary-fullpage-content');
+            if (!element) {
+                showToast('No itinerary to download', 'warning');
+                return;
+            }
+
+            const destination = window.currentDestination || 'itinerary';
+            const filename = `${destination.replace(/\s+/g, '_')}_itinerary.pdf`;
+
+            const opt = {
+                margin: 10,
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+            showToast('Downloading PDF...', 'success');
+        }
+
+        function shareItinerary() {
+            const destination = window.currentDestination || 'destination';
+            const shareText = `Check out my ${destination} itinerary created with VOYA AI Travel Planner!`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: `${destination} Itinerary`,
+                    text: shareText,
+                    url: window.location.href
+                }).catch(err => console.log('Share cancelled'));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText + '\n' + window.location.href)
+                    .then(() => showToast('Link copied to clipboard!', 'success'))
+                    .catch(() => showToast('Could not copy link', 'warning'));
+            }
+        }
+
+        // ==================== FLIGHTS FULL-PAGE VIEW FUNCTIONS ====================
+
+        function openFullPageFlights(from, to) {
+            const fullPageDiv = document.getElementById('flights-fullpage');
+            const contentDiv = document.getElementById('flights-fullpage-content');
+            const navTitle = document.getElementById('flights-nav-title');
+            const resultsDiv = document.getElementById('flight-results');
+
+            if (!fullPageDiv || !contentDiv) return;
+
+            // Set navigation title
+            const route = from && to ? `${from} → ${to}` : 'Flight Results';
+            navTitle.textContent = route;
+
+            // Copy flight results from results div
+            const flightContent = resultsDiv.innerHTML;
+
+            // Insert into full-page view
+            contentDiv.innerHTML = `
+                <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 30px; color: white;">
+                        <h1 style="font-size: 2.5rem; margin: 0 0 10px 0;">✈️ ${route}</h1>
+                        <p style="font-size: 1.1rem; opacity: 0.9; margin: 0;">Browse and compare flight options</p>
+                    </div>
+                    ${flightContent}
+                </div>
+            `;
+
+            // Show full-page view
+            fullPageDiv.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFullPageFlights() {
+            const fullPageDiv = document.getElementById('flights-fullpage');
+            if (fullPageDiv) {
+                fullPageDiv.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // ==================== HOTELS FULL-PAGE VIEW FUNCTIONS ====================
+
+        function openFullPageHotels(destination) {
+            const fullPageDiv = document.getElementById('hotels-fullpage');
+            const contentDiv = document.getElementById('hotels-fullpage-content');
+            const navTitle = document.getElementById('hotels-nav-title');
+            const resultsDiv = document.getElementById('hotel-results');
+
+            if (!fullPageDiv || !contentDiv) return;
+
+            // Set navigation title
+            const title = destination ? `Hotels in ${destination}` : 'Hotel Results';
+            navTitle.textContent = title;
+
+            // Copy hotel results from results div
+            const hotelContent = resultsDiv.innerHTML;
+
+            // Insert into full-page view
+            contentDiv.innerHTML = `
+                <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(135deg, #f953c6 0%, #b91d73 100%); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 30px; color: white;">
+                        <h1 style="font-size: 2.5rem; margin: 0 0 10px 0;">🏨 ${title}</h1>
+                        <p style="font-size: 1.1rem; opacity: 0.9; margin: 0;">Find your perfect accommodation</p>
+                    </div>
+                    ${hotelContent}
+                </div>
+            `;
+
+            // Show full-page view
+            fullPageDiv.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFullPageHotels() {
+            const fullPageDiv = document.getElementById('hotels-fullpage');
+            if (fullPageDiv) {
+                fullPageDiv.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // ==================== MAP STABILIZATION IMPROVEMENTS ====================
+
+        // Cache for geocoded coordinates to prevent re-geocoding
+        const geocodeCache = {};
+
+        function getCachedCoordinates(locationKey) {
+            return geocodeCache[locationKey] || null;
+        }
+
+        function setCachedCoordinates(locationKey, coords) {
+            geocodeCache[locationKey] = coords;
+        }
+
+        // Improved destination coordinates with more accuracy
+        function getDestinationCoordinates(destination) {
+            const destLower = destination.toLowerCase();
+            const coords = {
+                // Asia
+                'japan': [35.6762, 139.6503],
+                'tokyo': [35.6762, 139.6503],
+                'kyoto': [35.0116, 135.7681],
+                'osaka': [34.6937, 135.5023],
+                'bali': [-8.3405, 115.0920],
+                'thailand': [13.7563, 100.5018],
+                'bangkok': [13.7563, 100.5018],
+                'singapore': [1.3521, 103.8198],
+                'dubai': [25.2048, 55.2708],
+                'maldives': [3.2028, 73.2207],
+                'india': [28.6139, 77.2090],
+                'delhi': [28.6139, 77.2090],
+                'mumbai': [19.0760, 72.8777],
+
+                // Europe
+                'paris': [48.8566, 2.3522],
+                'london': [51.5074, -0.1278],
+                'rome': [41.9028, 12.4964],
+                'barcelona': [41.3851, 2.1734],
+                'amsterdam': [52.3676, 4.9041],
+                'berlin': [52.5200, 13.4050],
+                'prague': [50.0755, 14.4378],
+                'vienna': [48.2082, 16.3738],
+
+                // Americas
+                'new york': [40.7128, -74.0060],
+                'los angeles': [34.0522, -118.2437],
+                'miami': [25.7617, -80.1918],
+                'mexico': [19.4326, -99.1332],
+                'brazil': [-23.5505, -46.6333],
+                'argentina': [-34.6037, -58.3816],
+
+                // Default fallback
+                'default': [0, 0]
+            };
+
+            // Check cache first
+            const cached = getCachedCoordinates(destLower);
+            if (cached) return cached;
+
+            // Find matching coordinates
+            for (const [key, value] of Object.entries(coords)) {
+                if (destLower.includes(key)) {
+                    setCachedCoordinates(destLower, value);
+                    return value;
+                }
+            }
+
+            // Return default and mark for geocoding
+            return coords.default;
         }
 
         // Global storage for categorized markers
