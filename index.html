@@ -957,6 +957,189 @@
             text-align: center;
         }
 
+        /* ==================== TRIP.COM-STYLE COMPACT STICKY SEARCH BAR ==================== */
+
+        .compact-search-bar {
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 15px 30px;
+            z-index: 99;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .compact-search-bar .search-summary {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .compact-search-bar .search-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .compact-search-bar .search-detail strong {
+            color: #003580;
+            font-weight: 600;
+        }
+
+        .compact-search-bar .modify-search-btn {
+            background: #003580;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .compact-search-bar .modify-search-btn:hover {
+            background: #002a66;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 53, 128, 0.3);
+        }
+
+        /* ==================== SKELETON LOADERS (TRIP.COM STYLE) ==================== */
+
+        .skeleton-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .skeleton-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            animation: skeletonPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes skeletonPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .skeleton-line {
+            height: 16px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            animation: skeletonShimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes skeletonShimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-line.short {
+            width: 60%;
+        }
+
+        .skeleton-line.medium {
+            width: 80%;
+        }
+
+        .skeleton-line.long {
+            width: 100%;
+        }
+
+        .skeleton-image {
+            width: 200px;
+            height: 150px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 8px;
+            animation: skeletonShimmer 1.5s ease-in-out infinite;
+        }
+
+        .skeleton-flight-card {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .skeleton-hotel-card {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* ==================== SMOOTH FADE-IN ANIMATIONS ==================== */
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .fade-in-delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .fade-in-delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .fade-in-delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Results container with fade-in */
+        .results-loaded {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
 
         /* Day Cards with Timeline */
         .day-cards-container {
@@ -5037,23 +5220,69 @@
             const route = from && to ? `${from} → ${to}` : 'Flight Results';
             navTitle.textContent = route;
 
-            // Copy flight results from results div
-            const flightContent = resultsDiv.innerHTML;
-
-            // Insert into full-page view
-            contentDiv.innerHTML = `
-                <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 30px; color: white;">
-                        <h1 style="font-size: 2.5rem; margin: 0 0 10px 0;">✈️ ${route}</h1>
-                        <p style="font-size: 1.1rem; opacity: 0.9; margin: 0;">Browse and compare flight options</p>
-                    </div>
-                    ${flightContent}
-                </div>
-            `;
+            // Show skeleton loaders first
+            contentDiv.innerHTML = createFlightSkeletons();
 
             // Show full-page view
             fullPageDiv.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            // After a short delay, load actual content with fade-in
+            setTimeout(() => {
+                const flightContent = resultsDiv.innerHTML;
+
+                // Create compact search bar (Trip.com style)
+                const compactSearchBar = `
+                    <div class="compact-search-bar">
+                        <div class="search-summary">
+                            <div class="search-detail">
+                                <i class="fas fa-plane-departure" style="color: #003580;"></i>
+                                <span><strong>${from || 'Origin'}</strong></span>
+                            </div>
+                            <i class="fas fa-arrow-right" style="color: #999;"></i>
+                            <div class="search-detail">
+                                <i class="fas fa-plane-arrival" style="color: #003580;"></i>
+                                <span><strong>${to || 'Destination'}</strong></span>
+                            </div>
+                        </div>
+                        <button class="modify-search-btn" onclick="closeFullPageFlights()">
+                            <i class="fas fa-edit"></i> Modify Search
+                        </button>
+                    </div>
+                `;
+
+                // Insert into full-page view with compact search bar
+                contentDiv.innerHTML = `
+                    ${compactSearchBar}
+                    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;" class="fade-in">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 30px; color: white;">
+                            <h1 style="font-size: 2.5rem; margin: 0 0 10px 0;">✈️ ${route}</h1>
+                            <p style="font-size: 1.1rem; opacity: 0.9; margin: 0;">Browse and compare flight options</p>
+                        </div>
+                        <div class="results-loaded">${flightContent}</div>
+                    </div>
+                `;
+            }, 800);
+        }
+
+        function createFlightSkeletons() {
+            let skeletons = '<div class="skeleton-container">';
+            for (let i = 0; i < 5; i++) {
+                skeletons += `
+                    <div class="skeleton-card">
+                        <div class="skeleton-flight-card">
+                            <div style="flex: 1;">
+                                <div class="skeleton-line medium"></div>
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line long"></div>
+                            </div>
+                            <div class="skeleton-line short" style="width: 100px;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            skeletons += '</div>';
+            return skeletons;
         }
 
         function closeFullPageFlights() {
@@ -5078,23 +5307,65 @@
             const title = destination ? `Hotels in ${destination}` : 'Hotel Results';
             navTitle.textContent = title;
 
-            // Copy hotel results from results div
-            const hotelContent = resultsDiv.innerHTML;
-
-            // Insert into full-page view
-            contentDiv.innerHTML = `
-                <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-                    <div style="background: linear-gradient(135deg, #f953c6 0%, #b91d73 100%); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 30px; color: white;">
-                        <h1 style="font-size: 2.5rem; margin: 0 0 10px 0;">🏨 ${title}</h1>
-                        <p style="font-size: 1.1rem; opacity: 0.9; margin: 0;">Find your perfect accommodation</p>
-                    </div>
-                    ${hotelContent}
-                </div>
-            `;
+            // Show skeleton loaders first
+            contentDiv.innerHTML = createHotelSkeletons();
 
             // Show full-page view
             fullPageDiv.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            // After a short delay, load actual content with fade-in
+            setTimeout(() => {
+                const hotelContent = resultsDiv.innerHTML;
+
+                // Create compact search bar (Trip.com style)
+                const compactSearchBar = `
+                    <div class="compact-search-bar">
+                        <div class="search-summary">
+                            <div class="search-detail">
+                                <i class="fas fa-map-marker-alt" style="color: #003580;"></i>
+                                <span><strong>${destination || 'Destination'}</strong></span>
+                            </div>
+                        </div>
+                        <button class="modify-search-btn" onclick="closeFullPageHotels()">
+                            <i class="fas fa-edit"></i> Modify Search
+                        </button>
+                    </div>
+                `;
+
+                // Insert into full-page view with compact search bar
+                contentDiv.innerHTML = `
+                    ${compactSearchBar}
+                    <div style="max-width: 1200px; margin: 0 auto; padding: 20px;" class="fade-in">
+                        <div style="background: linear-gradient(135deg, #f953c6 0%, #b91d73 100%); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 30px; color: white;">
+                            <h1 style="font-size: 2.5rem; margin: 0 0 10px 0;">🏨 ${title}</h1>
+                            <p style="font-size: 1.1rem; opacity: 0.9; margin: 0;">Find your perfect accommodation</p>
+                        </div>
+                        <div class="results-loaded">${hotelContent}</div>
+                    </div>
+                `;
+            }, 800);
+        }
+
+        function createHotelSkeletons() {
+            let skeletons = '<div class="skeleton-container">';
+            for (let i = 0; i < 5; i++) {
+                skeletons += `
+                    <div class="skeleton-card">
+                        <div class="skeleton-hotel-card">
+                            <div class="skeleton-image"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton-line medium"></div>
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line long"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            skeletons += '</div>';
+            return skeletons;
         }
 
         function closeFullPageHotels() {
