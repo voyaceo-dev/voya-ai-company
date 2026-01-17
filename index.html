@@ -4314,6 +4314,11 @@
 
             loader.style.display = 'none';
             displayHotels(hotels, resultsDiv, checkin, checkout);
+
+            // Auto-open full-page view for hotels (Trip.com style)
+            setTimeout(() => {
+                openFullPageHotels(destination);
+            }, 500);
         }
 
         function displayHotels(hotels, container, checkin, checkout) {
