@@ -2986,12 +2986,8 @@
                 <div class="user-menu" id="user-menu">
                     <div class="user-info">
                         <span class="user-name" id="user-name"></span>
-                        <span class="user-email" id="user-email"></span>
                     </div>
                     <div class="menu-divider"></div>
-                    <button class="menu-item" onclick="viewSavedTrips()">
-                        <i class="fas fa-suitcase"></i> My Trips
-                    </button>
                     <button class="menu-item" onclick="handleSignOut()">
                         <i class="fas fa-sign-out-alt"></i> Sign Out
                     </button>
@@ -6574,7 +6570,6 @@
             const userProfile = document.getElementById('user-profile');
             const userAvatar = document.getElementById('user-avatar');
             const userName = document.getElementById('user-name');
-            const userEmail = document.getElementById('user-email');
 
             if (currentUser && signinBtn && userProfile) {
                 signinBtn.style.display = 'none';
@@ -6585,7 +6580,6 @@
                 }
 
                 if (userName) userName.textContent = currentUser.name || 'User';
-                if (userEmail) userEmail.textContent = currentUser.email || '';
             }
         }
 
