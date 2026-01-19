@@ -213,6 +213,22 @@
             color: var(--gray);
         }
 
+        .required-indicator {
+            color: #dc3545;
+            margin-left: 2px;
+        }
+
+        .input-error {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+        }
+
+        .error-text {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
         input,
         select,
         textarea {
@@ -3070,7 +3086,7 @@
                 <!-- From / To Row -->
                 <div class="search-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
                     <div class="input-group">
-                        <label>From</label>
+                        <label>From <span class="required-indicator">*</span></label>
                         <div class="airport-input-container">
                             <input type="text" id="flight-from" placeholder="City or airport" autocomplete="off"
                                 oninput="searchAirport(this, 'from-dropdown')"
@@ -3080,7 +3096,7 @@
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>To</label>
+                        <label>To <span class="required-indicator">*</span></label>
                         <div class="airport-input-container">
                             <input type="text" id="flight-to" placeholder="City or airport" autocomplete="off"
                                 oninput="searchAirport(this, 'to-dropdown')" onfocus="showRecentAirports('to-dropdown')"
@@ -3092,7 +3108,7 @@
                 <!-- Date Row - Separate side by side -->
                 <div class="search-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 20px;">
                     <div class="input-group">
-                        <label>Departure</label>
+                        <label>Departure <span class="required-indicator">*</span></label>
                         <input type="date" id="flight-depart">
                     </div>
                     <div class="input-group" id="return-date-group">
@@ -3195,8 +3211,8 @@
                 <i class="fas fa-search"></i> Search Flights
             </button>
 
-            <div id="flight-loader" class="loader">
-                <div class="spinner"></div>
+            <div id="flight-loader" class="loader" role="status" aria-label="Searching for flights">
+                <div class="spinner" aria-hidden="true"></div>
                 <p>Searching for best flight deals...</p>
                 <div class="loader-dots">
                     <span></span><span></span><span></span>
@@ -3210,15 +3226,15 @@
         <div id="hotels" class="tab-content">
             <div class="search-grid">
                 <div class="input-group" style="grid-column: span 2;">
-                    <label>Destination</label>
+                    <label>Destination <span class="required-indicator">*</span></label>
                     <input type="text" id="hotel-dest" placeholder="e.g., Dubai, Paris, New York">
                 </div>
                 <div class="input-group">
-                    <label>Check-in</label>
+                    <label>Check-in <span class="required-indicator">*</span></label>
                     <input type="date" id="hotel-checkin">
                 </div>
                 <div class="input-group">
-                    <label>Check-out</label>
+                    <label>Check-out <span class="required-indicator">*</span></label>
                     <input type="date" id="hotel-checkout">
                 </div>
             </div>
@@ -3258,8 +3274,8 @@
                 <i class="fas fa-search"></i> Search Hotels
             </button>
 
-            <div id="hotel-loader" class="loader">
-                <div class="spinner"></div>
+            <div id="hotel-loader" class="loader" role="status" aria-label="Searching for hotels">
+                <div class="spinner" aria-hidden="true"></div>
                 <p>Finding best hotel deals...</p>
                 <div class="loader-dots">
                     <span></span><span></span><span></span>
@@ -3273,7 +3289,7 @@
         <div id="ai-itinerary" class="tab-content" style="display: block;">
             <div class="search-grid">
                 <div class="input-group" style="grid-column: span 2;">
-                    <label>Destination</label>
+                    <label>Destination <span class="required-indicator">*</span></label>
                     <input type="text" id="ai-dest" placeholder="e.g., Japan, Bali, Dubai">
                 </div>
                 <div class="input-group">
@@ -3285,10 +3301,13 @@
                 <label>Preferences</label>
                 <textarea id="ai-prefs" rows="3" placeholder="Focus on food and culture..."></textarea>
             </div>
-            <button class="btn-main" id="generate-btn" onclick="generateAITrip()">Generate Trip</button>
+            <button class="btn-main" id="generate-btn" onclick="generateAITrip()">
+                <i class="fas fa-magic" id="generate-btn-icon"></i>
+                <span id="generate-btn-text">Generate Trip</span>
+            </button>
 
-            <div id="ai-loader" class="loader">
-                <div class="spinner"></div>
+            <div id="ai-loader" class="loader" role="status" aria-label="Generating itinerary">
+                <div class="spinner" aria-hidden="true"></div>
                 <p>AI is crafting your perfect journey...</p>
                 <div class="loader-dots">
                     <span></span><span></span><span></span>
@@ -4365,6 +4384,11 @@
             loader.style.display = 'none';
             displayHotels(hotels, resultsDiv, checkin, checkout);
 
+            // Show success toast
+            if (hotels.length > 0) {
+                showToast(`✅ Found ${hotels.length} hotels in ${destination}`, 'success');
+            }
+
             // Auto-open full-page view for hotels (Trip.com style)
             setTimeout(() => {
                 openFullPageHotels(destination);
@@ -4644,6 +4668,15 @@
             resultsDiv.innerHTML = '<p style="text-align:center;color:#888;padding:20px;">🔄 Generating 3 personalized itineraries (Budget, Mid-Range, Luxury)...</p>';
             btn.disabled = true;
 
+            // Update button to show loading state
+            const btnText = document.getElementById('generate-btn-text');
+            const btnIcon = document.getElementById('generate-btn-icon');
+            if (btnText) btnText.textContent = 'Generating...';
+            if (btnIcon) {
+                btnIcon.classList.remove('fa-magic');
+                btnIcon.classList.add('fa-spinner', 'fa-spin');
+            }
+
             // Reset stored itineraries
             window.tierItineraries = { budget: null, midrange: null, luxury: null };
 
@@ -4707,6 +4740,14 @@
                 </div>`;
             } finally {
                 btn.disabled = false;
+                // Restore button text
+                const btnText = document.getElementById('generate-btn-text');
+                const btnIcon = document.getElementById('generate-btn-icon');
+                if (btnText) btnText.textContent = 'Generate Trip';
+                if (btnIcon) {
+                    btnIcon.classList.remove('fa-spinner', 'fa-spin');
+                    btnIcon.classList.add('fa-magic');
+                }
             }
         }
 
@@ -6609,6 +6650,11 @@
 
         // Handle Sign Out
         function handleSignOut() {
+            // Confirm before signing out
+            if (!confirm('Are you sure you want to sign out?')) {
+                return;
+            }
+
             currentUser = null;
             localStorage.removeItem('voya_user');
 
