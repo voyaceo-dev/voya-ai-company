@@ -3004,6 +3004,9 @@
                         <span class="user-name" id="user-name"></span>
                     </div>
                     <div class="menu-divider"></div>
+                    <button class="menu-item" onclick="loadMyTrips()">
+                        <i class="fas fa-suitcase"></i> My Trips
+                    </button>
                     <button class="menu-item" onclick="handleSignOut()">
                         <i class="fas fa-sign-out-alt"></i> Sign Out
                     </button>
@@ -5052,6 +5055,9 @@
                     </div>
                     
                     <div class="itinerary-actions">
+                        <button class="btn-outline" onclick="saveTrip()" id="save-trip-btn">
+                            <i class="fas fa-save"></i> Save Trip
+                        </button>
                         <button class="btn-outline" onclick="copyItinerary()">
                             <i class="fas fa-copy"></i> Copy
                         </button>
@@ -5204,6 +5210,129 @@
                 fullPageDiv.classList.remove('active');
                 document.body.style.overflow = ''; // Restore scrolling
             }
+        }
+
+        // ==================== TRIP SAVING (SUPABASE) ====================
+
+        async function saveTrip() {
+            // Check if user is logged in
+            if (!currentUser) {
+                showToast('⚠️ Please sign in to save your trip', 'info');
+                openSignInModal();
+                return;
+            }
+
+            // Get current destination and itinerary
+            const destination = document.getElementById('ai-dest')?.value?.trim() || 'Unknown';
+            const tripData = window.tierItineraries[currentTier];
+
+            if (!tripData) {
+                showToast('⚠️ No itinerary to save. Please generate one first.', 'info');
+                return;
+            }
+
+            const btn = document.getElementById('save-trip-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/itinerary/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        destination: destination,
+                        trip_data: {
+                            tier: currentTier,
+                            content: tripData,
+                            allTiers: window.tierItineraries
+                        },
+                        start_date: null,
+                        end_date: null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Trip saved successfully!', 'success');
+                    if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            } catch (error) {
+                console.error('Save trip error:', error);
+                showToast('❌ Failed to save trip. Please try again.', 'error');
+                if (btn) btn.innerHTML = '<i class="fas fa-save"></i> Save Trip';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fas fa-save"></i> Save Trip';
+                    }, 2000);
+                }
+            }
+        }
+
+        async function loadMyTrips() {
+            if (!currentUser) {
+                showToast('⚠️ Please sign in to view your trips', 'info');
+                openSignInModal();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/itinerary/list`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUser.id })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displaySavedTrips(data.itineraries);
+                } else {
+                    showToast('❌ Failed to load trips', 'error');
+                }
+            } catch (error) {
+                console.error('Load trips error:', error);
+                showToast('❌ Failed to load trips', 'error');
+            }
+        }
+
+        function displaySavedTrips(itineraries) {
+            if (!itineraries || itineraries.length === 0) {
+                showToast('📭 No saved trips yet. Generate and save your first trip!', 'info');
+                return;
+            }
+
+            // Create a simple modal to show saved trips
+            const modal = document.createElement('div');
+            modal.id = 'saved-trips-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10001;display:flex;align-items:center;justify-content:center;';
+
+            let tripsHTML = itineraries.map(trip => `
+                <div style="background:#2a2a2a;padding:15px;margin:10px 0;border-radius:8px;cursor:pointer;" onclick="loadTrip('${trip.id}')">
+                    <h4 style="margin:0;color:#fff;">📍 ${trip.destination}</h4>
+                    <small style="color:#888;">Saved: ${new Date(trip.created_at).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+
+            modal.innerHTML = `
+                <div style="background:#1a1a1a;padding:30px;border-radius:12px;max-width:500px;width:90%;max-height:70vh;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;color:#fff;">🧳 My Saved Trips</h3>
+                        <button onclick="this.closest('#saved-trips-modal').remove()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">&times;</button>
+                    </div>
+                    ${tripsHTML}
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
         }
 
         function createAnimatedTitleCard(destination) {
@@ -5656,12 +5785,27 @@
             geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities, currentGenerationId);
         }
 
-        // Progressive marker loading with visual feedback
+        // Progressive marker loading with AI-powered batch geocoding
         async function geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities, generationId) {
             // Store all coordinates for route drawing
             const allCoords = [];
             const dayRoutes = {};
             let markerNum = 1;
+
+            // Collect all activity descriptions for batch AI geocoding
+            const allActivities = [];
+            const activityMetadata = []; // Store day and time info for each activity
+
+            for (const dayData of parsedData) {
+                for (const activity of dayData.activities) {
+                    allActivities.push(activity.description);
+                    activityMetadata.push({
+                        day: dayData.day,
+                        time: activity.time,
+                        description: activity.description
+                    });
+                }
+            }
 
             // Show placeholder markers immediately with loading animation
             for (const dayData of parsedData) {
@@ -5734,51 +5878,137 @@
                 }
             });
 
-            // Reset view to destination center initialy 
+            // Reset view to destination center initially 
             itineraryMap.setView(defaultCoords, 13);
 
-            // Start progressive geocoding
+            // Try AI BATCH GEOCODING first (much faster and more accurate)
             let loadedCount = 0;
+            let aiGeocodeResults = null;
 
-            // PROGRESSIVE GEOCODING LOOP
-            for (let i = 0; i < mapMarkers.length; i++) {
-                // Stop if map generation changed (CRITICAL FIX)
-                if (mapGenerationId !== generationId) return;
+            try {
+                console.log(`🤖 Using AI geocoding for ${allActivities.length} activities in ${destination}`);
+                showToast(`🤖 AI geocoding ${allActivities.length} locations...`, 'info');
 
-                const markerData = mapMarkers[i];
+                const response = await fetch(`${API_BASE_URL}/api/geocode/ai`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        activities: allActivities,
+                        destination: destination
+                    })
+                });
 
-                // Geocode individual activity with PROXIMITY BIAS
-                // Use defaultCoords (destination center) as proximity hint
-                const realCoords = await getDestinationCoordinates(markerData.activity.description, defaultCoords);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.results) {
+                        aiGeocodeResults = data.results;
+                        console.log(`✅ AI geocoded ${aiGeocodeResults.length} locations in ${data.processingTime}s`);
 
-                if (realCoords) {
-                    // Update marker position
-                    const newLatLng = L.latLng(realCoords[0], realCoords[1]);
-                    markerData.marker.setLatLng(newLatLng);
+                        // Update destination center if provided
+                        if (data.destinationCenter) {
+                            defaultCoords = data.destinationCenter;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('AI geocoding failed, falling back to progressive:', err.message);
+            }
 
-                    // Update icon (remove loading)
-                    const updatedIcon = L.divIcon({
-                        className: 'trip-marker',
-                        html: `<div class="trip-marker">${markerData.activityNum}</div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
-                    });
-                    markerData.marker.setIcon(updatedIcon);
+            // Update markers with AI coordinates or fallback to progressive
+            if (aiGeocodeResults && aiGeocodeResults.length === mapMarkers.length) {
+                // AI BATCH UPDATE - fast path
+                for (let i = 0; i < mapMarkers.length; i++) {
+                    if (mapGenerationId !== generationId) return;
 
-                    // Update popup
-                    markerData.marker.setPopupContent(`
-                        <div class="map-popup-title">${markerData.activity.description.split('.')[0]}</div>
-                        <div class="map-popup-meta">Day ${markerData.day} · ${markerData.activity.time || 'Flexible'}</div>
-                     `);
+                    const markerData = mapMarkers[i];
+                    const aiResult = aiGeocodeResults[i];
 
-                    loadedCount++;
+                    if (aiResult && aiResult.lat && aiResult.lng) {
+                        // Update marker position with AI coordinates
+                        const newLatLng = L.latLng(aiResult.lat, aiResult.lng);
+                        markerData.marker.setLatLng(newLatLng);
+
+                        // Update icon (remove loading)
+                        const updatedIcon = L.divIcon({
+                            className: 'trip-marker',
+                            html: `<div class="trip-marker">${markerData.activityNum}</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+                        markerData.marker.setIcon(updatedIcon);
+
+                        // Update popup with AI-provided name
+                        const locationName = aiResult.name || markerData.activity.description.split('.')[0];
+                        markerData.marker.setPopupContent(`
+                            <div class="map-popup-title">${locationName}</div>
+                            <div class="map-popup-meta">Day ${markerData.day} · ${markerData.activity.time || 'Flexible'}</div>
+                         `);
+
+                        loadedCount++;
+                    }
                 }
 
-                // Progress update
-                if (loadedCount % 5 === 0) console.log(`✓ Loaded ${loadedCount}/${totalActivities}`);
+                // Redraw routes with accurate coordinates
+                const updatedDayRoutes = {};
+                for (const markerData of mapMarkers) {
+                    const latlng = markerData.marker.getLatLng();
+                    if (!updatedDayRoutes[markerData.day]) updatedDayRoutes[markerData.day] = [];
+                    updatedDayRoutes[markerData.day].push([latlng.lat, latlng.lng]);
+                }
 
-                // Throttle to respect OpenCage API limits (1 req/200ms approx)
-                await new Promise(r => setTimeout(r, 200));
+                // Remove old polylines and draw new ones
+                routePolylines.forEach(p => itineraryMap.removeLayer(p));
+                routePolylines = [];
+                dayPolylines = {};
+
+                Object.keys(updatedDayRoutes).forEach((day, index) => {
+                    const coords = updatedDayRoutes[day];
+                    if (coords.length >= 2) {
+                        const polyline = L.polyline(coords, {
+                            color: dayColors[index % dayColors.length],
+                            weight: 4,
+                            opacity: 0.7,
+                            lineJoin: 'round'
+                        }).addTo(itineraryMap);
+                        routePolylines.push(polyline);
+                        if (!dayPolylines[day]) dayPolylines[day] = [];
+                        dayPolylines[day].push(polyline);
+                    }
+                });
+
+            } else {
+                // FALLBACK: Progressive geocoding (slower)
+                console.log('⚠️ AI geocoding unavailable, using progressive geocoding...');
+
+                for (let i = 0; i < mapMarkers.length; i++) {
+                    if (mapGenerationId !== generationId) return;
+
+                    const markerData = mapMarkers[i];
+                    const realCoords = await getDestinationCoordinates(markerData.activity.description, defaultCoords);
+
+                    if (realCoords) {
+                        const newLatLng = L.latLng(realCoords[0], realCoords[1]);
+                        markerData.marker.setLatLng(newLatLng);
+
+                        const updatedIcon = L.divIcon({
+                            className: 'trip-marker',
+                            html: `<div class="trip-marker">${markerData.activityNum}</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+                        markerData.marker.setIcon(updatedIcon);
+
+                        markerData.marker.setPopupContent(`
+                            <div class="map-popup-title">${markerData.activity.description.split('.')[0]}</div>
+                            <div class="map-popup-meta">Day ${markerData.day} · ${markerData.activity.time || 'Flexible'}</div>
+                         `);
+
+                        loadedCount++;
+                    }
+
+                    if (loadedCount % 5 === 0) console.log(`✓ Loaded ${loadedCount}/${totalActivities}`);
+                    await new Promise(r => setTimeout(r, 200));
+                }
             }
 
             // Generate Hotel markers (simulated near destination)
@@ -5830,7 +6060,7 @@
                 const group = new L.featureGroup(mapMarkers.map(m => m.marker));
                 // Fit bounds smoothly
                 itineraryMap.flyToBounds(group.getBounds().pad(0.15), { duration: 1.5 });
-                showToast(`✅ All ${loadedCount} locations loaded!`, 'success');
+                showToast(`✅ All ${loadedCount} locations loaded with AI!`, 'success');
             }
         }
 
@@ -6005,12 +6235,12 @@
             showToast(dayNum === 0 ? '📋 Showing complete itinerary' : `📅 Day ${dayNum} route`, 'info');
         }
 
-        // OpenCage Geocoding API key
-        const OPENCAGE_API_KEY = 'd42a4b56d77b4a40bd3df93eaef0834d';
+        // SECURITY: API keys are now stored in backend only
+        // Frontend geocoding uses backend /api/geocode/single endpoint
 
         // Uses shared geocodeCache defined in Map Stabilization section (line 5478)
 
-        // Get coordinates for any destination using OpenCage Geocoding API
+        // Get coordinates for any destination using backend geocoding API (secure)
         async function getDestinationCoordinates(destination, proximity = null) {
             // Check cache first
             const cacheKey = destination.toLowerCase().trim() + (proximity ? `_${proximity.join(',')}` : '');
@@ -6020,19 +6250,24 @@
             }
 
             try {
-                let url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(destination)}&key=${OPENCAGE_API_KEY}&limit=1`;
-                if (proximity) {
-                    url += `&proximity=${proximity[0]},${proximity[1]}`;
-                }
+                // Use backend API for geocoding (keeps API keys secure)
+                const response = await fetch(`${API_BASE_URL}/api/geocode/single`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        location: destination,
+                        destination: proximity ? null : destination
+                    })
+                });
 
-                const response = await fetch(url);
                 const data = await response.json();
 
-                if (data.results && data.results.length > 0) {
-                    const { lat, lng } = data.results[0].geometry;
-                    const coords = [lat, lng];
+                if (data.success && data.lat && data.lng) {
+                    const coords = [data.lat, data.lng];
                     geocodeCache[cacheKey] = coords;
-                    console.log(`📍 Geocoded ${destination} to [${lat}, ${lng}]`);
+                    console.log(`📍 Geocoded ${destination} to [${data.lat}, ${data.lng}]`);
                     return coords;
                 }
             } catch (error) {
@@ -6043,6 +6278,7 @@
             console.warn(`⚠️ Could not geocode ${destination}, using fallback`);
             return [28.6139, 77.2090];
         }
+
 
         // Parse itinerary content to extract structured data
         function parseItineraryContent(content) {
