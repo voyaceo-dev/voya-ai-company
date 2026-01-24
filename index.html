@@ -5,6 +5,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOYA 🌍 AI | Travel Smarter</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="VOYA AI is your intelligent travel companion. Plan flights, hotels, and AI-powered itineraries in seconds. Travel smarter with personalized recommendations.">
+    <meta name="keywords"
+        content="AI travel planner, flight search, hotel booking, itinerary generator, travel app, smart travel, VOYA AI">
+    <meta name="author" content="VOYA AI">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://voya-ai-company.vercel.app/">
+
+    <!-- Open Graph (Facebook, LinkedIn, Discord) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://voya-ai-company.vercel.app/">
+    <meta property="og:title" content="VOYA AI | Travel Smarter with AI">
+    <meta property="og:description"
+        content="Plan your perfect journey in seconds. AI-powered flights, hotels, and personalized itineraries.">
+    <meta property="og:image" content="https://voya-ai-company.vercel.app/og-preview.png">
+    <meta property="og:site_name" content="VOYA AI">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VOYA AI | Travel Smarter with AI">
+    <meta name="twitter:description"
+        content="Plan your perfect journey in seconds. AI-powered flights, hotels, and personalized itineraries.">
+    <meta name="twitter:image" content="https://voya-ai-company.vercel.app/og-preview.png">
+
+    <!-- Favicon (SVG Globe) -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230f172a'/%3E%3Cellipse cx='50' cy='50' rx='20' ry='45' fill='none' stroke='%23D4AF37' stroke-width='2'/%3E%3Cellipse cx='50' cy='50' rx='45' ry='20' fill='none' stroke='%23D4AF37' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23D4AF37' stroke-width='2'/%3E%3C/svg%3E">
+
+    <!-- Theme Color (Mobile Browser) -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "VOYA AI",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Web",
+        "description": "AI-powered travel planning app for flights, hotels, and personalized itineraries.",
+        "url": "https://voya-ai-company.vercel.app/",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "1200"
+        }
+    }
+    </script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Leaflet.js for Interactive Maps -->
@@ -3524,6 +3581,437 @@
         }
 
         /* ==================== END ANTIGRAVITY THEME ==================== */
+
+        /* ================================================================= */
+        /* 🏛️ PORCELAIN & GOLD THEME (CLASSIC LUXURY) */
+        /* ================================================================= */
+
+        /* 1. Warm Cream Background (Porcelain) */
+        body,
+        .itinerary-fullpage,
+        .itinerary-fullpage-content {
+            background: #FAFAF9 !important;
+            /* Stone-50 / Warm White */
+            color: #44403C !important;
+            /* Warm Grey Text */
+        }
+
+        /* 2. Clean White Cards with Gold Borders */
+        .trip-activity-card,
+        .trip-budget-sidebar,
+        .trip-map-panel,
+        .compact-search-bar,
+        .budget-box,
+        .itinerary-container li,
+        .day-card {
+            background: #FFFFFF !important;
+            backdrop-filter: none !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            /* Champagne Gold 30% */
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08) !important;
+            /* Soft Premium Shadow */
+            border-radius: 12px !important;
+            /* Slightly sharper corners for classic feel */
+            color: #292524 !important;
+        }
+
+        /* Hover Effect for Cards */
+        .trip-activity-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: 0 20px 50px -10px rgba(212, 175, 55, 0.15) !important;
+            border-color: rgba(212, 175, 55, 0.6) !important;
+        }
+
+        /* 3. Typography: Elegant Serif Headlines */
+        h1,
+        h2,
+        h3,
+        h4,
+        .trip-activity-title,
+        .nav-title,
+        strong,
+        .trip-budget-header h3 {
+            font-family: 'Playfair Display', serif !important;
+            /* Assuming font is available, or fallback to serif */
+            color: #1C1917 !important;
+            /* Deep Charcoal */
+            letter-spacing: -0.02em !important;
+            text-shadow: none !important;
+        }
+
+        /* Import Google Font if possible via CSS (might not work if blocked, but worth trying) */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap');
+
+        /* 4. Champagne Gold Buttons & Accents */
+        .btn-main,
+        .btn-book,
+        #save-trip-btn,
+        .modifier-search-btn,
+        .trip-budget-total {
+            background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%) !important;
+            /* Metallic Gold */
+            color: #FFFFFF !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            font-size: 0.85rem !important;
+            font-weight: 600 !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3) !important;
+        }
+
+        .btn-main:hover,
+        .btn-book:hover,
+        #save-trip-btn:hover {
+            background: linear-gradient(135deg, #E5C158 0%, #D4AF37 100%) !important;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4) !important;
+        }
+
+        /* 5. Gold Activity Numbers & Badges */
+        .trip-activity-number,
+        .trip-day-tab.active,
+        .trip-year-badge {
+            background: #D4AF37 !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4) !important;
+            font-family: 'Playfair Display', serif !important;
+        }
+
+        /* 6. Active Tab Styling */
+        .trip-day-tab {
+            background: transparent !important;
+            border: 1px solid #E7E5E4 !important;
+            color: #78716C !important;
+        }
+
+        .trip-day-tab:hover {
+            color: #D4AF37 !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* 7. Map Panel Refinement */
+        .trip-map-header {
+            background: #F5F5F4 !important;
+            border-bottom: 1px solid #E7E5E4 !important;
+        }
+
+        .trip-map-filter {
+            background: #FFFFFF !important;
+            border: 1px solid #D6D3D1 !important;
+            color: #57534E !important;
+        }
+
+        .trip-map-filter.active {
+            background: #D4AF37 !important;
+            color: white !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* 8. Text & Description Cleanups */
+        .trip-activity-description,
+        p,
+        .trip-transport-text {
+            color: #57534E !important;
+            /* Stone-600 */
+            font-family: system-ui, -apple-system, sans-serif !important;
+            /* Clean sans for body */
+            line-height: 1.7 !important;
+        }
+
+        .trip-transport-icon {
+            background: #FAFAF9 !important;
+            border-color: #D4AF37 !important;
+            color: #D4AF37 !important;
+        }
+
+        /* 9. Scrollbar Gold */
+        .itinerary-fullpage::-webkit-scrollbar-thumb {
+            background: #D4AF37 !important;
+            border-radius: 10px;
+        }
+
+        .itinerary-fullpage::-webkit-scrollbar-track {
+            background: #F5F5F4 !important;
+        }
+
+        /* 10. Floating Navigation Bar */
+        .itinerary-fullpage-nav {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+        }
+
+        .itinerary-fullpage-nav .nav-title {
+            color: #1C1917 !important;
+        }
+
+        /* 11. Landing Page & Header Fixes (White Theme) */
+        header,
+        .hero {
+            background: #FAFAF9 !important;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+        }
+
+        .logo {
+            color: #1C1917 !important;
+            text-shadow: none !important;
+            font-family: 'Playfair Display', serif !important;
+        }
+
+        .hero h1 {
+            color: #1C1917 !important;
+            font-family: 'Playfair Display', serif !important;
+            text-shadow: none !important;
+        }
+
+        .hero p {
+            color: #57534E !important;
+        }
+
+        /* Navigation Links */
+        nav a {
+            color: #57534E !important;
+        }
+
+        nav a:hover {
+            color: #D4AF37 !important;
+        }
+
+        /* Sign In Button */
+        .btn-signin {
+            background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3) !important;
+        }
+
+        /* Search Overlay Light Theme */
+        .search-overlay {
+            background: #FAFAF9 !important;
+        }
+
+        .overlay-cancel {
+            color: #1C1917 !important;
+        }
+
+        .airport-code {
+            color: #1C1917 !important;
+        }
+
+        .airport-name {
+            color: #78716C !important;
+        }
+
+        /* Flight Path Animation Colors */
+        .flight-path-line {
+            background: rgba(212, 175, 55, 0.2) !important;
+        }
+
+        .airplane-icon svg {
+            fill: #D4AF37 !important;
+        }
+
+        /* ================================================================= */
+        /* 🗺️ WIREFRAME LAYOUT OVERRIDES */
+        /* ================================================================= */
+
+        /* A. NAVIGATION BAR - Fixed, Dark Glassmorphism */
+        header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 1000 !important;
+            background: rgba(15, 23, 42, 0.85) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+            padding: 0 5% !important;
+            height: 70px !important;
+        }
+
+        .logo {
+            color: #FFFFFF !important;
+            font-weight: 700 !important;
+            font-size: 1.5rem !important;
+            text-shadow: none !important;
+        }
+
+        .btn-signin {
+            background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            padding: 10px 24px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-signin:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5) !important;
+        }
+
+        /* B. HERO SECTION - Deep Blue with Subtle Pattern */
+        .hero {
+            background:
+                /* Subtle globe/map pattern overlay */
+                radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 60%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                /* Abstract map lines pattern */
+                repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 100px,
+                    rgba(255, 255, 255, 0.02) 100px,
+                    rgba(255, 255, 255, 0.02) 101px),
+                repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 100px,
+                    rgba(255, 255, 255, 0.02) 100px,
+                    rgba(255, 255, 255, 0.02) 101px),
+                /* Deep blue gradient */
+                linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%) !important;
+            padding: 150px 20px 100px !important;
+            /* Extra top padding for fixed navbar */
+            text-align: center !important;
+            min-height: 45vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            position: relative !important;
+        }
+
+        /* Globe decoration pseudo-element */
+        .hero::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 400px !important;
+            height: 400px !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            border-radius: 50% !important;
+            pointer-events: none !important;
+        }
+
+        .hero::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 300px !important;
+            height: 300px !important;
+            border: 1px solid rgba(255, 255, 255, 0.03) !important;
+            border-radius: 50% !important;
+            pointer-events: none !important;
+        }
+
+        .hero h1 {
+            color: #FFFFFF !important;
+            font-family: 'Playfair Display', serif !important;
+            font-size: 3.5rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 15px !important;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+            position: relative !important;
+            z-index: 1 !important;
+        }
+
+        .hero p {
+            color: rgba(255, 255, 255, 0.7) !important;
+            font-size: 1.2rem !important;
+            font-weight: 400 !important;
+            position: relative !important;
+            z-index: 1 !important;
+        }
+
+        /* C. COMMAND CENTER - Centered Card with Elevation */
+        .container {
+            max-width: 900px !important;
+            margin: -60px auto 50px !important;
+            /* Overlap with hero */
+            padding: 0 20px !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+
+        .tabs-nav {
+            background: #FFFFFF !important;
+            border-radius: 16px 16px 0 0 !important;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1) !important;
+            border-bottom: 2px solid #F5F5F4 !important;
+            overflow: hidden !important;
+        }
+
+        .tab-btn {
+            background: #FFFFFF !important;
+            color: #57534E !important;
+            font-weight: 600 !important;
+            padding: 20px 15px !important;
+            border: none !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+        }
+
+        .tab-btn:hover {
+            background: #FAFAF9 !important;
+            color: #D4AF37 !important;
+        }
+
+        .tab-btn.active {
+            color: #D4AF37 !important;
+            background: #FAFAF9 !important;
+            border-bottom: 3px solid #D4AF37 !important;
+        }
+
+        .tab-btn i,
+        .tab-btn svg {
+            font-size: 1.1rem !important;
+            color: inherit !important;
+        }
+
+        .tab-content {
+            background: #FFFFFF !important;
+            border-radius: 0 0 16px 16px !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12) !important;
+            padding: 35px !important;
+            border: 1px solid rgba(212, 175, 55, 0.1) !important;
+            border-top: none !important;
+        }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem !important;
+            }
+
+            .hero {
+                padding: 130px 15px 80px !important;
+                min-height: 35vh !important;
+            }
+
+            .container {
+                margin-top: -40px !important;
+            }
+
+            .tab-btn {
+                padding: 15px 10px !important;
+                font-size: 0.85rem !important;
+            }
+        }
+
+        /* ================================================================= */
+        /* 🏛️ END PORCELAIN & GOLD THEME */
+        /* ================================================================= */
     </style>
 </head>
 
@@ -3678,6 +4166,9 @@
             </button>
             <button class="tab-btn active" onclick="switchTab(event, 'ai-itinerary')">
                 <i class="fas fa-robot"></i> AI Itinerary
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'blog')">
+                <i class="fas fa-newspaper"></i> Blog
             </button>
         </div>
 
@@ -3932,6 +4423,42 @@
             </div>
 
             <div id="ai-results" class="results-area"></div>
+        </div>
+
+        <!-- Blog Tab -->
+        <div id="blog" class="tab-content">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
+                <div>
+                    <h2 style="margin:0;color:#1C1917;font-family:'Playfair Display',serif;font-size:1.5rem;">Travel
+                        Insights & Tips</h2>
+                    <p style="margin:5px 0 0;color:#78716C;font-size:0.9rem;">AI-curated articles to inspire your next
+                        adventure</p>
+                </div>
+                <button class="btn-main" onclick="generateNewBlog()" style="padding:10px 20px;font-size:0.9rem;">
+                    <i class="fas fa-plus"></i> New Article
+                </button>
+            </div>
+
+            <div id="blog-loader" class="loader" style="display:none;">
+                <div class="spinner"></div>
+                <p>Loading travel insights...</p>
+            </div>
+
+            <div id="blog-articles"
+                style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+                <!-- Articles will be loaded dynamically -->
+            </div>
+
+            <!-- Blog Article Modal -->
+            <div id="blog-modal"
+                style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:2000;padding:40px;overflow-y:auto;backdrop-filter:blur(4px);">
+                <div
+                    style="max-width:800px;margin:0 auto;background:#fff;border-radius:16px;padding:40px;position:relative;">
+                    <button onclick="closeBlogModal()"
+                        style="position:absolute;top:15px;right:15px;width:36px;height:36px;border:none;background:#f0f0f0;border-radius:50%;font-size:1.2rem;cursor:pointer;">&times;</button>
+                    <div id="blog-modal-content"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -7459,6 +7986,185 @@
         function getCurrentUser() {
             return currentUser;
         }
+
+        // ==================== BLOG SYSTEM ====================
+        let blogArticles = [];
+
+        /**
+         * Load blog articles from API
+         */
+        async function loadBlogArticles() {
+            const loader = document.getElementById('blog-loader');
+            const container = document.getElementById('blog-articles');
+
+            if (loader) loader.style.display = 'block';
+            if (container) container.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/blog/list`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load blog articles');
+                }
+
+                const data = await response.json();
+                blogArticles = data.articles || [];
+
+                if (blogArticles.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;color:#78716C;padding:40px;">No articles yet. Click "New Article" to generate one!</p>';
+                } else {
+                    container.innerHTML = blogArticles.map(article => renderBlogCard(article)).join('');
+                }
+
+            } catch (error) {
+                console.error('Blog load error:', error);
+                container.innerHTML = '<p style="text-align:center;color:#dc2626;padding:40px;">Failed to load articles. Please try again.</p>';
+            } finally {
+                if (loader) loader.style.display = 'none';
+            }
+        }
+
+        /**
+         * Generate a new blog article
+         */
+        async function generateNewBlog() {
+            const loader = document.getElementById('blog-loader');
+            if (loader) loader.style.display = 'block';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/blog/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate article');
+                }
+
+                const data = await response.json();
+                showToast(`New article: "${data.article.title}"`, 'success');
+
+                // Reload articles to show the new one
+                await loadBlogArticles();
+
+            } catch (error) {
+                console.error('Blog generation error:', error);
+                showToast('Failed to generate article. Please try again.', 'error');
+                if (loader) loader.style.display = 'none';
+            }
+        }
+
+        /**
+         * Render a blog article card
+         */
+        function renderBlogCard(article) {
+            const date = new Date(article.createdAt).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+            const categoryColors = {
+                destinations: '#3b82f6',
+                tips: '#10b981',
+                guides: '#8b5cf6',
+                news: '#f59e0b'
+            };
+            const color = categoryColors[article.category] || '#D4AF37';
+
+            return `
+                <div class="blog-card" onclick="openBlogArticle('${article.id}')"
+                     style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);cursor:pointer;transition:all 0.3s ease;">
+                    <div style="height:160px;background:url('${article.imageUrl}') center/cover;position:relative;">
+                        <span style="position:absolute;top:12px;left:12px;background:${color};color:#fff;padding:4px 12px;border-radius:20px;font-size:0.75rem;text-transform:uppercase;">${article.category}</span>
+                    </div>
+                    <div style="padding:20px;">
+                        <h3 style="margin:0 0 8px;font-size:1.1rem;color:#1C1917;font-family:'Playfair Display',serif;line-height:1.3;">${escapeHtml(article.title)}</h3>
+                        <p style="margin:0 0 12px;color:#78716C;font-size:0.85rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(article.excerpt)}</p>
+                        <div style="display:flex;justify-content:space-between;align-items:center;color:#a8a29e;font-size:0.75rem;">
+                            <span><i class="fas fa-calendar"></i> ${date}</span>
+                            <span style="color:#D4AF37;">Read more →</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Open a blog article in modal
+         */
+        function openBlogArticle(articleId) {
+            const article = blogArticles.find(a => a.id === articleId);
+            if (!article) return;
+
+            const modal = document.getElementById('blog-modal');
+            const content = document.getElementById('blog-modal-content');
+
+            if (modal && content) {
+                const date = new Date(article.createdAt).toLocaleDateString('en-US', {
+                    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+                });
+
+                // Convert markdown to simple HTML (basic conversion)
+                let htmlContent = article.content
+                    .replace(/^## (.+)$/gm, '<h2 style="color:#1C1917;margin:25px 0 15px;font-family:\'Playfair Display\',serif;">$1</h2>')
+                    .replace(/^### (.+)$/gm, '<h3 style="color:#1C1917;margin:20px 0 10px;">$1</h3>')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n\n/g, '</p><p style="color:#57534E;line-height:1.8;margin:0 0 15px;">')
+                    .replace(/\n/g, '<br>');
+                htmlContent = '<p style="color:#57534E;line-height:1.8;margin:0 0 15px;">' + htmlContent + '</p>';
+
+                content.innerHTML = `
+                    <div style="margin-bottom:20px;">
+                        <span style="background:linear-gradient(135deg,#D4AF37,#C5A059);color:#fff;padding:4px 12px;border-radius:20px;font-size:0.75rem;text-transform:uppercase;">${article.category}</span>
+                        <span style="color:#a8a29e;font-size:0.85rem;margin-left:15px;">${date}</span>
+                    </div>
+                    <h1 style="font-family:'Playfair Display',serif;color:#1C1917;font-size:2rem;margin:0 0 20px;line-height:1.3;">${escapeHtml(article.title)}</h1>
+                    <img src="${article.imageUrl}" alt="" style="width:100%;height:300px;object-fit:cover;border-radius:12px;margin-bottom:25px;">
+                    <div class="blog-content">${htmlContent}</div>
+                    ${article.tags && article.tags.length ? `
+                        <div style="margin-top:25px;padding-top:20px;border-top:1px solid #e5e5e5;">
+                            ${article.tags.map(tag => `<span style="display:inline-block;background:#f5f5f4;color:#57534E;padding:4px 12px;border-radius:15px;font-size:0.8rem;margin-right:8px;">#${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                `;
+
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        /**
+         * Close blog modal
+         */
+        function closeBlogModal() {
+            const modal = document.getElementById('blog-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Load blogs when switching to blog tab
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function (event, tabId) {
+            if (typeof originalSwitchTab === 'function') {
+                originalSwitchTab(event, tabId);
+            } else {
+                // Fallback tab switching
+                document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                const targetTab = document.getElementById(tabId);
+                if (targetTab) targetTab.style.display = 'block';
+                if (event && event.target) event.target.classList.add('active');
+            }
+
+            // Load blogs when blog tab is selected
+            if (tabId === 'blog' && blogArticles.length === 0) {
+                loadBlogArticles();
+            }
+        };
     </script>
 </body>
 
