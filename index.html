@@ -2910,6 +2910,620 @@
                 padding: 0 15px;
             }
         }
+
+        /* ==================== ANTIGRAVITY THEME OVERRIDES ==================== */
+        /* Premium Glassmorphism Dark Mode - Cosmic Design */
+
+        /* === COSMIC BACKGROUND FOR FULL-PAGE ITINERARY === */
+        .itinerary-fullpage {
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(108, 93, 211, 0.4) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(139, 120, 230, 0.3) 0%, transparent 40%),
+                radial-gradient(ellipse at 40% 80%, rgba(147, 51, 234, 0.25) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 90%, rgba(59, 130, 246, 0.2) 0%, transparent 40%),
+                linear-gradient(180deg, #0a0a0f 0%, #0d0d14 25%, #0f0f18 50%, #0a0a12 100%) !important;
+            background-attachment: fixed !important;
+        }
+
+        .itinerary-fullpage.active {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        /* === GLASS NAVIGATION BAR === */
+        .itinerary-fullpage-nav {
+            background: rgba(15, 15, 25, 0.85) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .itinerary-fullpage-nav .nav-title {
+            color: #ffffff !important;
+            text-shadow: 0 2px 10px rgba(108, 93, 211, 0.3) !important;
+        }
+
+        .itinerary-fullpage-nav .back-btn {
+            background: transparent !important;
+            border: 2px solid rgba(108, 93, 211, 0.6) !important;
+            color: #a78bfa !important;
+            backdrop-filter: blur(10px) !important;
+        }
+
+        .itinerary-fullpage-nav .back-btn:hover {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            border-color: #8B78E6 !important;
+            color: #ffffff !important;
+            transform: translateX(-5px) !important;
+            box-shadow: 0 4px 20px rgba(108, 93, 211, 0.5) !important;
+        }
+
+        .itinerary-fullpage-nav .nav-actions button {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 20px rgba(108, 93, 211, 0.4) !important;
+        }
+
+        .itinerary-fullpage-nav .nav-actions button:hover {
+            background: linear-gradient(135deg, #7c6de3 0%, #9b88f6 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 30px rgba(108, 93, 211, 0.6) !important;
+        }
+
+        /* === GLASS BUDGET SIDEBAR === */
+        .trip-budget-sidebar {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+            border-radius: 24px !important;
+        }
+
+        .trip-budget-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .trip-budget-header h3 {
+            color: #ffffff !important;
+        }
+
+        .trip-budget-header svg {
+            color: #F7B500 !important;
+        }
+
+        .trip-budget-total {
+            background: rgba(108, 93, 211, 0.15) !important;
+            border: 1px solid rgba(108, 93, 211, 0.25) !important;
+            border-radius: 20px !important;
+        }
+
+        .trip-budget-total .label {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .trip-budget-total .amount {
+            background: linear-gradient(135deg, #F7B500 0%, #FFCC33 50%, #FFE066 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            filter: drop-shadow(0 2px 4px rgba(247, 181, 0, 0.3)) !important;
+        }
+
+        .trip-budget-total .per-person {
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .trip-budget-progress {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+        }
+
+        .trip-budget-progress-bar {
+            background: linear-gradient(90deg, #6C5DD3 0%, #8B78E6 50%, #F7B500 100%) !important;
+        }
+
+        .trip-budget-item {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 16px !important;
+        }
+
+        .trip-budget-item:hover {
+            background: rgba(108, 93, 211, 0.15) !important;
+            border-color: rgba(108, 93, 211, 0.3) !important;
+            box-shadow: 0 4px 20px rgba(108, 93, 211, 0.2) !important;
+        }
+
+        .trip-budget-item .category {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .trip-budget-item .price {
+            color: #F7B500 !important;
+        }
+
+        .trip-budget-item .icon {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .trip-ai-note {
+            background: rgba(108, 93, 211, 0.1) !important;
+            border: 1px solid rgba(108, 93, 211, 0.2) !important;
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .trip-ai-note strong {
+            color: #a78bfa !important;
+        }
+
+        /* === TIER TABS (GLASS DESIGN) === */
+        .trip-tier-tabs {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 20px !important;
+            padding: 6px !important;
+        }
+
+        .trip-tier-tab {
+            color: rgba(255, 255, 255, 0.6) !important;
+            background: transparent !important;
+        }
+
+        .trip-tier-tab::before {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-radius: 14px !important;
+        }
+
+        .trip-tier-tab:hover {
+            color: #a78bfa !important;
+        }
+
+        .trip-tier-tab.active {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 30px rgba(108, 93, 211, 0.5) !important;
+        }
+
+        /* === MAIN ITINERARY PANEL (GLASS) === */
+        .trip-itinerary-main {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+            border-radius: 24px !important;
+        }
+
+        .trip-day-tabs {
+            background: rgba(255, 255, 255, 0.02) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .trip-day-tab {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .trip-day-tab:hover {
+            background: rgba(108, 93, 211, 0.15) !important;
+            border-color: rgba(108, 93, 211, 0.3) !important;
+            color: #a78bfa !important;
+        }
+
+        .trip-day-tab.active {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            color: #ffffff !important;
+            border-color: transparent !important;
+            box-shadow: 0 4px 15px rgba(108, 93, 211, 0.4) !important;
+        }
+
+        .trip-title-bar {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .trip-title-bar h2 {
+            color: #ffffff !important;
+        }
+
+        .trip-year-badge {
+            background: linear-gradient(135deg, #F7B500 0%, #FFCC33 100%) !important;
+            color: #0a0a0f !important;
+            font-weight: 700 !important;
+        }
+
+        /* === ACTIVITY CARDS (GLASS DESIGN) === */
+        .trip-activity-card {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 20px !important;
+        }
+
+        .trip-activity-card:hover {
+            background: rgba(108, 93, 211, 0.08) !important;
+            border-color: rgba(108, 93, 211, 0.3) !important;
+            box-shadow: 0 12px 40px rgba(108, 93, 211, 0.25) !important;
+            transform: translateY(-4px) !important;
+        }
+
+        .trip-activity-number {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            box-shadow: 0 6px 25px rgba(108, 93, 211, 0.5) !important;
+        }
+
+        .trip-activity-title {
+            color: #ffffff !important;
+        }
+
+        .trip-activity-meta {
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .trip-activity-meta span {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .trip-activity-description {
+            color: rgba(255, 255, 255, 0.75) !important;
+        }
+
+        .trip-best-badge {
+            background: linear-gradient(135deg, #F7B500 0%, #FFCC33 100%) !important;
+            color: #0a0a0f !important;
+        }
+
+        .trip-rating {
+            background: linear-gradient(135deg, #F7B500 0%, #FFCC33 100%) !important;
+            color: #0a0a0f !important;
+        }
+
+        .trip-activity-image {
+            border-radius: 16px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* === TRANSPORT CONNECTORS === */
+        .trip-transport {
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .trip-transport::before {
+            background: linear-gradient(180deg, rgba(108, 93, 211, 0.3) 0%, rgba(139, 120, 230, 0.15) 100%) !important;
+        }
+
+        .trip-transport-icon {
+            background: rgba(20, 20, 35, 0.9) !important;
+            border: 2px solid rgba(108, 93, 211, 0.4) !important;
+        }
+
+        .trip-transport-text {
+            color: #a78bfa !important;
+        }
+
+        /* === MAP PANEL (GLASS WITH GLOW) === */
+        .trip-map-panel {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(108, 93, 211, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+            border-radius: 24px !important;
+            overflow: hidden !important;
+        }
+
+        .trip-map-header {
+            background: rgba(255, 255, 255, 0.02) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .trip-map-header h3 {
+            color: #ffffff !important;
+        }
+
+        .trip-map-filter {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .trip-map-filter:hover {
+            background: rgba(108, 93, 211, 0.2) !important;
+            border-color: rgba(108, 93, 211, 0.4) !important;
+            color: #a78bfa !important;
+        }
+
+        .trip-map-filter.active {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            border-color: transparent !important;
+            color: #ffffff !important;
+        }
+
+        .trip-map-container {
+            border-radius: 0 0 24px 24px !important;
+            overflow: hidden !important;
+        }
+
+        #itinerary-map {
+            border-radius: 0 0 24px 24px !important;
+        }
+
+        /* === DAY CARDS (TIMELINE STYLE) === */
+        .day-card {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 20px !important;
+        }
+
+        .day-card:hover {
+            background: rgba(108, 93, 211, 0.06) !important;
+            border-color: rgba(108, 93, 211, 0.25) !important;
+            box-shadow: 0 15px 50px rgba(108, 93, 211, 0.2) !important;
+        }
+
+        .day-card h2 {
+            color: #ffffff !important;
+        }
+
+        .day-card h3 {
+            color: #a78bfa !important;
+        }
+
+        .day-card h4 {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .day-card p {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .day-cards-container::before {
+            background: linear-gradient(180deg, #6C5DD3 0%, #8B78E6 50%, #F7B500 100%) !important;
+        }
+
+        .day-card::before {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            box-shadow: 0 2px 15px rgba(108, 93, 211, 0.5) !important;
+        }
+
+        .day-number {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            box-shadow: 0 4px 20px rgba(108, 93, 211, 0.5) !important;
+        }
+
+        /* === ITINERARY LISTS === */
+        .itinerary-fullpage li,
+        .trip-itinerary-main li {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-left: 4px solid #6C5DD3 !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        .itinerary-fullpage li:hover,
+        .trip-itinerary-main li:hover {
+            background: rgba(108, 93, 211, 0.1) !important;
+            border-color: rgba(108, 93, 211, 0.3) !important;
+            border-left-color: #8B78E6 !important;
+        }
+
+        .itinerary-fullpage li::before,
+        .trip-itinerary-main li::before {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+        }
+
+        /* === TIP CARDS === */
+        .tip-card {
+            background: rgba(247, 181, 0, 0.08) !important;
+            border: 1px solid rgba(247, 181, 0, 0.2) !important;
+            border-left: 4px solid #F7B500 !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-radius: 16px !important;
+        }
+
+        .tip-card::after {
+            background: rgba(247, 181, 0, 0.1) !important;
+        }
+
+        /* === BUDGET TABLE === */
+        .budget-box {
+            background: rgba(108, 93, 211, 0.15) !important;
+            border: none !important;
+            box-shadow: 0 10px 40px rgba(108, 93, 211, 0.2) !important;
+        }
+
+        .budget-title {
+            background: rgba(15, 15, 25, 0.9) !important;
+            color: #ffffff !important;
+        }
+
+        .budget-table th {
+            background: rgba(30, 30, 50, 0.9) !important;
+            color: #ffffff !important;
+        }
+
+        .budget-table td {
+            background: rgba(20, 20, 35, 0.9) !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .budget-table td:first-child {
+            background: rgba(25, 25, 40, 0.95) !important;
+            color: #ffffff !important;
+        }
+
+        .budget-table .price-budget {
+            background: rgba(40, 167, 69, 0.2) !important;
+            color: #4ade80 !important;
+        }
+
+        .budget-table .price-midrange {
+            background: rgba(247, 181, 0, 0.2) !important;
+            color: #F7B500 !important;
+        }
+
+        .budget-table .price-luxury {
+            background: rgba(239, 68, 68, 0.2) !important;
+            color: #f87171 !important;
+        }
+
+        /* === COMPACT SEARCH BAR === */
+        .compact-search-bar {
+            background: rgba(15, 15, 25, 0.9) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .compact-search-bar .search-detail {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .compact-search-bar .search-detail strong {
+            color: #F7B500 !important;
+        }
+
+        .compact-search-bar .modify-search-btn {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            box-shadow: 0 4px 20px rgba(108, 93, 211, 0.4) !important;
+        }
+
+        .compact-search-bar .modify-search-btn:hover {
+            box-shadow: 0 6px 25px rgba(108, 93, 211, 0.6) !important;
+        }
+
+        /* === CUSTOM SCROLLBAR FOR DARK THEME === */
+        .itinerary-fullpage::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .itinerary-fullpage::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .itinerary-fullpage::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6C5DD3 0%, #8B78E6 100%);
+            border-radius: 10px;
+            border: 2px solid rgba(10, 10, 15, 0.8);
+        }
+
+        .itinerary-fullpage::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #7c6de3 0%, #9b88f6 100%);
+        }
+
+        /* === FLOATING PARTICLES ANIMATION === */
+        .itinerary-fullpage::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.15), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(139, 120, 230, 0.2), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(247, 181, 0, 0.15), transparent),
+                radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.1), transparent),
+                radial-gradient(1px 1px at 160px 120px, rgba(108, 93, 211, 0.2), transparent);
+            background-size: 200px 150px;
+            animation: particleDrift 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        @keyframes particleDrift {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 400px 300px;
+            }
+        }
+
+        .itinerary-fullpage-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* === GLOW EFFECTS FOR KEY ELEMENTS === */
+        .trip-budget-total .amount {
+            text-shadow: 0 0 30px rgba(247, 181, 0, 0.4) !important;
+        }
+
+        .trip-activity-number {
+            animation: numberGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes numberGlow {
+            0% {
+                box-shadow: 0 6px 25px rgba(108, 93, 211, 0.5);
+            }
+
+            100% {
+                box-shadow: 0 6px 35px rgba(139, 120, 230, 0.7);
+            }
+        }
+
+        /* === EMPTY STATE === */
+        .trip-empty-day {
+            color: rgba(255, 255, 255, 0.5) !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+            border: 1px dashed rgba(255, 255, 255, 0.1) !important;
+            border-radius: 16px !important;
+        }
+
+        .trip-empty-day svg {
+            color: rgba(108, 93, 211, 0.4) !important;
+        }
+
+        /* === LEAFLET MAP POPUP OVERRIDES === */
+        .leaflet-popup-content-wrapper {
+            background: rgba(20, 20, 35, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(20, 20, 35, 0.95) !important;
+        }
+
+        .map-popup-title {
+            color: #ffffff !important;
+        }
+
+        .map-popup-meta {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* === CUSTOM MAP MARKERS === */
+        .trip-marker {
+            background: linear-gradient(135deg, #6C5DD3 0%, #8B78E6 100%) !important;
+            box-shadow: 0 4px 15px rgba(108, 93, 211, 0.5) !important;
+        }
+
+        .trip-marker.highlighted {
+            box-shadow: 0 6px 25px rgba(108, 93, 211, 0.8), 0 0 40px rgba(247, 181, 0, 0.3) !important;
+        }
+
+        /* ==================== END ANTIGRAVITY THEME ==================== */
     </style>
 </head>
 
