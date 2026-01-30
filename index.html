@@ -6925,180 +6925,251 @@
         }
 
         /**
-         * Strip ALL markdown characters from text
+         * Strip ALL markdown characters from text - COMPREHENSIVE VERSION
          */
         function stripAllMarkdown(text) {
             if (!text) return '';
             return text
-                .replace(/#{1,6}\s*/g, '')           // Remove all # headers
-                .replace(/\*\*([^*]+)\*\*/g, '$1')   // **bold** -> bold
-                .replace(/\*([^*]+)\*/g, '$1')       // *italic* -> italic
-                .replace(/^[\*\-•]\s*/gm, '')        // Remove bullet markers
-                .replace(/`([^`]+)`/g, '$1')         // `code` -> code
-                .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // [link](url) -> link
-                .replace(/---+/g, '')                // Remove horizontal rules
-                .replace(/\n{3,}/g, '\n\n')          // Multiple newlines to double
+                // Headers
+                .replace(/#{1,6}\s*/g, '')
+                // Bold/italic with asterisks
+                .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*([^*\n]+)\*/g, '$1')
+                // Bold/italic with underscores
+                .replace(/___(.+?)___/g, '$1')
+                .replace(/__(.+?)__/g, '$1')
+                .replace(/_([^_\n]+)_/g, '$1')
+                // Code blocks and inline code
+                .replace(/```[\s\S]*?```/g, '')
+                .replace(/`([^`]+)`/g, '$1')
+                // Links and images
+                .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                // Bullet points and list markers
+                .replace(/^[\s]*[-*•+]\s+/gm, '')
+                .replace(/^\s*\d+\.\s+/gm, '')
+                // Blockquotes
+                .replace(/^>\s*/gm, '')
+                // Horizontal rules
+                .replace(/^[-*_]{3,}$/gm, '')
+                .replace(/---+/g, '')
+                // Table separators and pipes (for markdown tables)
+                .replace(/\|/g, ' ')
+                .replace(/^[-:\s|]+$/gm, '')
+                // Extra cleanup
+                .replace(/\s{2,}/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
                 .trim();
         }
 
         /**
          * Convert markdown itinerary to styled HTML with day cards
+         * SIMPLIFIED VERSION - focuses on clean output
          */
         function convertItineraryToHTML(markdown) {
             if (!markdown) return '<p>No content available</p>';
 
+            // First, fully clean the markdown to identify structure
             let html = '';
-
-            // First, find all day sections using multiple patterns
-            const dayPattern = /(?:#{1,3}\s*)?(?:\*\*)?Day\s*(\d+)[:\s\-]*([^*#\n]*?)(?:\*\*)?(?=\n|$|Day\s*\d)/gi;
-
-            // Split content by "Day X" markers
             const content = markdown;
-            const dayMatches = [...content.matchAll(/(?:#{1,3}\s*)?(?:\*\*)?Day\s*(\d+)[:\s\-]*([^\n*#]*?)(?:\*\*)?/gi)];
 
-            if (dayMatches.length === 0) {
-                // No days found, just format the whole thing
-                return `<div style="line-height:1.8;color:#333;">${formatCleanContent(markdown)}</div>`;
-            }
+            // Find all "Day X" patterns (various formats)
+            const dayPattern = /(?:#{1,3}\s*)?(?:\*\*)?[Dd]ay\s*(\d+)[:\s\-–—]*([^\n]*)/g;
+            const dayMatches = [...content.matchAll(dayPattern)];
 
-            // Extract intro (text before first day)
-            const firstDayIndex = content.search(/(?:#{1,3}\s*)?(?:\*\*)?Day\s*\d+/i);
-            if (firstDayIndex > 50) {
-                const intro = stripAllMarkdown(content.substring(0, firstDayIndex));
-                if (intro.length > 20) {
+            // Extract intro text (before first day mention)
+            const firstDayPos = content.search(/(?:#{1,3}\s*)?(?:\*\*)?[Dd]ay\s*\d+/);
+            if (firstDayPos > 30) {
+                const introText = stripAllMarkdown(content.substring(0, firstDayPos));
+                if (introText.length > 20) {
                     html += `
-                        <div class="intro-card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:25px;border-radius:16px;margin-bottom:25px;">
-                            <i class="fas fa-info-circle" style="font-size:1.3rem;margin-bottom:10px;display:block;"></i>
-                            <p style="margin:0;font-size:1rem;line-height:1.7;">${intro}</p>
+                        <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:25px;border-radius:16px;margin-bottom:25px;">
+                            <div style="display:flex;align-items:flex-start;gap:15px;">
+                                <i class="fas fa-info-circle" style="font-size:1.3rem;margin-top:3px;"></i>
+                                <p style="margin:0;font-size:1rem;line-height:1.7;">${introText}</p>
+                            </div>
                         </div>
                     `;
                 }
+            }
+
+            // If no days found, just format everything cleanly
+            if (dayMatches.length === 0) {
+                const cleanContent = stripAllMarkdown(content);
+                return `<div style="line-height:1.8;color:#333;padding:20px;">${formatAsParagraphs(cleanContent)}</div>`;
             }
 
             // Process each day
             for (let i = 0; i < dayMatches.length; i++) {
                 const dayNum = dayMatches[i][1];
-                const dayTitle = stripAllMarkdown(dayMatches[i][2] || '');
+                const dayTitle = stripAllMarkdown(dayMatches[i][2] || '').replace(/\*+/g, '').trim();
 
-                // Get content between this day and next day
+                // Extract day content (from this day marker to next day marker or end)
                 const startPos = dayMatches[i].index + dayMatches[i][0].length;
                 const endPos = dayMatches[i + 1]?.index || content.length;
-                const dayContent = content.substring(startPos, endPos);
+                const rawDayContent = content.substring(startPos, endPos);
+
+                // Clean the day content completely
+                const cleanDayContent = stripAllMarkdown(rawDayContent);
 
                 html += `
-                    <div class="day-card" style="background:#fff;border-radius:16px;margin-bottom:25px;box-shadow:0 4px 20px rgba(0,0,0,0.08);overflow:hidden;">
-                        <div class="day-header" style="background:linear-gradient(135deg,#ff6b35 0%,#f45c22 100%);padding:20px 25px;display:flex;align-items:center;gap:15px;">
-                            <div style="width:55px;height:55px;background:rgba(255,255,255,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <span style="font-size:1.5rem;font-weight:700;color:#fff;">${dayNum}</span>
-                            </div>
-                            <div style="flex:1;">
-                                <h3 style="margin:0;color:#fff;font-size:1.4rem;font-weight:600;">Day ${dayNum}</h3>
-                                ${dayTitle ? `<p style="margin:8px 0 0 0;color:rgba(255,255,255,0.95);font-size:1rem;">${dayTitle}</p>` : ''}
+                    <div style="background:#fff;border-radius:16px;margin-bottom:25px;box-shadow:0 4px 20px rgba(0,0,0,0.08);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#ff6b35 0%,#f45c22 100%);padding:20px 25px;">
+                            <div style="display:flex;align-items:center;gap:18px;">
+                                <div style="width:55px;height:55px;background:rgba(255,255,255,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <span style="font-size:1.6rem;font-weight:700;color:#fff;">${dayNum}</span>
+                                </div>
+                                <div>
+                                    <h3 style="margin:0;color:#fff;font-size:1.5rem;font-weight:600;">Day ${dayNum}</h3>
+                                    ${dayTitle.length > 3 ? `<p style="margin:8px 0 0 0;color:rgba(255,255,255,0.95);font-size:1.05rem;">${dayTitle}</p>` : ''}
+                                </div>
                             </div>
                         </div>
-                        <div class="day-body" style="padding:25px;">
-                            ${formatDayContent(dayContent)}
+                        <div style="padding:25px;">
+                            ${formatDayActivities(cleanDayContent)}
                         </div>
                     </div>
                 `;
             }
 
-            return html;
-        }
-
-        /**
-         * Format day content into organized sections
-         */
-        function formatDayContent(content) {
-            if (!content) return '';
-
-            // Split by time of day sections
-            const sectionPattern = /(?:\*\*|##?\s*)(Morning|Afternoon|Evening|Night|Lunch|Dinner|Nightcap|Walk|Shopping|Activity|Hidden Gem|Late Afternoon|Focus|Area)[:\s\*]*/gi;
-            const sections = content.split(sectionPattern);
-            const sectionNames = content.match(sectionPattern) || [];
-
-            // Get icon for section type
-            const getIcon = (name) => {
-                const lower = name.toLowerCase();
-                if (lower.includes('morning')) return '☀️';
-                if (lower.includes('afternoon')) return '🌤️';
-                if (lower.includes('evening')) return '🌙';
-                if (lower.includes('night')) return '⭐';
-                if (lower.includes('lunch')) return '🍽️';
-                if (lower.includes('dinner')) return '🍷';
-                if (lower.includes('walk')) return '🚶';
-                if (lower.includes('shopping')) return '🛍️';
-                if (lower.includes('hidden')) return '💎';
-                if (lower.includes('area')) return '📍';
-                return '📌';
-            };
-
-            let html = '';
-
-            // Process intro content (before first section)
-            const introContent = sections[0] ? formatCleanContent(sections[0]) : '';
-            if (introContent && introContent.length > 10) {
-                html += `<div style="margin-bottom:20px;color:#555;line-height:1.7;">${introContent}</div>`;
-            }
-
-            // Process each section
-            for (let i = 0; i < sectionNames.length; i++) {
-                const sectionName = stripAllMarkdown(sectionNames[i]).trim();
-                const sectionContent = sections[i + 1] ? formatCleanContent(sections[i + 1]) : '';
-
-                if (sectionContent && sectionContent.length > 5) {
+            // Look for additional info sections (tips, costs, etc.) after all days
+            const lastDayEnd = dayMatches[dayMatches.length - 1]?.index || 0;
+            const lastDayContent = content.substring(lastDayEnd);
+            const tipPattern = /(?:#{1,3}\s*)?(?:\*\*)?(Tips|Estimated Costs|Pro Tips|Budget|Transportation|Notes)[:\s\*]*/gi;
+            if (tipPattern.test(lastDayContent)) {
+                const tipSection = stripAllMarkdown(lastDayContent.substring(lastDayContent.search(tipPattern)));
+                if (tipSection.length > 30) {
                     html += `
-                        <div class="activity-section" style="margin-bottom:20px;padding:20px;background:#f8f9fa;border-radius:12px;border-left:4px solid #ff6b35;">
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:15px;">
-                                <span style="font-size:1.4rem;">${getIcon(sectionName)}</span>
-                                <h4 style="margin:0;color:#1a1a2e;font-size:1.1rem;font-weight:600;">${sectionName}</h4>
-                            </div>
-                            <div style="color:#444;line-height:1.8;padding-left:40px;">
-                                ${sectionContent}
+                        <div style="background:#f0f9ff;border-radius:16px;padding:25px;margin-bottom:25px;border:1px solid #e0f2fe;">
+                            <div style="display:flex;align-items:flex-start;gap:15px;">
+                                <span style="font-size:1.5rem;">💡</span>
+                                <div>
+                                    <h4 style="margin:0 0 15px 0;color:#0369a1;font-size:1.2rem;">Tips & Information</h4>
+                                    <div style="color:#444;line-height:1.7;">${formatAsParagraphs(tipSection)}</div>
+                                </div>
                             </div>
                         </div>
                     `;
                 }
             }
 
-            // If no sections found, just format the content directly
-            if (html === '' || (sectionNames.length === 0 && content.length > 10)) {
-                html = `<div style="color:#444;line-height:1.8;">${formatCleanContent(content)}</div>`;
+            return html;
+        }
+
+        /**
+         * Format day activities into organized sections
+         */
+        function formatDayActivities(content) {
+            if (!content || content.length < 5) return '<p style="color:#666;">No activities planned</p>';
+
+            // Split content by time markers (Morning, Afternoon, Evening, etc.)
+            const timePatterns = ['Morning', 'Afternoon', 'Evening', 'Night', 'Lunch', 'Dinner', 'Breakfast'];
+            let html = '';
+            let remainingContent = content;
+            let foundSections = false;
+
+            // Try to find and split by time-of-day sections
+            for (const timeName of timePatterns) {
+                const regex = new RegExp(`(${timeName}[^:]*:?)\\s*`, 'gi');
+                const match = remainingContent.match(regex);
+                if (match) {
+                    foundSections = true;
+                    const parts = remainingContent.split(regex);
+
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i]?.trim();
+                        if (!part) continue;
+
+                        // Check if this is a time header
+                        if (timePatterns.some(t => part.toLowerCase().includes(t.toLowerCase()))) {
+                            const nextContent = parts[i + 1]?.trim();
+                            if (nextContent && nextContent.length > 10) {
+                                const icon = getTimeIcon(part);
+                                html += `
+                                    <div style="margin-bottom:20px;padding:20px;background:#f8f9fa;border-radius:12px;border-left:4px solid #ff6b35;">
+                                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                            <span style="font-size:1.3rem;">${icon}</span>
+                                            <h4 style="margin:0;color:#1a1a2e;font-size:1.1rem;font-weight:600;">${part.replace(/:/g, '')}</h4>
+                                        </div>
+                                        <div style="color:#444;line-height:1.8;padding-left:38px;">
+                                            ${formatAsParagraphs(nextContent)}
+                                        </div>
+                                    </div>
+                                `;
+                                i++; // Skip the content part as we've used it
+                            }
+                        }
+                    }
+                }
+            }
+
+            // If no time sections found, just format as paragraphs
+            if (!foundSections || html === '') {
+                html = `<div style="color:#444;line-height:1.9;">${formatAsParagraphs(content)}</div>`;
             }
 
             return html;
         }
 
         /**
-         * Format content: strip markdown, split into sentences, create bullets for long content
+         * Get emoji icon for time of day
          */
-        function formatCleanContent(text) {
-            if (!text) return '';
-
-            // Strip all markdown
-            let clean = stripAllMarkdown(text);
-
-            // Split by sentence endings followed by space and capital letter
-            const sentences = clean.split(/(?<=[.!?])\s+(?=[A-Z])/);
-
-            // If we have multiple sentences, create a nice bulleted list
-            if (sentences.length >= 4) {
-                return '<ul style="margin:0;padding-left:0;list-style:none;">' +
-                    sentences.filter(s => s.trim().length > 3).map(s =>
-                        `<li style="margin-bottom:12px;padding-left:25px;position:relative;">
-                            <span style="position:absolute;left:0;color:#ff6b35;">✓</span>
-                            ${s.trim()}
-                        </li>`
-                    ).join('') +
-                    '</ul>';
-            }
-
-            // For shorter content, just return as paragraph
-            return `<p style="margin:0;">${clean}</p>`;
+        function getTimeIcon(timeText) {
+            const lower = timeText.toLowerCase();
+            if (lower.includes('morning') || lower.includes('breakfast')) return '☀️';
+            if (lower.includes('lunch')) return '🍽️';
+            if (lower.includes('afternoon')) return '🌤️';
+            if (lower.includes('dinner')) return '🍷';
+            if (lower.includes('evening')) return '🌙';
+            if (lower.includes('night')) return '⭐';
+            return '📍';
         }
 
         /**
-         * Format inline markdown (bold, italic) - backup function
+         * Format clean text as nice paragraphs with bullet points for lists
+         */
+        function formatAsParagraphs(text) {
+            if (!text) return '';
+
+            // Split by sentences
+            const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 3);
+
+            if (sentences.length >= 5) {
+                // Many sentences - format as checklist
+                return `<ul style="margin:0;padding:0;list-style:none;">
+                    ${sentences.map(s => `
+                        <li style="margin-bottom:10px;padding-left:28px;position:relative;">
+                            <span style="position:absolute;left:0;color:#ff6b35;font-weight:bold;">✓</span>
+                            ${s.trim()}
+                        </li>
+                    `).join('')}
+                </ul>`;
+            } else if (sentences.length >= 2) {
+                // Few sentences - format as paragraph with line breaks
+                return `<p style="margin:0;line-height:1.9;">${sentences.join(' ')}</p>`;
+            } else {
+                // Single sentence
+                return `<p style="margin:0;">${text}</p>`;
+            }
+        }
+
+        /**
+         * Format day content (alias for backwards compatibility)
+         */
+        function formatDayContent(content) {
+            return formatDayActivities(stripAllMarkdown(content));
+        }
+
+        /**
+         * Format clean content (alias)
+         */
+        function formatCleanContent(text) {
+            return formatAsParagraphs(stripAllMarkdown(text));
+        }
+
+        /**
+         * Format inline markdown - just strip it
          */
         function formatInlineMarkdown(text) {
             return stripAllMarkdown(text);
