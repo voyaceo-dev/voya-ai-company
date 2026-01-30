@@ -7087,12 +7087,12 @@
                             if (nextContent && nextContent.length > 10) {
                                 const icon = getTimeIcon(part);
                                 html += `
-                                    <div style="margin-bottom:20px;padding:20px;background:#f8f9fa;border-radius:12px;border-left:4px solid #ff6b35;">
-                                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-                                            <span style="font-size:1.3rem;">${icon}</span>
-                                            <h4 style="margin:0;color:#1a1a2e;font-size:1.1rem;font-weight:600;">${part.replace(/:/g, '')}</h4>
+                                    <div style="margin-bottom:20px;padding:20px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid #ff6b35;">
+                                            <span style="font-size:1.5rem;">${icon}</span>
+                                            <h4 style="margin:0;color:#1f2937;font-size:1.15rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">${part.replace(/:/g, '')}</h4>
                                         </div>
-                                        <div style="color:#444;line-height:1.8;padding-left:38px;">
+                                        <div style="color:#374151;line-height:1.9;font-size:1rem;">
                                             ${formatAsParagraphs(nextContent)}
                                         </div>
                                     </div>
@@ -7106,7 +7106,7 @@
 
             // If no time sections found, just format as paragraphs
             if (!foundSections || html === '') {
-                html = `<div style="color:#444;line-height:1.9;">${formatAsParagraphs(content)}</div>`;
+                html = `<div style="color:#374151;line-height:1.9;font-size:0.95rem;">${formatAsParagraphs(content)}</div>`;
             }
 
             return html;
@@ -7136,21 +7136,21 @@
             const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 3);
 
             if (sentences.length >= 5) {
-                // Many sentences - format as checklist
+                // Many sentences - format as checklist with visible text
                 return `<ul style="margin:0;padding:0;list-style:none;">
                     ${sentences.map(s => `
-                        <li style="margin-bottom:10px;padding-left:28px;position:relative;">
-                            <span style="position:absolute;left:0;color:#ff6b35;font-weight:bold;">✓</span>
+                        <li style="margin-bottom:12px;padding-left:30px;position:relative;color:#374151;font-size:0.95rem;line-height:1.8;">
+                            <span style="position:absolute;left:0;color:#10b981;font-size:1.1rem;font-weight:bold;">✓</span>
                             ${s.trim()}
                         </li>
                     `).join('')}
                 </ul>`;
             } else if (sentences.length >= 2) {
-                // Few sentences - format as paragraph with line breaks
-                return `<p style="margin:0;line-height:1.9;">${sentences.join(' ')}</p>`;
+                // Few sentences - format as paragraph
+                return `<p style="margin:0;line-height:1.9;color:#374151;font-size:0.95rem;">${sentences.join(' ')}</p>`;
             } else {
                 // Single sentence
-                return `<p style="margin:0;">${text}</p>`;
+                return `<p style="margin:0;color:#374151;font-size:0.95rem;line-height:1.8;">${text}</p>`;
             }
         }
 
