@@ -6729,7 +6729,8 @@
                     body: JSON.stringify({
                         destination: dest,
                         duration: days || '5 days',
-                        preferences: prefs.join(', ')
+                        preferences: prefs.join(', '),
+                        budget_tier: budget
                     })
                 });
 
@@ -8076,12 +8077,8 @@
             }
         }
 
-        // Store itineraries for each tier
-        window.tierItineraries = {
-            budget: null,
-            midrange: null,
-            luxury: null
-        };
+        // Store current itinerary
+        window.currentItinerary = null;
 
         async function generateAITrip() {
             const dest = document.getElementById('ai-dest').value.trim();
@@ -8097,7 +8094,7 @@
             }
 
             loader.style.display = 'block';
-            resultsDiv.innerHTML = '<p style="text-align:center;color:#888;padding:20px;">🔄 Generating 3 personalized itineraries (Budget, Mid-Range, Luxury)...</p>';
+            resultsDiv.innerHTML = '<p style="text-align:center;color:#888;padding:20px;">🔄 Generating your personalized itinerary...</p>';
             btn.disabled = true;
 
             // Update button to show loading state
@@ -8109,60 +8106,36 @@
                 btnIcon.classList.add('fa-spinner', 'fa-spin');
             }
 
-            // Reset stored itineraries
-            window.tierItineraries = { budget: null, midrange: null, luxury: null };
-
             try {
-                // Generate all 3 tier itineraries in parallel
-                const tierPrompts = {
-                    budget: `Create a BUDGET-FRIENDLY ${days || '5'}-day travel itinerary for ${dest}. Focus on: FREE attractions, street food, public transport, hostels/budget hotels, walking tours. ${prefs ? 'Preferences: ' + prefs : ''} Provide day-by-day breakdown with specific budget recommendations.`,
-                    midrange: `Create a MID-RANGE ${days || '5'}-day travel itinerary for ${dest}. Focus on: Popular attractions, local restaurants, mix of transport options, 3-4 star hotels. ${prefs ? 'Preferences: ' + prefs : ''} Provide day-by-day breakdown with moderate budget recommendations.`,
-                    luxury: `Create a LUXURY ${days || '5'}-day travel itinerary for ${dest}. Focus on: Exclusive experiences, fine dining, private transport, 5-star hotels, VIP access, spa treatments. ${prefs ? 'Preferences: ' + prefs : ''} Provide day-by-day breakdown with premium recommendations.`
-                };
+                // Generate single itinerary based on user preferences
+                const prompt = `Create a ${days || '5'}-day travel itinerary for ${dest}. ${prefs ? 'Preferences: ' + prefs : ''} Provide day-by-day breakdown with recommendations.`;
 
-                const fetchItinerary = async (tier, prompt) => {
-                    const response = await fetch("https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws/api/itinerary/generate", {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            destination: dest,
-                            duration: days || '5 days',
-                            preferences: prompt,
-                            tier: tier  // Pass tier to backend for dedicated API key routing
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Failed to generate ${tier} itinerary`);
-                    }
-
-                    const data = await response.json();
-                    return { tier, content: data.itinerary || data.message || "No content received." };
-                };
-
-                // Fetch all 3 in parallel
-                const results = await Promise.all([
-                    fetchItinerary('budget', tierPrompts.budget),
-                    fetchItinerary('midrange', tierPrompts.midrange),
-                    fetchItinerary('luxury', tierPrompts.luxury)
-                ]);
-
-                // Store all itineraries
-                results.forEach(result => {
-                    window.tierItineraries[result.tier] = result.content;
+                const response = await fetch(`${API_BASE_URL}/api/itinerary/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        destination: dest,
+                        duration: days || '5 days',
+                        preferences: prefs || ''
+                    })
                 });
 
-                loader.style.display = 'none';
+                if (!response.ok) {
+                    throw new Error(`Failed to generate itinerary: ${response.statusText}`);
+                }
 
-                // Display the currently selected tier (default: midrange)
-                displayFormattedItinerary(window.tierItineraries[currentTier], resultsDiv);
+                const data = await response.json();
+                window.currentItinerary = data.itinerary || data.message || "No content received.";
+
+                loader.style.display = 'none';
+                displayFormattedItinerary(window.currentItinerary, resultsDiv);
 
                 // Automatically open full-page itinerary view
                 setTimeout(() => {
                     openFullPageItinerary();
                 }, 500);
 
-                showToast('✨ Generated 3 itineraries! Switch tiers to explore different options.', 'success');
+                showToast('✨ Itinerary generated successfully!', 'success');
 
             } catch (error) {
                 loader.style.display = 'none';
