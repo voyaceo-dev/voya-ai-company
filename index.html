@@ -7614,9 +7614,13 @@
                     </div>
                 `;
 
-                // Initialize map after slight delay to ensure DOM is ready
+                // Initialize map using new Mapbox implementation
                 setTimeout(() => {
-                    initItineraryMap(rawItinerary);
+                    const destination = document.getElementById('unified-ai-dest')?.value || 'Unknown';
+                    const parsedData = parseItineraryContent(rawItinerary);
+                    if (parsedData && parsedData.length > 0) {
+                        initializeItineraryMap(destination, parsedData);
+                    }
                 }, 100);
             } else {
                 container.innerHTML = `
@@ -7881,160 +7885,9 @@
         }
 
         // ==================== INTERACTIVE MAP INTEGRATION ====================
+        // Map functionality moved to Mapbox GL JS implementation (initializeItineraryMap)
+        // See the new implementation below using mapboxgl.Map
 
-        let itineraryMap = null;
-        let itineraryMarkers = [];
-        let itineraryPolyline = null;
-
-        /**
-         * Initialize the itinerary map with locations from the text
-         */
-        async function initItineraryMap(markdown) {
-            const mapContainer = document.getElementById('itinerary-map');
-            if (!mapContainer) return;
-
-            // Clean up existing map instance
-            if (itineraryMap) {
-                itineraryMap.remove();
-                itineraryMap = null;
-            }
-
-            // Initialize Leaflet map
-            // Default view: global, will fit bounds later
-            itineraryMap = L.map('itinerary-map', {
-                zoomControl: true,
-                scrollWheelZoom: false // Prevent scrolling page when zooming map
-            }).setView([20, 0], 2);
-
-            // Add OpenStreetMap tiles (free, no key needed)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19
-            }).addTo(itineraryMap);
-
-            // Extract potential locations from the itinerary text
-            const locations = extractLocationsFromItinerary(markdown);
-            const destination = document.getElementById('unified-ai-dest').value;
-
-            // If no distinct locations found, at least show the main destination
-            if (locations.length === 0 && destination) {
-                locations.push(destination);
-            }
-
-            console.log('Extracted locations for map:', locations);
-
-            // Fetch coordinates and plot markers
-            const latLngs = [];
-
-            // Iterate sequentially to maintain route order
-            for (const loc of locations) {
-                try {
-                    // Fetch coords from our backend geocoder (uses caching + AI)
-                    const coords = await fetchLocationCoordinates(loc, destination);
-
-                    if (coords) {
-                        // Create marker
-                        const marker = L.marker([coords.lat, coords.lng]).addTo(itineraryMap);
-
-                        // Add nice popup
-                        marker.bindPopup(`
-                            <div style="text-align:center;">
-                                <b style="font-size:1.1em;color:#333;">${loc}</b>
-                                <p style="margin:5px 0 0 0;font-size:0.9em;color:#666;">Itinerary Stop</p>
-                            </div>
-                        `);
-
-                        itineraryMarkers.push(marker);
-                        latLngs.push([coords.lat, coords.lng]);
-                    }
-                } catch (e) {
-                    console.error('Error plotting location:', loc, e);
-                }
-            }
-
-            // Draw route line if we have multiple points
-            if (latLngs.length > 1) {
-                itineraryPolyline = L.polyline(latLngs, {
-                    color: '#ff6b35', // Brand orange
-                    weight: 4,
-                    opacity: 0.8,
-                    dashArray: '10, 10', // Dashed line implies travel
-                    lineCap: 'round'
-                }).addTo(itineraryMap);
-            }
-
-            // Fit map to show all points
-            if (latLngs.length > 0) {
-                const bounds = L.latLngBounds(latLngs);
-                itineraryMap.fitBounds(bounds, { padding: [50, 50] });
-            } else if (destination) {
-                // Fallback: Try to center on destination city
-                try {
-                    const destCoords = await fetchLocationCoordinates(destination);
-                    if (destCoords) itineraryMap.setView([destCoords.lat, destCoords.lng], 12);
-                } catch (e) { }
-            }
-
-            // Force map resize (fixes grey tile issues)
-            setTimeout(() => itineraryMap.invalidateSize(), 500);
-        }
-
-        /**
-         * Parse itinerary text to find potential location names
-         */
-        function extractLocationsFromItinerary(text) {
-            if (!text) return [];
-
-            // Strategies to find locations:
-            // 1. Bold text: **Location Name**
-            const boldMatches = [...text.matchAll(/\*\*([^*]+)\*\*/g)].map(m => m[1]);
-
-            // 2. Headers: ### Location Name
-            const headerMatches = [...text.matchAll(/###\s*([^\n]+)/g)].map(m => m[1]);
-
-            // 3. Time-Location lines: "Morning: Location Name" or "10:00 AM: Location Name"
-            const timeLocMatches = [...text.matchAll(/(?:Morning|Afternoon|Evening|Night|Lunch|Dinner|\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*:\s*([A-Za-z0-9\s'.]+)(?:-|:|\n|$|\()/gi)]
-                .map(m => m[1]);
-
-            // Combine and clean up
-            const candidates = [...boldMatches, ...headerMatches, ...timeLocMatches];
-
-            // Filter invalid or too long/short strings
-            const blackList = ['Morning', 'Afternoon', 'Evening', 'Night', 'Lunch', 'Dinner', 'Day', 'Tips', 'Note', 'Hotel', 'Accommodation'];
-
-            return [...new Set(candidates)] // Remove duplicates
-                .map(s => s.trim())
-                .filter(s =>
-                    s.length > 3 &&
-                    s.length < 50 &&
-                    !s.toLowerCase().includes('day ') &&
-                    !blackList.some(b => s.toLowerCase().includes(b.toLowerCase()))
-                );
-        }
-
-        /**
-         * Helper to fetch coordinates from backend
-         */
-        async function fetchLocationCoordinates(location, destinationContext = '') {
-            const API_URL = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : '';
-            try {
-                const response = await fetch(`${API_URL}/api/geocode`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ location, destination: destinationContext })
-                });
-
-                if (!response.ok) return null;
-
-                const data = await response.json();
-                if (data.success && data.lat && data.lng) {
-                    return { lat: data.lat, lng: data.lng };
-                }
-            } catch (e) {
-                console.error('Geocode failed for', location);
-            }
-            return null;
-        }
 
         /**
          * Toggle map visibility (for mobile)
