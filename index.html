@@ -7139,8 +7139,12 @@
          */
         function updateUnifiedFilters(tab) {
             const filtersContainer = document.getElementById('unified-filters');
+            const sidebarContainer = document.getElementById('unified-sidebar');
+            const resultsContainer = document.getElementById('unified-results');
 
             if (tab === 'flights') {
+                sidebarContainer.style.display = 'block';
+                resultsContainer.style.flex = '';
                 filtersContainer.innerHTML = `
                     <h4><i class="fas fa-filter"></i> Flight Filters</h4>
                     <div class="sidebar-filter">
@@ -7171,6 +7175,8 @@
                     </div>
                 `;
             } else if (tab === 'hotels') {
+                sidebarContainer.style.display = 'block';
+                resultsContainer.style.flex = '';
                 filtersContainer.innerHTML = `
                     <h4><i class="fas fa-filter"></i> Hotel Filters</h4>
                     <div class="sidebar-filter">
@@ -7193,6 +7199,9 @@
                     </div>
                 `;
             } else if (tab === 'itinerary') {
+                // Hide sidebar for itinerary tab so content takes full width
+                sidebarContainer.style.display = 'none';
+                resultsContainer.style.flex = '1';
                 filtersContainer.innerHTML = '';
             }
         }
