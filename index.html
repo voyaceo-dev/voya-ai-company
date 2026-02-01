@@ -64,9 +64,9 @@
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Leaflet.js for Interactive Maps -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Mapbox GL JS for Interactive Maps with Directions -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css' rel='stylesheet' />
     <!-- Google Identity Services for OAuth 2.0 -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
@@ -10293,37 +10293,45 @@
         // Map generation counter to prevent race conditions
         let mapGenerationId = 0;
 
-        // Initialize Leaflet map with progressive marker loading
+        // Initialize Mapbox map with progressive marker loading
         async function initializeItineraryMap(destination, parsedData) {
             // Increment generation ID
             mapGenerationId++;
             const currentGenerationId = mapGenerationId;
 
+            // mapbox token
+            mapboxgl.accessToken = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWwwZG85c2owOTQzM2VxczUxNHhwMXhsIn0.VimrSd-UaXdO4jAI6ShvyQ';
+
             // Default coordinates (will be geocoded based on destination)
             let defaultCoords = await getDestinationCoordinates(destination);
-            // Fallback if geocoding fails
+            // Fallback if geocoding fails (New Delhi)
             if (!defaultCoords) defaultCoords = [28.6139, 77.2090];
+            // Swap for Mapbox (Lng, Lat)
+            const mapboxCenter = [defaultCoords[1], defaultCoords[0]];
 
-            // Create map IMMEDIATELY (don't wait for geocoding)
-            if (itineraryMap) {
-                itineraryMap.remove();
+            // Create map IMMEDIATELY
+            const mapContainer = document.getElementById('itinerary-map');
+            if (window.itineraryMap) {
+                window.itineraryMap.remove();
+                window.itineraryMap = null;
             }
 
-            itineraryMap = L.map('itinerary-map').setView(defaultCoords, 13);
+            window.itineraryMap = new mapboxgl.Map({
+                container: 'itinerary-map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: mapboxCenter,
+                zoom: 12,
+                pitch: 45, // Add some 3D pitch for better view
+                bearing: -17.6
+            });
 
-            // Add tile layer (Mapbox Streets)
-            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-                attribution: '© <a href="https://www.mapbox.com/">Mapbox</a>',
-                id: 'mapbox/streets-v12',
-                tileSize: 512,
-                zoomOffset: -1,
-                accessToken: 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWwwZG85c2owOTQzM2VxczUxNHhwMXhsIn0.VimrSd-UaXdO4jAI6ShvyQ'
-            }).addTo(itineraryMap);
+            // Add navigation controls
+            window.itineraryMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
             // Clear existing markers
             mapMarkers = [];
             categorizedMarkers = { attractions: [], hotels: [], food: [] };
-            routePolylines = [];
+            routePolylines = []; // Will store layer IDs for Mapbox
             dayMarkers = {};
             dayPolylines = {};
             currentActiveDay = 0;
@@ -10334,59 +10342,112 @@
             // Show initial loading message
             showToast(`🗺️ Map ready! Loading ${totalActivities} locations...`, 'info');
 
-            // Start geocoding in background (don't await)
-            geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities, currentGenerationId);
+            // Start geocoding and routing in background
+            window.itineraryMap.on('load', () => {
+                geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities, currentGenerationId);
+
+                // Add 3D buildings layer
+                const layers = window.itineraryMap.getStyle().layers;
+                const labelLayerId = layers.find(
+                    (layer) => layer.type === 'symbol' && layer.layout['text-field']
+                ).id;
+
+                window.itineraryMap.addLayer(
+                    {
+                        'id': 'add-3d-buildings',
+                        'source': 'composite',
+                        'source-layer': 'building',
+                        'filter': ['==', 'extrude', 'true'],
+                        'type': 'fill-extrusion',
+                        'minzoom': 15,
+                        'paint': {
+                            'fill-extrusion-color': '#aaa',
+                            'fill-extrusion-height': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                15,
+                                0,
+                                15.05,
+                                ['get', 'height']
+                            ],
+                            'fill-extrusion-base': [
+                                'interpolate',
+                                ['linear'],
+                                ['zoom'],
+                                15,
+                                0,
+                                15.05,
+                                ['get', 'min_height']
+                            ],
+                            'fill-extrusion-opacity': 0.6
+                        }
+                    },
+                    labelLayerId
+                );
+            });
         }
 
-        // Progressive marker loading with AI-powered batch geocoding
+        // Progressive marker loading with Mapbox Geocoding and Directions
         async function geocodeAndLoadMarkersProgressively(destination, parsedData, defaultCoords, totalActivities, generationId) {
-            // Store all coordinates for route drawing
-            const allCoords = [];
-            const dayRoutes = {};
+            const dayRoutes = {}; // Stores coordinates for each day
             let markerNum = 1;
 
-            // Collect all activity descriptions for batch AI geocoding
-            const allActivities = [];
-            const activityMetadata = []; // Store day and time info for each activity
-
+            // Loop through days and activities
             for (const dayData of parsedData) {
-                for (const activity of dayData.activities) {
-                    allActivities.push(activity.description);
-                    activityMetadata.push({
-                        day: dayData.day,
-                        time: activity.time,
-                        description: activity.description
-                    });
-                }
-            }
+                const dayCoords = []; // Store coordinates specifically for this day's route
 
-            // Show placeholder markers immediately with loading animation
-            for (const dayData of parsedData) {
-                const dayCoords = [];
                 for (const activity of dayData.activities) {
-                    // Stop if map generation changed (race condition check)
                     if (mapGenerationId !== generationId) return;
 
-                    // Use fallback/random offset coordinates immediately
-                    const offset = () => (Math.random() - 0.5) * 0.04;
-                    const lat = defaultCoords[0] + offset();
-                    const lng = defaultCoords[1] + offset();
+                    // Geocode the location using Mapbox API
+                    const query = `${activity.description}, ${destination}`;
+                    let coords = null;
 
-                    // Create marker with loading state
-                    const markerIcon = L.divIcon({
-                        className: 'trip-marker loading',
-                        html: `<div class="trip-marker loading">${markerNum}</div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
-                    });
+                    try {
+                        const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&limit=1`);
+                        const data = await response.json();
+                        if (data.features && data.features.length > 0) {
+                            coords = data.features[0].center; // [lng, lat]
+                        }
+                    } catch (e) {
+                        console.warn('Geocoding failed for', query);
+                    }
 
-                    const marker = L.marker([lat, lng], { icon: markerIcon }).addTo(itineraryMap);
+                    // Fallback to random offset if geocoding fails
+                    if (!coords) {
+                        const offset = () => (Math.random() - 0.5) * 0.04;
+                        coords = [defaultCoords[1] + offset(), defaultCoords[0] + offset()];
+                    }
 
-                    // Add temporary popup
-                    marker.bindPopup(`
-                        <div class="map-popup-title">📍 Loading...</div>
-                        <div class="map-popup-meta">Day ${dayData.day}</div>
+                    // Create custom marker element
+                    const el = document.createElement('div');
+                    el.className = 'trip-marker';
+                    el.innerText = markerNum;
+                    el.style.backgroundColor = '#003580';
+                    el.style.color = 'white';
+                    el.style.width = '30px';
+                    el.style.height = '30px';
+                    el.style.borderRadius = '50%';
+                    el.style.display = 'flex';
+                    el.style.alignItems = 'center';
+                    el.style.justifyContent = 'center';
+                    el.style.fontWeight = 'bold';
+                    el.style.border = '2px solid white';
+                    el.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+                    el.style.cursor = 'pointer';
+
+                    // Create popup
+                    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                        <div class="map-popup-title" style="font-weight:bold;margin-bottom:5px;">${activity.description.split('.')[0]}</div>
+                        <div class="map-popup-meta" style="font-size:0.85em;color:#666;">Day ${dayData.day} · ${activity.time || 'Flexible'}</div>
                     `);
+
+                    // Add marker to map
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat(coords)
+                        .setPopup(popup)
+                        .addTo(window.itineraryMap);
 
                     // Store marker data
                     const markerData = {
@@ -10395,8 +10456,8 @@
                         day: dayData.day,
                         category: 'attractions',
                         activity: activity,
-                        tempLat: lat,
-                        tempLng: lng
+                        lng: coords[0],
+                        lat: coords[1]
                     };
 
                     mapMarkers.push(markerData);
@@ -10405,216 +10466,79 @@
                     if (!dayMarkers[dayData.day]) dayMarkers[dayData.day] = [];
                     dayMarkers[dayData.day].push(marker);
 
-                    dayCoords.push([lat, lng]);
-                    allCoords.push([lat, lng]);
+                    dayCoords.push(coords); // Add to this day's route points
                     markerNum++;
+
+                    // Small delay to prevent rate limiting and show animation
+                    await new Promise(r => setTimeout(r, 100));
                 }
 
-                if (dayCoords.length > 1) dayRoutes[dayData.day] = dayCoords;
+                // If we have at least 2 points, fetch and draw route for the day
+                if (dayCoords.length >= 2) {
+                    await drawDayRoute(dayData.day, dayCoords, generationId);
+                }
             }
+        }
 
-            // Draw temporary routes
-            const dayColors = ['#0060FF', '#f953c6', '#00b894', '#fdcb6e', '#e17055', '#6c5ce7'];
-            Object.keys(dayRoutes).forEach((day, index) => {
-                const coords = dayRoutes[day];
-                if (coords.length >= 2) {
-                    const polyline = L.polyline(coords, {
-                        color: dayColors[index % dayColors.length],
-                        weight: 4,
-                        opacity: 0.4,
-                        dashArray: '10, 10',
-                        lineJoin: 'round'
-                    }).addTo(itineraryMap);
-                    routePolylines.push(polyline);
-                    if (!dayPolylines[day]) dayPolylines[day] = [];
-                    dayPolylines[day].push(polyline);
-                }
-            });
+        // Helper to fetch and draw driving/walking route for a specific day
+        async function drawDayRoute(day, coords, generationId) {
+            if (mapGenerationId !== generationId) return;
 
-            // Reset view to destination center initially 
-            itineraryMap.setView(defaultCoords, 13);
-
-            // Try AI BATCH GEOCODING first (much faster and more accurate)
-            let loadedCount = 0;
-            let aiGeocodeResults = null;
+            // Construct coordinate string for API: lng1,lat1;lng2,lat2;...
+            const coordString = coords.map(c => c.join(',')).join(';');
 
             try {
-                console.log(`🤖 Using AI geocoding for ${allActivities.length} activities in ${destination}`);
-                showToast(`🤖 AI geocoding ${allActivities.length} locations...`, 'info');
+                // Request driving route (can switch to 'walking' if preferred)
+                const response = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${coordString}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
+                const data = await response.json();
 
-                const response = await fetch(`${API_BASE_URL}/api/geocode/ai`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        activities: allActivities,
-                        destination: destination
-                    })
-                });
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0].geometry;
+                    const dayColors = ['#0060FF', '#f953c6', '#00b894', '#fdcb6e', '#e17055', '#6c5ce7'];
+                    const color = dayColors[(day - 1) % dayColors.length];
+                    const layerId = `route-day-${day}`;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success && data.results) {
-                        aiGeocodeResults = data.results;
-                        console.log(`✅ AI geocoded ${aiGeocodeResults.length} locations in ${data.processingTime}s`);
-
-                        // Update destination center if provided
-                        if (data.destinationCenter) {
-                            defaultCoords = data.destinationCenter;
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn('AI geocoding failed, falling back to progressive:', err.message);
-            }
-
-            // Update markers with AI coordinates or fallback to progressive
-            if (aiGeocodeResults && aiGeocodeResults.length === mapMarkers.length) {
-                // AI BATCH UPDATE - fast path
-                for (let i = 0; i < mapMarkers.length; i++) {
-                    if (mapGenerationId !== generationId) return;
-
-                    const markerData = mapMarkers[i];
-                    const aiResult = aiGeocodeResults[i];
-
-                    if (aiResult && aiResult.lat && aiResult.lng) {
-                        // Update marker position with AI coordinates
-                        const newLatLng = L.latLng(aiResult.lat, aiResult.lng);
-                        markerData.marker.setLatLng(newLatLng);
-
-                        // Update icon (remove loading)
-                        const updatedIcon = L.divIcon({
-                            className: 'trip-marker',
-                            html: `<div class="trip-marker">${markerData.activityNum}</div>`,
-                            iconSize: [32, 32],
-                            iconAnchor: [16, 16]
+                    // Add route source and layer
+                    if (window.itineraryMap.getSource(layerId)) {
+                        window.itineraryMap.getSource(layerId).setData(route);
+                    } else {
+                        window.itineraryMap.addSource(layerId, {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'Feature',
+                                'properties': {},
+                                'geometry': route
+                            }
                         });
-                        markerData.marker.setIcon(updatedIcon);
 
-                        // Update popup with AI-provided name
-                        const locationName = aiResult.name || markerData.activity.description.split('.')[0];
-                        markerData.marker.setPopupContent(`
-                            <div class="map-popup-title">${locationName}</div>
-                            <div class="map-popup-meta">Day ${markerData.day} · ${markerData.activity.time || 'Flexible'}</div>
-                         `);
-
-                        loadedCount++;
-                    }
-                }
-
-                // Redraw routes with accurate coordinates
-                const updatedDayRoutes = {};
-                for (const markerData of mapMarkers) {
-                    const latlng = markerData.marker.getLatLng();
-                    if (!updatedDayRoutes[markerData.day]) updatedDayRoutes[markerData.day] = [];
-                    updatedDayRoutes[markerData.day].push([latlng.lat, latlng.lng]);
-                }
-
-                // Remove old polylines and draw new ones
-                routePolylines.forEach(p => itineraryMap.removeLayer(p));
-                routePolylines = [];
-                dayPolylines = {};
-
-                Object.keys(updatedDayRoutes).forEach((day, index) => {
-                    const coords = updatedDayRoutes[day];
-                    if (coords.length >= 2) {
-                        const polyline = L.polyline(coords, {
-                            color: dayColors[index % dayColors.length],
-                            weight: 4,
-                            opacity: 0.7,
-                            lineJoin: 'round'
-                        }).addTo(itineraryMap);
-                        routePolylines.push(polyline);
-                        if (!dayPolylines[day]) dayPolylines[day] = [];
-                        dayPolylines[day].push(polyline);
-                    }
-                });
-
-            } else {
-                // FALLBACK: Progressive geocoding (slower)
-                console.log('⚠️ AI geocoding unavailable, using progressive geocoding...');
-
-                for (let i = 0; i < mapMarkers.length; i++) {
-                    if (mapGenerationId !== generationId) return;
-
-                    const markerData = mapMarkers[i];
-                    const realCoords = await getDestinationCoordinates(markerData.activity.description, defaultCoords);
-
-                    if (realCoords) {
-                        const newLatLng = L.latLng(realCoords[0], realCoords[1]);
-                        markerData.marker.setLatLng(newLatLng);
-
-                        const updatedIcon = L.divIcon({
-                            className: 'trip-marker',
-                            html: `<div class="trip-marker">${markerData.activityNum}</div>`,
-                            iconSize: [32, 32],
-                            iconAnchor: [16, 16]
+                        window.itineraryMap.addLayer({
+                            'id': layerId,
+                            'type': 'line',
+                            'source': layerId,
+                            'layout': {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            'paint': {
+                                'line-color': color,
+                                'line-width': 5,
+                                'line-opacity': 0.8
+                            }
                         });
-                        markerData.marker.setIcon(updatedIcon);
 
-                        markerData.marker.setPopupContent(`
-                            <div class="map-popup-title">${markerData.activity.description.split('.')[0]}</div>
-                            <div class="map-popup-meta">Day ${markerData.day} · ${markerData.activity.time || 'Flexible'}</div>
-                         `);
-
-                        loadedCount++;
+                        // Add arrows or dashed line effect if needed
+                        // For now just solid colored lines
                     }
 
-                    if (loadedCount % 5 === 0) console.log(`✓ Loaded ${loadedCount}/${totalActivities}`);
-                    await new Promise(r => setTimeout(r, 200));
+                    if (!dayPolylines[day]) dayPolylines[day] = [];
+                    dayPolylines[day].push(layerId);
+                    routePolylines.push(layerId);
                 }
+            } catch (e) {
+                console.warn(`Failed to fetch route for Day ${day}:`, e);
             }
+        }
 
-            // Generate Hotel markers (simulated near destination)
-            const hotelNames = ['Grand Plaza Hotel', 'City Center Inn', 'Riverside Suites', 'Heritage Boutique', 'The Luxury Collection'];
-            for (let i = 0; i < 5; i++) {
-                const offset = () => (Math.random() - 0.5) * 0.06;
-                const lat = defaultCoords[0] + offset();
-                const lng = defaultCoords[1] + offset();
-
-                const hotelIcon = L.divIcon({
-                    className: 'trip-marker hotel-marker',
-                    html: `<div class="trip-marker" style="background:linear-gradient(135deg,#00b894,#00cec9);">🏨</div>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
-                });
-
-                const marker = L.marker([lat, lng], { icon: hotelIcon });
-                marker.bindPopup(`
-                        <div class="map-popup-title">🏨 ${hotelNames[i]}</div>
-                        <div class="map-popup-meta">⭐ ${(4 + Math.random()).toFixed(1)} · $${80 + Math.floor(Math.random() * 200)}/night</div>
-                    `);
-                categorizedMarkers.hotels.push(marker);
-            }
-
-            // Generate Food/Restaurant markers (simulated near destination)
-            const foodNames = ['Le Petit Café', 'Authentic Local Kitchen', 'Street Food Market', 'Fine Dining Experience', 'Rooftop Bistro', 'Traditional Eatery'];
-            for (let i = 0; i < 6; i++) {
-                const offset = () => (Math.random() - 0.5) * 0.05;
-                const lat = defaultCoords[0] + offset();
-                const lng = defaultCoords[1] + offset();
-
-                const foodIcon = L.divIcon({
-                    className: 'trip-marker food-marker',
-                    html: `<div class="trip-marker" style="background:linear-gradient(135deg,#fd79a8,#e84393);">🍽️</div>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
-                });
-
-                const marker = L.marker([lat, lng], { icon: foodIcon });
-                marker.bindPopup(`
-                        <div class="map-popup-title">🍽️ ${foodNames[i]}</div>
-                        <div class="map-popup-meta">⭐ ${(3.5 + Math.random() * 1.5).toFixed(1)} · $${10 + Math.floor(Math.random() * 40)}/person</div>
-                    `);
-                categorizedMarkers.food.push(marker);
-            }
-
-            // Final operations: fit bounds if generation still valid and we have markers
-            if (mapGenerationId === generationId && mapMarkers.length > 0) {
-                const group = new L.featureGroup(mapMarkers.map(m => m.marker));
-                // Fit bounds smoothly
-                itineraryMap.flyToBounds(group.getBounds().pad(0.15), { duration: 1.5 });
-                showToast(`✅ All ${loadedCount} locations loaded with AI!`, 'success');
-            }
         }
 
         // Filter map markers by category
@@ -10802,100 +10726,241 @@
                 return geocodeCache[cacheKey];
             }
 
-            try {
-                // Use backend API for geocoding (keeps API keys secure)
-                const response = await fetch(`${API_BASE_URL}/api/geocode/single`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        location: destination,
-                        destination: proximity ? null : destination
-                    })
+            // Filter map markers by category
+            function filterMapMarkers(category) {
+                if (!window.itineraryMap) return;
+
+                // Hide all markers first
+                Object.keys(categorizedMarkers).forEach(cat => {
+                    categorizedMarkers[cat].forEach(marker => {
+                        marker.remove();
+                    });
                 });
 
-                const data = await response.json();
-
-                if (data.success && data.lat && data.lng) {
-                    const coords = [data.lat, data.lng];
-                    geocodeCache[cacheKey] = coords;
-                    console.log(`📍 Geocoded ${destination} to [${data.lat}, ${data.lng}]`);
-                    return coords;
-                }
-            } catch (error) {
-                console.error('Geocoding error:', error);
-            }
-
-            // Fallback to Delhi, India if geocoding fails
-            console.warn(`⚠️ Could not geocode ${destination}, using fallback`);
-            return [28.6139, 77.2090];
-        }
-
-
-        // Parse itinerary content to extract structured data
-        function parseItineraryContent(content) {
-            const days = [];
-            const lines = content.split('\n');
-            let currentDay = null;
-            let currentActivities = [];
-
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (!trimmed) continue;
-
-                // Check for day headings
-                const dayMatch = trimmed.match(/^#{1,4}\s*\*{0,2}\s*Day\s*(\d+)[:\s-]*(.*?)\*{0,2}\s*$/i) ||
-                    trimmed.match(/^\*{0,2}\s*Day\s*(\d+)[:\s-]*(.*?)\*{0,2}\s*$/i);
-
-                if (dayMatch) {
-                    if (currentDay !== null) {
-                        days.push({ day: currentDay.day, title: currentDay.title, activities: currentActivities });
-                    }
-                    currentDay = { day: parseInt(dayMatch[1]), title: dayMatch[2] || '' };
-                    currentActivities = [];
-                    continue;
-                }
-
-                // Check for activities (list items or time-based entries)
-                if (currentDay !== null && /^[\*\-]\s+/.test(trimmed)) {
-                    const activityText = trimmed.replace(/^[\*\-]\s+/, '').replace(/\*\*/g, '');
-                    const timeMatch = activityText.match(/^(Morning|Afternoon|Evening|Night|[\d:]+\s*(AM|PM)?)[:\s]*/i);
-                    const time = timeMatch ? timeMatch[1] : '';
-                    const description = timeMatch ? activityText.replace(timeMatch[0], '') : activityText;
-
-                    currentActivities.push({
-                        time: time,
-                        description: description,
-                        rating: (7.5 + Math.random() * 2).toFixed(1) // Random rating 7.5-9.5
+                // Handle "overall" filter - show all markers and routes
+                if (category === 'overall') {
+                    Object.keys(categorizedMarkers).forEach(cat => {
+                        categorizedMarkers[cat].forEach(marker => {
+                            marker.addTo(window.itineraryMap);
+                        });
                     });
+
+                    // Show all routes
+                    routePolylines.forEach(layerId => {
+                        if (window.itineraryMap.getLayer(layerId)) {
+                            window.itineraryMap.setLayoutProperty(layerId, 'visibility', 'visible');
+                        }
+                    });
+
+                    // Fit bounds to all markers if generic
+                    if (mapMarkers.length > 0) {
+                        const bounds = new mapboxgl.LngLatBounds();
+                        mapMarkers.forEach(m => bounds.extend(m.marker.getLngLat()));
+                        window.itineraryMap.fitBounds(bounds, { padding: 50 });
+                    }
+
+                    showToast('🗺️ Showing complete overview', 'info');
+                    return;
+                }
+
+                // Show selected category
+                if (categorizedMarkers[category]) {
+                    categorizedMarkers[category].forEach(marker => {
+                        marker.addTo(window.itineraryMap);
+                    });
+
+                    // Hide routes for specific categories (optional, but cleaner)
+                    if (category !== 'attractions') {
+                        routePolylines.forEach(layerId => {
+                            if (window.itineraryMap.getLayer(layerId)) {
+                                window.itineraryMap.setLayoutProperty(layerId, 'visibility', 'none');
+                            }
+                        });
+                    }
                 }
             }
 
-            // Push last day
-            if (currentDay !== null) {
-                days.push({ day: currentDay.day, title: currentDay.title, activities: currentActivities });
+            // Focus map on a specific activity when its card is clicked
+            function focusMapOnActivity(activityNum) {
+                if (!window.itineraryMap) return;
+
+                // Highlight the card
+                document.querySelectorAll('.trip-activity-card').forEach(card => {
+                    card.classList.remove('active');
+                    if (parseInt(card.dataset.activityNum) === activityNum) {
+                        card.classList.add('active');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+
+                const markerData = mapMarkers.find(m => m.activityNum === activityNum);
+                if (markerData) {
+                    // Center map on this marker
+                    window.itineraryMap.flyTo({
+                        center: markerData.marker.getLngLat(),
+                        zoom: 15,
+                        speed: 1.5
+                    });
+
+                    markerData.marker.togglePopup();
+                    showToast(`📍 Showing activity ${activityNum} on map`, 'info');
+                }
             }
 
-            return days;
-        }
+            // Filter activities and map by day
+            function filterActivitiesByDay(dayNum) {
+                currentActiveDay = dayNum;
 
-        // Generate Trip.com-style activity cards
-        function generateTripActivities(parsedData, totalDays) {
-            let html = '';
-            let activityNum = 1;
-            const icons = ['🏛️', '🎨', '🍽️', '🚶', '🌳', '🎭', '🛍️', '🌅', '☕', '🏰'];
+                // Filter list items
+                const daySections = document.querySelectorAll('.trip-day-section');
+                daySections.forEach(section => {
+                    if (dayNum === 0) {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = parseInt(section.dataset.day) === dayNum ? 'block' : 'none';
+                    }
+                });
 
-            for (const dayData of parsedData) {
-                html += `<div class="trip-day-section" data-day="${dayData.day}">`;
-                html += `<h3 style="font-size:1rem; color:#1a1a2e; margin:20px 0 10px; font-weight:700;">Day ${dayData.day}: ${dayData.title || 'Exploration'}</h3>`;
+                // Filter map markers and routes
+                if (!window.itineraryMap) return;
 
-                for (let i = 0; i < dayData.activities.length; i++) {
-                    const activity = dayData.activities[i];
-                    const icon = icons[activityNum % icons.length];
-                    const showBestBadge = Math.random() > 0.6;
+                // Remove all markers first
+                mapMarkers.forEach(m => m.marker.remove());
 
-                    html += `
+                // Hide all routes first
+                routePolylines.forEach(layerId => {
+                    if (window.itineraryMap.getLayer(layerId)) {
+                        window.itineraryMap.setLayoutProperty(layerId, 'visibility', 'none');
+                    }
+                });
+
+                if (dayNum === 0) {
+                    // Show All
+                    filterMapMarkers('overall');
+                } else {
+                    // Show only this day's markers
+                    if (dayMarkers[dayNum]) {
+                        dayMarkers[dayNum].forEach(marker => marker.addTo(window.itineraryMap));
+
+                        // Fit bounds to day
+                        const bounds = new mapboxgl.LngLatBounds();
+                        dayMarkers[dayNum].forEach(m => bounds.extend(m.getLngLat()));
+                        window.itineraryMap.fitBounds(bounds, { padding: 50 });
+                    }
+
+                    // Show this day's route
+                    if (dayPolylines[dayNum]) {
+                        dayPolylines[dayNum].forEach(layerId => {
+                            if (window.itineraryMap.getLayer(layerId)) {
+                                window.itineraryMap.setLayoutProperty(layerId, 'visibility', 'visible');
+                            }
+                        });
+                    }
+
+                    showToast(`📅 Day ${dayNum} route`, 'info');
+                }
+            }
+
+            async function getDestinationCoordinates(destination, proximity = null) {
+                const cacheKey = destination.toLowerCase();
+                if (geocodeCache[cacheKey]) {
+                    return geocodeCache[cacheKey];
+                }
+
+                try {
+                    // Use backend API for geocoding (keeps API keys secure)
+                    const response = await fetch(`${API_BASE_URL}/api/geocode/single`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            location: destination,
+                            destination: proximity ? null : destination
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.lat && data.lng) {
+                        const coords = [data.lat, data.lng];
+                        geocodeCache[cacheKey] = coords;
+                        console.log(`📍 Geocoded ${destination} to [${data.lat}, ${data.lng}]`);
+                        return coords;
+                    }
+                } catch (error) {
+                    console.error('Geocoding error:', error);
+                }
+
+                // Fallback to Delhi, India if geocoding fails
+                console.warn(`⚠️ Could not geocode ${destination}, using fallback`);
+                return [28.6139, 77.2090];
+            }
+
+
+            // Parse itinerary content to extract structured data
+            function parseItineraryContent(content) {
+                const days = [];
+                const lines = content.split('\n');
+                let currentDay = null;
+                let currentActivities = [];
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+
+                    // Check for day headings
+                    const dayMatch = trimmed.match(/^#{1,4}\s*\*{0,2}\s*Day\s*(\d+)[:\s-]*(.*?)\*{0,2}\s*$/i) ||
+                        trimmed.match(/^\*{0,2}\s*Day\s*(\d+)[:\s-]*(.*?)\*{0,2}\s*$/i);
+
+                    if (dayMatch) {
+                        if (currentDay !== null) {
+                            days.push({ day: currentDay.day, title: currentDay.title, activities: currentActivities });
+                        }
+                        currentDay = { day: parseInt(dayMatch[1]), title: dayMatch[2] || '' };
+                        currentActivities = [];
+                        continue;
+                    }
+
+                    // Check for activities (list items or time-based entries)
+                    if (currentDay !== null && /^[\*\-]\s+/.test(trimmed)) {
+                        const activityText = trimmed.replace(/^[\*\-]\s+/, '').replace(/\*\*/g, '');
+                        const timeMatch = activityText.match(/^(Morning|Afternoon|Evening|Night|[\d:]+\s*(AM|PM)?)[:\s]*/i);
+                        const time = timeMatch ? timeMatch[1] : '';
+                        const description = timeMatch ? activityText.replace(timeMatch[0], '') : activityText;
+
+                        currentActivities.push({
+                            time: time,
+                            description: description,
+                            rating: (7.5 + Math.random() * 2).toFixed(1) // Random rating 7.5-9.5
+                        });
+                    }
+                }
+
+                // Push last day
+                if (currentDay !== null) {
+                    days.push({ day: currentDay.day, title: currentDay.title, activities: currentActivities });
+                }
+
+                return days;
+            }
+
+            // Generate Trip.com-style activity cards
+            function generateTripActivities(parsedData, totalDays) {
+                let html = '';
+                let activityNum = 1;
+                const icons = ['🏛️', '🎨', '🍽️', '🚶', '🌳', '🎭', '🛍️', '🌅', '☕', '🏰'];
+
+                for (const dayData of parsedData) {
+                    html += `<div class="trip-day-section" data-day="${dayData.day}">`;
+                    html += `<h3 style="font-size:1rem; color:#1a1a2e; margin:20px 0 10px; font-weight:700;">Day ${dayData.day}: ${dayData.title || 'Exploration'}</h3>`;
+
+                    for (let i = 0; i < dayData.activities.length; i++) {
+                        const activity = dayData.activities[i];
+                        const icon = icons[activityNum % icons.length];
+                        const showBestBadge = Math.random() > 0.6;
+
+                        html += `
                         <div class="trip-activity-card" data-activity-num="${activityNum}" data-day="${dayData.day}" onclick="focusMapOnActivity(${activityNum})">
                             <div class="trip-activity-number">${activityNum}</div>
                             <div class="trip-activity-image">
@@ -10916,26 +10981,26 @@
                         </div>
                     `;
 
-                    // Add transportation connector between activities (not after last one)
-                    if (i < dayData.activities.length - 1) {
-                        const walkTime = Math.floor(5 + Math.random() * 15);
-                        html += `
+                        // Add transportation connector between activities (not after last one)
+                        if (i < dayData.activities.length - 1) {
+                            const walkTime = Math.floor(5 + Math.random() * 15);
+                            html += `
                             <div class="trip-transport">
                                 <div class="trip-transport-icon">🚶</div>
                                 <span class="trip-transport-text">${walkTime} minutes · ${(walkTime * 80)}m</span>
                             </div>
                         `;
+                        }
+
+                        activityNum++;
                     }
 
-                    activityNum++;
+                    html += '</div>';
                 }
 
-                html += '</div>';
-            }
-
-            // If no parsed data, show placeholder
-            if (parsedData.length === 0) {
-                html = `
+                // If no parsed data, show placeholder
+                if (parsedData.length === 0) {
+                    html = `
                     <div class="trip-empty-day">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -10943,18 +11008,18 @@
                         <p>Your itinerary is being generated...</p>
                     </div>
                 `;
+                }
+
+                return html;
             }
 
-            return html;
-        }
+            // filterActivitiesByDay is defined earlier and handles both DOM filtering and map markers
 
-        // filterActivitiesByDay is defined earlier and handles both DOM filtering and map markers
-
-        function printItinerary() {
-            const content = document.querySelector('.itinerary-container');
-            if (content) {
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
+            function printItinerary() {
+                const content = document.querySelector('.itinerary-container');
+                if (content) {
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
                     <html>
                     <head>
                         <title>VOYA AI - Travel Itinerary</title>
@@ -10970,44 +11035,44 @@
                     <body>${content.innerHTML}</body>
                     </html>
                 `);
-                printWindow.document.close();
-                printWindow.print();
-            }
-        }
-
-        function copyItinerary() {
-            const container = document.querySelector('.itinerary-container');
-            if (container) {
-                const text = container.innerText;
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('✅ Itinerary copied to clipboard!');
-                }).catch(err => {
-                    alert('❌ Failed to copy: ' + err.message);
-                });
-            }
-        }
-
-        function downloadItinerary() {
-            const container = document.querySelector('.itinerary-container');
-            if (!container) {
-                alert('No itinerary to download. Please generate one first.');
-                return;
+                    printWindow.document.close();
+                    printWindow.print();
+                }
             }
 
-            // Show loading state
-            showToast('Generating PDF...', 'info');
+            function copyItinerary() {
+                const container = document.querySelector('.itinerary-container');
+                if (container) {
+                    const text = container.innerText;
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('✅ Itinerary copied to clipboard!');
+                    }).catch(err => {
+                        alert('❌ Failed to copy: ' + err.message);
+                    });
+                }
+            }
 
-            // Get destination for filename and header
-            const destination = document.getElementById('ai-dest').value.trim() || 'Travel';
-            const duration = document.getElementById('ai-days').value.trim() || '';
-            const filename = `VOYA-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
+            function downloadItinerary() {
+                const container = document.querySelector('.itinerary-container');
+                if (!container) {
+                    alert('No itinerary to download. Please generate one first.');
+                    return;
+                }
 
-            // Create a complete standalone HTML document for PDF generation
-            const pdfContent = document.createElement('div');
-            pdfContent.id = 'pdf-export-container';
+                // Show loading state
+                showToast('Generating PDF...', 'info');
 
-            // Build clean HTML content with all styles inline
-            let cleanHTML = `
+                // Get destination for filename and header
+                const destination = document.getElementById('ai-dest').value.trim() || 'Travel';
+                const duration = document.getElementById('ai-days').value.trim() || '';
+                const filename = `VOYA-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
+
+                // Create a complete standalone HTML document for PDF generation
+                const pdfContent = document.createElement('div');
+                pdfContent.id = 'pdf-export-container';
+
+                // Build clean HTML content with all styles inline
+                let cleanHTML = `
                 <div style="font-family: Arial, sans-serif; padding: 25px; background: #ffffff; color: #333333; min-height: 100%;">
                     <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #003580;">
                         <h1 style="color: #003580; font-size: 24px; margin: 0 0 8px 0; font-weight: bold;">VOYA AI Travel Itinerary</h1>
@@ -11015,731 +11080,731 @@
                     </div>
             `;
 
-            // Clone the container content and process it
-            const contentClone = container.cloneNode(true);
+                // Clone the container content and process it
+                const contentClone = container.cloneNode(true);
 
-            // Remove action buttons from the clone
-            const actions = contentClone.querySelector('.itinerary-actions');
-            if (actions) actions.remove();
+                // Remove action buttons from the clone
+                const actions = contentClone.querySelector('.itinerary-actions');
+                if (actions) actions.remove();
 
-            // Remove the header from clone (we're adding our own)
-            const headerClone = contentClone.querySelector('.itinerary-header');
-            if (headerClone) headerClone.remove();
+                // Remove the header from clone (we're adding our own)
+                const headerClone = contentClone.querySelector('.itinerary-header');
+                if (headerClone) headerClone.remove();
 
-            // Process day cards
-            const dayCards = contentClone.querySelectorAll('.day-card');
-            dayCards.forEach((card, index) => {
-                // Extract the day title
-                const h2 = card.querySelector('h2');
-                const dayTitle = h2 ? h2.textContent.replace('📅', '').trim() : `Day ${index + 1}`;
+                // Process day cards
+                const dayCards = contentClone.querySelectorAll('.day-card');
+                dayCards.forEach((card, index) => {
+                    // Extract the day title
+                    const h2 = card.querySelector('h2');
+                    const dayTitle = h2 ? h2.textContent.replace('📅', '').trim() : `Day ${index + 1}`;
 
-                // Get all content except the h2
-                let cardContent = '';
-                Array.from(card.children).forEach(child => {
-                    if (child.tagName !== 'H2') {
-                        cardContent += child.outerHTML;
-                    }
-                });
+                    // Get all content except the h2
+                    let cardContent = '';
+                    Array.from(card.children).forEach(child => {
+                        if (child.tagName !== 'H2') {
+                            cardContent += child.outerHTML;
+                        }
+                    });
 
-                cleanHTML += `
+                    cleanHTML += `
                     <div style="background: #f8f9fa; border-left: 4px solid #003580; padding: 15px 20px; margin: 15px 0; border-radius: 6px; page-break-inside: avoid;">
                         <h2 style="color: #003580; font-size: 16px; margin: 0 0 12px 0; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 8px;">📅 ${dayTitle}</h2>
                         ${cardContent}
                     </div>
                 `;
-            });
+                });
 
-            // If no day cards found, just use the raw content
-            if (dayCards.length === 0) {
-                cleanHTML += contentClone.innerHTML;
+                // If no day cards found, just use the raw content
+                if (dayCards.length === 0) {
+                    cleanHTML += contentClone.innerHTML;
+                }
+
+                cleanHTML += '</div>';
+                pdfContent.innerHTML = cleanHTML;
+
+                // Apply inline styles to all elements for PDF compatibility
+                pdfContent.querySelectorAll('h3').forEach(h => {
+                    h.style.cssText = 'color: #1a73e8; font-size: 14px; margin: 12px 0 8px 0; font-weight: bold;';
+                });
+                pdfContent.querySelectorAll('h4').forEach(h => {
+                    h.style.cssText = 'color: #333; font-size: 13px; margin: 10px 0 6px 0; font-weight: bold;';
+                });
+                pdfContent.querySelectorAll('ul').forEach(ul => {
+                    ul.style.cssText = 'margin: 8px 0; padding-left: 25px; list-style-type: disc;';
+                });
+                pdfContent.querySelectorAll('li').forEach(li => {
+                    li.style.cssText = 'margin: 4px 0; color: #444; line-height: 1.5; font-size: 12px; background: none; border: none; padding: 2px 0;';
+                });
+                pdfContent.querySelectorAll('p').forEach(p => {
+                    p.style.cssText = 'margin: 6px 0; color: #555; line-height: 1.5; font-size: 12px;';
+                });
+                pdfContent.querySelectorAll('.tip-card').forEach(tip => {
+                    tip.style.cssText = 'background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 10px 0; border-radius: 4px; font-size: 12px;';
+                });
+                pdfContent.querySelectorAll('table').forEach(table => {
+                    table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px;';
+                });
+                pdfContent.querySelectorAll('th').forEach(th => {
+                    th.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left; background: #003580; color: white; font-weight: bold;';
+                });
+                pdfContent.querySelectorAll('td').forEach(td => {
+                    td.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left;';
+                });
+                pdfContent.querySelectorAll('strong').forEach(s => {
+                    s.style.cssText = 'color: #003580; font-weight: bold;';
+                });
+                pdfContent.querySelectorAll('em').forEach(e => {
+                    e.style.cssText = 'color: #1a73e8; font-style: italic;';
+                });
+
+                // Position the content visibly but off-screen (visibility approach for better rendering)
+                pdfContent.style.cssText = 'position: fixed; top: 0; left: 0; width: 210mm; background: white; z-index: -9999; visibility: visible;';
+                document.body.appendChild(pdfContent);
+
+                // PDF options with better settings for capturing
+                const opt = {
+                    margin: [15, 15, 15, 15],
+                    filename: filename,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff',
+                        windowWidth: pdfContent.scrollWidth,
+                        windowHeight: pdfContent.scrollHeight,
+                        x: 0,
+                        y: 0
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                // Wait a moment for styles to apply, then generate PDF
+                setTimeout(() => {
+                    html2pdf().set(opt).from(pdfContent).save().then(() => {
+                        document.body.removeChild(pdfContent);
+                        showToast('PDF downloaded successfully!', 'success');
+                    }).catch(err => {
+                        if (document.body.contains(pdfContent)) {
+                            document.body.removeChild(pdfContent);
+                        }
+                        console.error('PDF generation error:', err);
+                        // Fallback: Try direct print
+                        alert('PDF generation encountered an issue. Opening print dialog instead.');
+                        printItinerary();
+                    });
+                }, 100);
             }
 
-            cleanHTML += '</div>';
-            pdfContent.innerHTML = cleanHTML;
+            // ==================== GOOGLE OAUTH AUTHENTICATION ====================
 
-            // Apply inline styles to all elements for PDF compatibility
-            pdfContent.querySelectorAll('h3').forEach(h => {
-                h.style.cssText = 'color: #1a73e8; font-size: 14px; margin: 12px 0 8px 0; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('h4').forEach(h => {
-                h.style.cssText = 'color: #333; font-size: 13px; margin: 10px 0 6px 0; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('ul').forEach(ul => {
-                ul.style.cssText = 'margin: 8px 0; padding-left: 25px; list-style-type: disc;';
-            });
-            pdfContent.querySelectorAll('li').forEach(li => {
-                li.style.cssText = 'margin: 4px 0; color: #444; line-height: 1.5; font-size: 12px; background: none; border: none; padding: 2px 0;';
-            });
-            pdfContent.querySelectorAll('p').forEach(p => {
-                p.style.cssText = 'margin: 6px 0; color: #555; line-height: 1.5; font-size: 12px;';
-            });
-            pdfContent.querySelectorAll('.tip-card').forEach(tip => {
-                tip.style.cssText = 'background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 10px 0; border-radius: 4px; font-size: 12px;';
-            });
-            pdfContent.querySelectorAll('table').forEach(table => {
-                table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px;';
-            });
-            pdfContent.querySelectorAll('th').forEach(th => {
-                th.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left; background: #003580; color: white; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('td').forEach(td => {
-                td.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left;';
-            });
-            pdfContent.querySelectorAll('strong').forEach(s => {
-                s.style.cssText = 'color: #003580; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('em').forEach(e => {
-                e.style.cssText = 'color: #1a73e8; font-style: italic;';
-            });
+            // Google OAuth Configuration
+            const GOOGLE_CLIENT_ID = '624000186446-n3uttrkq8qlitc7h2ho7k6cbd993s6od.apps.googleusercontent.com';
+            // Note: API_BASE_URL is already declared above at line 3366
 
-            // Position the content visibly but off-screen (visibility approach for better rendering)
-            pdfContent.style.cssText = 'position: fixed; top: 0; left: 0; width: 210mm; background: white; z-index: -9999; visibility: visible;';
-            document.body.appendChild(pdfContent);
+            // Current user state
+            let currentUser = null;
 
-            // PDF options with better settings for capturing
-            const opt = {
-                margin: [15, 15, 15, 15],
-                filename: filename,
-                image: { type: 'jpeg', quality: 0.95 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff',
-                    windowWidth: pdfContent.scrollWidth,
-                    windowHeight: pdfContent.scrollHeight,
-                    x: 0,
-                    y: 0
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-
-            // Wait a moment for styles to apply, then generate PDF
-            setTimeout(() => {
-                html2pdf().set(opt).from(pdfContent).save().then(() => {
-                    document.body.removeChild(pdfContent);
-                    showToast('PDF downloaded successfully!', 'success');
-                }).catch(err => {
-                    if (document.body.contains(pdfContent)) {
-                        document.body.removeChild(pdfContent);
+            // Initialize auth state on page load
+            document.addEventListener('DOMContentLoaded', () => {
+                // Check for existing session
+                const savedUser = localStorage.getItem('voya_user');
+                if (savedUser) {
+                    try {
+                        currentUser = JSON.parse(savedUser);
+                        updateUIForLoggedInUser();
+                    } catch (e) {
+                        localStorage.removeItem('voya_user');
                     }
-                    console.error('PDF generation error:', err);
-                    // Fallback: Try direct print
-                    alert('PDF generation encountered an issue. Opening print dialog instead.');
-                    printItinerary();
+                }
+
+                // Close user menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    const userMenu = document.getElementById('user-menu');
+                    const userAvatar = document.getElementById('user-avatar');
+                    if (userMenu && userAvatar && !userAvatar.contains(e.target) && !userMenu.contains(e.target)) {
+                        userMenu.classList.remove('active');
+                    }
                 });
-            }, 100);
-        }
+            });
 
-        // ==================== GOOGLE OAUTH AUTHENTICATION ====================
-
-        // Google OAuth Configuration
-        const GOOGLE_CLIENT_ID = '624000186446-n3uttrkq8qlitc7h2ho7k6cbd993s6od.apps.googleusercontent.com';
-        // Note: API_BASE_URL is already declared above at line 3366
-
-        // Current user state
-        let currentUser = null;
-
-        // Initialize auth state on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check for existing session
-            const savedUser = localStorage.getItem('voya_user');
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    updateUIForLoggedInUser();
-                } catch (e) {
-                    localStorage.removeItem('voya_user');
+            // Open Sign In Modal
+            function openSignInModal() {
+                const modal = document.getElementById('signin-modal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    modal.classList.add('active');
                 }
             }
 
-            // Close user menu when clicking outside
-            document.addEventListener('click', (e) => {
-                const userMenu = document.getElementById('user-menu');
+            // Close Sign In Modal
+            function closeSignInModal() {
+                const modal = document.getElementById('signin-modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    modal.classList.remove('active');
+                }
+            }
+
+            // Handle Google Sign In
+            function handleGoogleSignIn() {
+                // Check if Google Identity Services is loaded
+                if (typeof google === 'undefined' || !google.accounts) {
+                    showToast('Google Sign-In is still loading. Please try again.', 'warning');
+                    return;
+                }
+
+                // Initialize Google Sign In
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                // Show Google One Tap or prompt
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        // If One Tap is not displayed, use OAuth popup
+                        initiateGoogleOAuthPopup();
+                    }
+                });
+            }
+
+            // Initiate Google OAuth using the popup button approach
+            function initiateGoogleOAuthPopup() {
+                if (!GOOGLE_CLIENT_ID) {
+                    showToast('Google OAuth is not configured. Please set up Google Cloud credentials.', 'error');
+                    console.error('GOOGLE_CLIENT_ID is not set.');
+                    return;
+                }
+
+                // Create a temporary container for Google's button
+                let googleBtnContainer = document.getElementById('google-btn-container');
+                if (!googleBtnContainer) {
+                    googleBtnContainer = document.createElement('div');
+                    googleBtnContainer.id = 'google-btn-container';
+                    googleBtnContainer.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;background:white;padding:40px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+
+                    const closeBtn = document.createElement('button');
+                    closeBtn.innerHTML = '&times;';
+                    closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;border:none;background:#f0f0f0;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1.2rem;';
+                    closeBtn.onclick = () => googleBtnContainer.remove();
+                    googleBtnContainer.appendChild(closeBtn);
+
+                    const title = document.createElement('p');
+                    title.textContent = 'Sign in with your Google account';
+                    title.style.cssText = 'margin-bottom:20px;font-weight:600;color:#333;';
+                    googleBtnContainer.appendChild(title);
+
+                    const btnWrapper = document.createElement('div');
+                    btnWrapper.id = 'google-signin-wrapper';
+                    googleBtnContainer.appendChild(btnWrapper);
+
+                    document.body.appendChild(googleBtnContainer);
+                }
+
+                // Close the main modal
+                closeSignInModal();
+
+                // Render Google's official sign-in button
+                google.accounts.id.renderButton(
+                    document.getElementById('google-signin-wrapper'),
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        type: 'standard',
+                        text: 'signin_with',
+                        shape: 'rectangular',
+                        logo_alignment: 'left',
+                        width: 280
+                    }
+                );
+            }
+
+            // Handle OAuth message from popup
+            function handleOAuthMessage(event) {
+                if (event.origin !== window.location.origin) return;
+
+                if (event.data.type === 'google-auth-success') {
+                    handleGoogleCredentialResponse({ credential: event.data.token });
+                }
+            }
+
+            // Handle Google Credential Response
+            async function handleGoogleCredentialResponse(response) {
+                closeSignInModal();
+
+                try {
+                    // Decode JWT token to get user info
+                    const payload = decodeJwtPayload(response.credential);
+
+                    if (payload) {
+                        currentUser = {
+                            id: payload.sub,
+                            email: payload.email,
+                            name: payload.name,
+                            picture: payload.picture,
+                            token: response.credential
+                        };
+
+                        // Save to localStorage
+                        localStorage.setItem('voya_user', JSON.stringify(currentUser));
+
+                        // Update UI
+                        updateUIForLoggedInUser();
+
+                        showToast(`Welcome, ${currentUser.name}!`, 'success');
+
+                        // Optional: Send to backend for validation
+                        // await verifyTokenWithBackend(response.credential);
+                    }
+                } catch (error) {
+                    console.error('Error processing Google sign in:', error);
+                    showToast('Sign in failed. Please try again.', 'error');
+                }
+            }
+
+            // Decode JWT payload (base64)
+            function decodeJwtPayload(token) {
+                try {
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                    return JSON.parse(jsonPayload);
+                } catch (e) {
+                    console.error('Error decoding JWT:', e);
+                    return null;
+                }
+            }
+
+            // Update UI for logged in user
+            function updateUIForLoggedInUser() {
+                const signinBtn = document.getElementById('signin-btn');
+                const userProfile = document.getElementById('user-profile');
                 const userAvatar = document.getElementById('user-avatar');
-                if (userMenu && userAvatar && !userAvatar.contains(e.target) && !userMenu.contains(e.target)) {
+                const userName = document.getElementById('user-name');
+
+                if (currentUser && signinBtn && userProfile) {
+                    signinBtn.style.display = 'none';
+                    userProfile.style.display = 'block';
+
+                    if (userAvatar && currentUser.picture) {
+                        userAvatar.style.backgroundImage = `url(${currentUser.picture})`;
+                    }
+
+                    if (userName) userName.textContent = currentUser.name || 'User';
+                }
+            }
+
+            // Update UI for logged out user
+            function updateUIForLoggedOutUser() {
+                const signinBtn = document.getElementById('signin-btn');
+                const userProfile = document.getElementById('user-profile');
+                const userMenu = document.getElementById('user-menu');
+
+                if (signinBtn && userProfile) {
+                    signinBtn.style.display = 'block';
+                    userProfile.style.display = 'none';
+                }
+
+                if (userMenu) {
                     userMenu.classList.remove('active');
                 }
-            });
-        });
-
-        // Open Sign In Modal
-        function openSignInModal() {
-            const modal = document.getElementById('signin-modal');
-            if (modal) {
-                modal.style.display = 'flex';
-                modal.classList.add('active');
-            }
-        }
-
-        // Close Sign In Modal
-        function closeSignInModal() {
-            const modal = document.getElementById('signin-modal');
-            if (modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('active');
-            }
-        }
-
-        // Handle Google Sign In
-        function handleGoogleSignIn() {
-            // Check if Google Identity Services is loaded
-            if (typeof google === 'undefined' || !google.accounts) {
-                showToast('Google Sign-In is still loading. Please try again.', 'warning');
-                return;
             }
 
-            // Initialize Google Sign In
-            google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleGoogleCredentialResponse,
-                auto_select: false,
-                cancel_on_tap_outside: true
-            });
-
-            // Show Google One Tap or prompt
-            google.accounts.id.prompt((notification) => {
-                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                    // If One Tap is not displayed, use OAuth popup
-                    initiateGoogleOAuthPopup();
+            // Toggle user menu dropdown
+            function toggleUserMenu() {
+                const userMenu = document.getElementById('user-menu');
+                if (userMenu) {
+                    userMenu.classList.toggle('active');
                 }
-            });
-        }
-
-        // Initiate Google OAuth using the popup button approach
-        function initiateGoogleOAuthPopup() {
-            if (!GOOGLE_CLIENT_ID) {
-                showToast('Google OAuth is not configured. Please set up Google Cloud credentials.', 'error');
-                console.error('GOOGLE_CLIENT_ID is not set.');
-                return;
             }
 
-            // Create a temporary container for Google's button
-            let googleBtnContainer = document.getElementById('google-btn-container');
-            if (!googleBtnContainer) {
-                googleBtnContainer = document.createElement('div');
-                googleBtnContainer.id = 'google-btn-container';
-                googleBtnContainer.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;background:white;padding:40px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
-
-                const closeBtn = document.createElement('button');
-                closeBtn.innerHTML = '&times;';
-                closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;border:none;background:#f0f0f0;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1.2rem;';
-                closeBtn.onclick = () => googleBtnContainer.remove();
-                googleBtnContainer.appendChild(closeBtn);
-
-                const title = document.createElement('p');
-                title.textContent = 'Sign in with your Google account';
-                title.style.cssText = 'margin-bottom:20px;font-weight:600;color:#333;';
-                googleBtnContainer.appendChild(title);
-
-                const btnWrapper = document.createElement('div');
-                btnWrapper.id = 'google-signin-wrapper';
-                googleBtnContainer.appendChild(btnWrapper);
-
-                document.body.appendChild(googleBtnContainer);
-            }
-
-            // Close the main modal
-            closeSignInModal();
-
-            // Render Google's official sign-in button
-            google.accounts.id.renderButton(
-                document.getElementById('google-signin-wrapper'),
-                {
-                    theme: 'outline',
-                    size: 'large',
-                    type: 'standard',
-                    text: 'signin_with',
-                    shape: 'rectangular',
-                    logo_alignment: 'left',
-                    width: 280
-                }
-            );
-        }
-
-        // Handle OAuth message from popup
-        function handleOAuthMessage(event) {
-            if (event.origin !== window.location.origin) return;
-
-            if (event.data.type === 'google-auth-success') {
-                handleGoogleCredentialResponse({ credential: event.data.token });
-            }
-        }
-
-        // Handle Google Credential Response
-        async function handleGoogleCredentialResponse(response) {
-            closeSignInModal();
-
-            try {
-                // Decode JWT token to get user info
-                const payload = decodeJwtPayload(response.credential);
-
-                if (payload) {
-                    currentUser = {
-                        id: payload.sub,
-                        email: payload.email,
-                        name: payload.name,
-                        picture: payload.picture,
-                        token: response.credential
-                    };
-
-                    // Save to localStorage
-                    localStorage.setItem('voya_user', JSON.stringify(currentUser));
-
-                    // Update UI
-                    updateUIForLoggedInUser();
-
-                    showToast(`Welcome, ${currentUser.name}!`, 'success');
-
-                    // Optional: Send to backend for validation
-                    // await verifyTokenWithBackend(response.credential);
-                }
-            } catch (error) {
-                console.error('Error processing Google sign in:', error);
-                showToast('Sign in failed. Please try again.', 'error');
-            }
-        }
-
-        // Decode JWT payload (base64)
-        function decodeJwtPayload(token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
-            } catch (e) {
-                console.error('Error decoding JWT:', e);
-                return null;
-            }
-        }
-
-        // Update UI for logged in user
-        function updateUIForLoggedInUser() {
-            const signinBtn = document.getElementById('signin-btn');
-            const userProfile = document.getElementById('user-profile');
-            const userAvatar = document.getElementById('user-avatar');
-            const userName = document.getElementById('user-name');
-
-            if (currentUser && signinBtn && userProfile) {
-                signinBtn.style.display = 'none';
-                userProfile.style.display = 'block';
-
-                if (userAvatar && currentUser.picture) {
-                    userAvatar.style.backgroundImage = `url(${currentUser.picture})`;
+            // Handle Sign Out
+            function handleSignOut() {
+                // Confirm before signing out
+                if (!confirm('Are you sure you want to sign out?')) {
+                    return;
                 }
 
-                if (userName) userName.textContent = currentUser.name || 'User';
-            }
-        }
+                currentUser = null;
+                localStorage.removeItem('voya_user');
 
-        // Update UI for logged out user
-        function updateUIForLoggedOutUser() {
-            const signinBtn = document.getElementById('signin-btn');
-            const userProfile = document.getElementById('user-profile');
-            const userMenu = document.getElementById('user-menu');
+                // Revoke Google session if available
+                if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                    google.accounts.id.disableAutoSelect();
+                }
 
-            if (signinBtn && userProfile) {
-                signinBtn.style.display = 'block';
-                userProfile.style.display = 'none';
-            }
+                // Also call Supabase logout if we have a token
+                const savedToken = localStorage.getItem('voya_token');
+                if (savedToken) {
+                    fetch(`${API_BASE_URL}/api/auth/logout`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${savedToken}` }
+                    }).catch(() => { }); // Ignore errors
+                }
 
-            if (userMenu) {
-                userMenu.classList.remove('active');
-            }
-        }
+                localStorage.removeItem('voya_token');
+                localStorage.removeItem('voya_refresh_token');
 
-        // Toggle user menu dropdown
-        function toggleUserMenu() {
-            const userMenu = document.getElementById('user-menu');
-            if (userMenu) {
-                userMenu.classList.toggle('active');
-            }
-        }
-
-        // Handle Sign Out
-        function handleSignOut() {
-            // Confirm before signing out
-            if (!confirm('Are you sure you want to sign out?')) {
-                return;
+                updateUIForLoggedOutUser();
+                showToast('Signed out successfully', 'success');
             }
 
-            currentUser = null;
-            localStorage.removeItem('voya_user');
+            // ==================== SUPABASE EMAIL/PASSWORD AUTHENTICATION ====================
 
-            // Revoke Google session if available
-            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                google.accounts.id.disableAutoSelect();
+            // Open Auth Overlay
+            function openAuthOverlay(tab = 'login') {
+                const overlay = document.getElementById('auth-overlay');
+                if (overlay) {
+                    overlay.classList.add('active');
+                    switchAuthTab(tab);
+                    document.getElementById('auth-error').classList.remove('show');
+                    document.getElementById('auth-success').classList.remove('show');
+                }
             }
 
-            // Also call Supabase logout if we have a token
-            const savedToken = localStorage.getItem('voya_token');
-            if (savedToken) {
-                fetch(`${API_BASE_URL}/api/auth/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${savedToken}` }
-                }).catch(() => { }); // Ignore errors
+            // Close Auth Overlay
+            function closeAuthOverlay() {
+                const overlay = document.getElementById('auth-overlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                    // Clear form inputs
+                    document.getElementById('login-email').value = '';
+                    document.getElementById('login-password').value = '';
+                    document.getElementById('signup-name').value = '';
+                    document.getElementById('signup-email').value = '';
+                    document.getElementById('signup-password').value = '';
+                }
             }
 
-            localStorage.removeItem('voya_token');
-            localStorage.removeItem('voya_refresh_token');
+            // Switch between Login and Signup tabs
+            function switchAuthTab(tab) {
+                const loginTab = document.getElementById('login-tab');
+                const signupTab = document.getElementById('signup-tab');
+                const loginForm = document.getElementById('login-form');
+                const signupForm = document.getElementById('signup-form');
+                const authHeader = document.querySelector('.auth-header h2');
+                const authSubtext = document.querySelector('.auth-header p');
+                const footerText = document.getElementById('auth-footer-text');
 
-            updateUIForLoggedOutUser();
-            showToast('Signed out successfully', 'success');
-        }
+                if (tab === 'login') {
+                    loginTab.classList.add('active');
+                    signupTab.classList.remove('active');
+                    loginForm.classList.add('active');
+                    signupForm.classList.remove('active');
+                    // Update header and footer
+                    if (authHeader) authHeader.textContent = 'Welcome back';
+                    if (authSubtext) authSubtext.textContent = 'Continue your adventure with VOYA AI';
+                    if (footerText) footerText.innerHTML = 'Don\'t have an account? <a href="#" onclick="switchAuthTab(\'signup\'); return false;">Sign up</a>';
+                } else {
+                    signupTab.classList.add('active');
+                    loginTab.classList.remove('active');
+                    signupForm.classList.add('active');
+                    loginForm.classList.remove('active');
+                    // Update header and footer
+                    if (authHeader) authHeader.textContent = 'Create Account';
+                    if (authSubtext) authSubtext.textContent = 'Start your journey with VOYA AI today';
+                    if (footerText) footerText.innerHTML = 'Already have an account? <a href="#" onclick="switchAuthTab(\'login\'); return false;">Sign in</a>';
+                }
 
-        // ==================== SUPABASE EMAIL/PASSWORD AUTHENTICATION ====================
-
-        // Open Auth Overlay
-        function openAuthOverlay(tab = 'login') {
-            const overlay = document.getElementById('auth-overlay');
-            if (overlay) {
-                overlay.classList.add('active');
-                switchAuthTab(tab);
+                // Clear messages
                 document.getElementById('auth-error').classList.remove('show');
                 document.getElementById('auth-success').classList.remove('show');
             }
-        }
 
-        // Close Auth Overlay
-        function closeAuthOverlay() {
-            const overlay = document.getElementById('auth-overlay');
-            if (overlay) {
-                overlay.classList.remove('active');
-                // Clear form inputs
-                document.getElementById('login-email').value = '';
-                document.getElementById('login-password').value = '';
-                document.getElementById('signup-name').value = '';
-                document.getElementById('signup-email').value = '';
-                document.getElementById('signup-password').value = '';
-            }
-        }
-
-        // Switch between Login and Signup tabs
-        function switchAuthTab(tab) {
-            const loginTab = document.getElementById('login-tab');
-            const signupTab = document.getElementById('signup-tab');
-            const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
-            const authHeader = document.querySelector('.auth-header h2');
-            const authSubtext = document.querySelector('.auth-header p');
-            const footerText = document.getElementById('auth-footer-text');
-
-            if (tab === 'login') {
-                loginTab.classList.add('active');
-                signupTab.classList.remove('active');
-                loginForm.classList.add('active');
-                signupForm.classList.remove('active');
-                // Update header and footer
-                if (authHeader) authHeader.textContent = 'Welcome back';
-                if (authSubtext) authSubtext.textContent = 'Continue your adventure with VOYA AI';
-                if (footerText) footerText.innerHTML = 'Don\'t have an account? <a href="#" onclick="switchAuthTab(\'signup\'); return false;">Sign up</a>';
-            } else {
-                signupTab.classList.add('active');
-                loginTab.classList.remove('active');
-                signupForm.classList.add('active');
-                loginForm.classList.remove('active');
-                // Update header and footer
-                if (authHeader) authHeader.textContent = 'Create Account';
-                if (authSubtext) authSubtext.textContent = 'Start your journey with VOYA AI today';
-                if (footerText) footerText.innerHTML = 'Already have an account? <a href="#" onclick="switchAuthTab(\'login\'); return false;">Sign in</a>';
+            // Show auth error
+            function showAuthError(message) {
+                const errorEl = document.getElementById('auth-error');
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+                document.getElementById('auth-success').classList.remove('show');
             }
 
-            // Clear messages
-            document.getElementById('auth-error').classList.remove('show');
-            document.getElementById('auth-success').classList.remove('show');
-        }
-
-        // Show auth error
-        function showAuthError(message) {
-            const errorEl = document.getElementById('auth-error');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-            document.getElementById('auth-success').classList.remove('show');
-        }
-
-        // Show auth success
-        function showAuthSuccess(message) {
-            const successEl = document.getElementById('auth-success');
-            successEl.textContent = message;
-            successEl.classList.add('show');
-            document.getElementById('auth-error').classList.remove('show');
-        }
-
-        // Handle Supabase Signup
-        async function handleSupabaseSignup(e) {
-            e.preventDefault();
-
-            const name = document.getElementById('signup-name').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-
-            // Validation
-            if (!name || !email || !password) {
-                showAuthError('Please fill in all fields');
-                return;
+            // Show auth success
+            function showAuthSuccess(message) {
+                const successEl = document.getElementById('auth-success');
+                successEl.textContent = message;
+                successEl.classList.add('show');
+                document.getElementById('auth-error').classList.remove('show');
             }
 
-            if (password.length < 8) {
-                showAuthError('Password must be at least 8 characters');
-                return;
-            }
+            // Handle Supabase Signup
+            async function handleSupabaseSignup(e) {
+                e.preventDefault();
 
-            const submitBtn = document.getElementById('signup-submit');
-            const originalContent = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Creating account...';
+                const name = document.getElementById('signup-name').value.trim();
+                const email = document.getElementById('signup-email').value.trim();
+                const password = document.getElementById('signup-password').value;
 
-            try {
-                const response = await fetchWithFailover('/api/auth/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, name })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || 'Signup failed');
+                // Validation
+                if (!name || !email || !password) {
+                    showAuthError('Please fill in all fields');
+                    return;
                 }
 
-                if (data.session) {
-                    // Immediate login (email already confirmed or confirmation disabled)
+                if (password.length < 8) {
+                    showAuthError('Password must be at least 8 characters');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('signup-submit');
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Creating account...';
+
+                try {
+                    const response = await fetchWithFailover('/api/auth/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, name })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Signup failed');
+                    }
+
+                    if (data.session) {
+                        // Immediate login (email already confirmed or confirmation disabled)
+                        currentUser = data.user;
+                        localStorage.setItem('voya_user', JSON.stringify(currentUser));
+                        localStorage.setItem('voya_token', data.session.access_token);
+                        localStorage.setItem('voya_refresh_token', data.session.refresh_token);
+                        updateUIForLoggedInUser();
+                        closeAuthOverlay();
+                        showToast(`Welcome, ${currentUser.name}! 🎉`, 'success');
+                    } else {
+                        // Email confirmation required
+                        showAuthSuccess('Account created! Please check your email to confirm.');
+                    }
+                } catch (err) {
+                    showAuthError(err.message || 'Signup failed. Please try again.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-user-plus" style="margin-right: 8px;"></i> Create Account';
+                }
+            }
+
+            // Handle Supabase Login
+            async function handleSupabaseLogin(e) {
+                e.preventDefault();
+
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value;
+
+                if (!email || !password) {
+                    showAuthError('Please enter email and password');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('login-submit');
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Signing in...';
+
+                try {
+                    const response = await fetchWithFailover('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Login failed');
+                    }
+
                     currentUser = data.user;
                     localStorage.setItem('voya_user', JSON.stringify(currentUser));
-                    localStorage.setItem('voya_token', data.session.access_token);
-                    localStorage.setItem('voya_refresh_token', data.session.refresh_token);
-                    updateUIForLoggedInUser();
-                    closeAuthOverlay();
-                    showToast(`Welcome, ${currentUser.name}! 🎉`, 'success');
-                } else {
-                    // Email confirmation required
-                    showAuthSuccess('Account created! Please check your email to confirm.');
-                }
-            } catch (err) {
-                showAuthError(err.message || 'Signup failed. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-user-plus" style="margin-right: 8px;"></i> Create Account';
-            }
-        }
-
-        // Handle Supabase Login
-        async function handleSupabaseLogin(e) {
-            e.preventDefault();
-
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            if (!email || !password) {
-                showAuthError('Please enter email and password');
-                return;
-            }
-
-            const submitBtn = document.getElementById('login-submit');
-            const originalContent = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Signing in...';
-
-            try {
-                const response = await fetchWithFailover('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || 'Login failed');
-                }
-
-                currentUser = data.user;
-                localStorage.setItem('voya_user', JSON.stringify(currentUser));
-                localStorage.setItem('voya_token', data.token);
-                localStorage.setItem('voya_refresh_token', data.refresh_token);
-
-                updateUIForLoggedInUser();
-                closeAuthOverlay();
-                showToast(`Welcome back, ${currentUser.name}! 🌍`, 'success');
-            } catch (err) {
-                showAuthError(err.message || 'Login failed. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i> Sign In';
-            }
-        }
-
-        // Get auth token for API requests
-        function getAuthToken() {
-            return localStorage.getItem('voya_token') || null;
-        }
-
-        // Refresh auth token
-        async function refreshAuthToken() {
-            const refreshToken = localStorage.getItem('voya_refresh_token');
-            if (!refreshToken) return false;
-
-            try {
-                const response = await fetchWithFailover('/api/auth/refresh', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refresh_token: refreshToken })
-                });
-
-                const data = await response.json();
-                if (data.success && data.token) {
                     localStorage.setItem('voya_token', data.token);
                     localStorage.setItem('voya_refresh_token', data.refresh_token);
-                    return true;
-                }
-            } catch (err) {
-                console.error('Token refresh failed:', err);
-            }
 
-            return false;
-        }
-
-        // Make authenticated API request
-        async function authenticatedFetch(endpoint, options = {}) {
-            const token = getAuthToken();
-            if (!token) {
-                throw new Error('Not authenticated');
-            }
-
-            options.headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${token}`
-            };
-
-            const response = await fetchWithFailover(endpoint, options);
-
-            // If 401, try to refresh token
-            if (response.status === 401) {
-                const refreshed = await refreshAuthToken();
-                if (refreshed) {
-                    options.headers['Authorization'] = `Bearer ${getAuthToken()}`;
-                    return fetchWithFailover(endpoint, options);
-                } else {
-                    // Token refresh failed, log out
-                    handleSignOut();
-                    throw new Error('Session expired. Please sign in again.');
+                    updateUIForLoggedInUser();
+                    closeAuthOverlay();
+                    showToast(`Welcome back, ${currentUser.name}! 🌍`, 'success');
+                } catch (err) {
+                    showAuthError(err.message || 'Login failed. Please try again.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i> Sign In';
                 }
             }
 
-            return response;
-        }
-
-        // View saved trips (placeholder)
-        function viewSavedTrips() {
-            if (!currentUser) {
-                openSignInModal();
-                return;
+            // Get auth token for API requests
+            function getAuthToken() {
+                return localStorage.getItem('voya_token') || null;
             }
 
-            showToast('My Trips feature coming soon!', 'info');
-            toggleUserMenu();
-        }
+            // Refresh auth token
+            async function refreshAuthToken() {
+                const refreshToken = localStorage.getItem('voya_refresh_token');
+                if (!refreshToken) return false;
 
-        // Check if user is logged in
-        function isUserLoggedIn() {
-            return currentUser !== null;
-        }
+                try {
+                    const response = await fetchWithFailover('/api/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: refreshToken })
+                    });
 
-        // Get current user
-        function getCurrentUser() {
-            return currentUser;
-        }
+                    const data = await response.json();
+                    if (data.success && data.token) {
+                        localStorage.setItem('voya_token', data.token);
+                        localStorage.setItem('voya_refresh_token', data.refresh_token);
+                        return true;
+                    }
+                } catch (err) {
+                    console.error('Token refresh failed:', err);
+                }
 
-        // ==================== BLOG SYSTEM ====================
-        let blogArticles = [];
+                return false;
+            }
 
-        /**
-         * Load blog articles from API
-         */
-        async function loadBlogArticles() {
-            const loader = document.getElementById('blog-loader');
-            const container = document.getElementById('blog-articles');
+            // Make authenticated API request
+            async function authenticatedFetch(endpoint, options = {}) {
+                const token = getAuthToken();
+                if (!token) {
+                    throw new Error('Not authenticated');
+                }
 
-            if (loader) loader.style.display = 'block';
-            if (container) container.innerHTML = '';
+                options.headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/blog/list`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                const response = await fetchWithFailover(endpoint, options);
+
+                // If 401, try to refresh token
+                if (response.status === 401) {
+                    const refreshed = await refreshAuthToken();
+                    if (refreshed) {
+                        options.headers['Authorization'] = `Bearer ${getAuthToken()}`;
+                        return fetchWithFailover(endpoint, options);
+                    } else {
+                        // Token refresh failed, log out
+                        handleSignOut();
+                        throw new Error('Session expired. Please sign in again.');
+                    }
+                }
+
+                return response;
+            }
+
+            // View saved trips (placeholder)
+            function viewSavedTrips() {
+                if (!currentUser) {
+                    openSignInModal();
+                    return;
+                }
+
+                showToast('My Trips feature coming soon!', 'info');
+                toggleUserMenu();
+            }
+
+            // Check if user is logged in
+            function isUserLoggedIn() {
+                return currentUser !== null;
+            }
+
+            // Get current user
+            function getCurrentUser() {
+                return currentUser;
+            }
+
+            // ==================== BLOG SYSTEM ====================
+            let blogArticles = [];
+
+            /**
+             * Load blog articles from API
+             */
+            async function loadBlogArticles() {
+                const loader = document.getElementById('blog-loader');
+                const container = document.getElementById('blog-articles');
+
+                if (loader) loader.style.display = 'block';
+                if (container) container.innerHTML = '';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/blog/list`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load blog articles');
+                    }
+
+                    const data = await response.json();
+                    blogArticles = data.articles || [];
+
+                    if (blogArticles.length === 0) {
+                        container.innerHTML = '<p style="text-align:center;color:#78716C;padding:40px;">No articles yet. Click "New Article" to generate one!</p>';
+                    } else {
+                        container.innerHTML = blogArticles.map(article => renderBlogCard(article)).join('');
+                    }
+
+                } catch (error) {
+                    console.error('Blog load error:', error);
+                    container.innerHTML = '<p style="text-align:center;color:#dc2626;padding:40px;">Failed to load articles. Please try again.</p>';
+                } finally {
+                    if (loader) loader.style.display = 'none';
+                }
+            }
+
+            /**
+             * Generate a new blog article
+             */
+            async function generateNewBlog() {
+                const loader = document.getElementById('blog-loader');
+                if (loader) loader.style.display = 'block';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/blog/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to generate article');
+                    }
+
+                    const data = await response.json();
+                    showToast(`New article: "${data.article.title}"`, 'success');
+
+                    // Reload articles to show the new one
+                    await loadBlogArticles();
+
+                } catch (error) {
+                    console.error('Blog generation error:', error);
+                    showToast('Failed to generate article. Please try again.', 'error');
+                    if (loader) loader.style.display = 'none';
+                }
+            }
+
+            /**
+             * Render a blog article card
+             */
+            function renderBlogCard(article) {
+                const date = new Date(article.createdAt).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
                 });
+                const categoryColors = {
+                    destinations: '#3b82f6',
+                    tips: '#10b981',
+                    guides: '#8b5cf6',
+                    news: '#f59e0b'
+                };
+                const color = categoryColors[article.category] || '#D4AF37';
 
-                if (!response.ok) {
-                    throw new Error('Failed to load blog articles');
-                }
-
-                const data = await response.json();
-                blogArticles = data.articles || [];
-
-                if (blogArticles.length === 0) {
-                    container.innerHTML = '<p style="text-align:center;color:#78716C;padding:40px;">No articles yet. Click "New Article" to generate one!</p>';
-                } else {
-                    container.innerHTML = blogArticles.map(article => renderBlogCard(article)).join('');
-                }
-
-            } catch (error) {
-                console.error('Blog load error:', error);
-                container.innerHTML = '<p style="text-align:center;color:#dc2626;padding:40px;">Failed to load articles. Please try again.</p>';
-            } finally {
-                if (loader) loader.style.display = 'none';
-            }
-        }
-
-        /**
-         * Generate a new blog article
-         */
-        async function generateNewBlog() {
-            const loader = document.getElementById('blog-loader');
-            if (loader) loader.style.display = 'block';
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/blog/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to generate article');
-                }
-
-                const data = await response.json();
-                showToast(`New article: "${data.article.title}"`, 'success');
-
-                // Reload articles to show the new one
-                await loadBlogArticles();
-
-            } catch (error) {
-                console.error('Blog generation error:', error);
-                showToast('Failed to generate article. Please try again.', 'error');
-                if (loader) loader.style.display = 'none';
-            }
-        }
-
-        /**
-         * Render a blog article card
-         */
-        function renderBlogCard(article) {
-            const date = new Date(article.createdAt).toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric'
-            });
-            const categoryColors = {
-                destinations: '#3b82f6',
-                tips: '#10b981',
-                guides: '#8b5cf6',
-                news: '#f59e0b'
-            };
-            const color = categoryColors[article.category] || '#D4AF37';
-
-            return `
+                return `
                 <div class="blog-card" onclick="openBlogArticle('${article.id}')"
                      style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);cursor:pointer;transition:all 0.3s ease;">
                     <div style="height:160px;background:url('${article.imageUrl}') center/cover;position:relative;">
@@ -11755,33 +11820,33 @@
                     </div>
                 </div>
             `;
-        }
+            }
 
-        /**
-         * Open a blog article in modal
-         */
-        function openBlogArticle(articleId) {
-            const article = blogArticles.find(a => a.id === articleId);
-            if (!article) return;
+            /**
+             * Open a blog article in modal
+             */
+            function openBlogArticle(articleId) {
+                const article = blogArticles.find(a => a.id === articleId);
+                if (!article) return;
 
-            const modal = document.getElementById('blog-modal');
-            const content = document.getElementById('blog-modal-content');
+                const modal = document.getElementById('blog-modal');
+                const content = document.getElementById('blog-modal-content');
 
-            if (modal && content) {
-                const date = new Date(article.createdAt).toLocaleDateString('en-US', {
-                    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-                });
+                if (modal && content) {
+                    const date = new Date(article.createdAt).toLocaleDateString('en-US', {
+                        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+                    });
 
-                // Convert markdown to simple HTML (basic conversion)
-                let htmlContent = article.content
-                    .replace(/^## (.+)$/gm, '<h2 style="color:#1C1917;margin:25px 0 15px;font-family:\'Playfair Display\',serif;">$1</h2>')
-                    .replace(/^### (.+)$/gm, '<h3 style="color:#1C1917;margin:20px 0 10px;">$1</h3>')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '</p><p style="color:#57534E;line-height:1.8;margin:0 0 15px;">')
-                    .replace(/\n/g, '<br>');
-                htmlContent = '<p style="color:#57534E;line-height:1.8;margin:0 0 15px;">' + htmlContent + '</p>';
+                    // Convert markdown to simple HTML (basic conversion)
+                    let htmlContent = article.content
+                        .replace(/^## (.+)$/gm, '<h2 style="color:#1C1917;margin:25px 0 15px;font-family:\'Playfair Display\',serif;">$1</h2>')
+                        .replace(/^### (.+)$/gm, '<h3 style="color:#1C1917;margin:20px 0 10px;">$1</h3>')
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n\n/g, '</p><p style="color:#57534E;line-height:1.8;margin:0 0 15px;">')
+                        .replace(/\n/g, '<br>');
+                    htmlContent = '<p style="color:#57534E;line-height:1.8;margin:0 0 15px;">' + htmlContent + '</p>';
 
-                content.innerHTML = `
+                    content.innerHTML = `
                     <div style="margin-bottom:20px;">
                         <span style="background:linear-gradient(135deg,#D4AF37,#C5A059);color:#fff;padding:4px 12px;border-radius:20px;font-size:0.75rem;text-transform:uppercase;">${article.category}</span>
                         <span style="color:#a8a29e;font-size:0.85rem;margin-left:15px;">${date}</span>
@@ -11796,41 +11861,41 @@
                     ` : ''}
                 `;
 
-                modal.style.display = 'block';
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        /**
-         * Close blog modal
-         */
-        function closeBlogModal() {
-            const modal = document.getElementById('blog-modal');
-            if (modal) {
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        }
-
-        // Load blogs when switching to blog tab
-        const originalSwitchTab = window.switchTab;
-        window.switchTab = function (event, tabId) {
-            if (typeof originalSwitchTab === 'function') {
-                originalSwitchTab(event, tabId);
-            } else {
-                // Fallback tab switching
-                document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
-                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                const targetTab = document.getElementById(tabId);
-                if (targetTab) targetTab.style.display = 'block';
-                if (event && event.target) event.target.classList.add('active');
+                    modal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
             }
 
-            // Load blogs when blog tab is selected
-            if (tabId === 'blog' && blogArticles.length === 0) {
-                loadBlogArticles();
+            /**
+             * Close blog modal
+             */
+            function closeBlogModal() {
+                const modal = document.getElementById('blog-modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
             }
-        };
+
+            // Load blogs when switching to blog tab
+            const originalSwitchTab = window.switchTab;
+            window.switchTab = function (event, tabId) {
+                if (typeof originalSwitchTab === 'function') {
+                    originalSwitchTab(event, tabId);
+                } else {
+                    // Fallback tab switching
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    const targetTab = document.getElementById(tabId);
+                    if (targetTab) targetTab.style.display = 'block';
+                    if (event && event.target) event.target.classList.add('active');
+                }
+
+                // Load blogs when blog tab is selected
+                if (tabId === 'blog' && blogArticles.length === 0) {
+                    loadBlogArticles();
+                }
+            };
 
 
     </script>
