@@ -6096,6 +6096,362 @@
                 transform: translateX(0);
             }
         }
+
+        /* ==================== AUTH OVERLAY STYLES ==================== */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .auth-overlay.active {
+            display: flex;
+        }
+
+        .auth-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            position: relative;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #aaa;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .auth-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-header h2 {
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 25px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .auth-input-group {
+            margin-bottom: 18px;
+        }
+
+        .auth-input-group label {
+            display: block;
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .auth-input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .auth-input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .auth-input-group input::placeholder {
+            color: #666;
+        }
+
+        .auth-submit {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .auth-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .auth-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-divider span {
+            padding: 0 15px;
+        }
+
+        .google-signin-btn {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: #fff;
+            color: #333;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .google-signin-btn:hover {
+            background: #f8f8f8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .google-signin-btn img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .auth-error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            color: #ff6b6b;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .auth-success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            color: #5dff8d;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-success.show {
+            display: block;
+        }
+
+        /* User profile dropdown */
+        .user-profile-dropdown {
+            position: relative;
+        }
+
+        .user-avatar-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .user-avatar-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .user-avatar-btn img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-avatar-btn .user-name {
+            font-weight: 500;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background: #1a1a2e;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            min-width: 200px;
+            display: none;
+            overflow: hidden;
+            z-index: 1001;
+        }
+
+        .user-dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .user-dropdown-menu a,
+        .user-dropdown-menu button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 0.95rem;
+            border: none;
+            background: transparent;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-dropdown-menu a:hover,
+        .user-dropdown-menu button:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .user-dropdown-menu button.logout-btn {
+            color: #ff6b6b;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
     </style>
 
     <script>
@@ -6105,8 +6461,62 @@
         // All API calls go through the secure backend
         // ====================================================================================
 
-        // API Configuration - Secure backend endpoint
-        const API_BASE_URL = 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws';
+        // ==================== DUAL BACKEND LOAD BALANCING ====================
+        // Primary: Supabase Edge Functions | Secondary: AWS Lambda
+        const BACKENDS = {
+            primary: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
+            secondary: 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws'
+        };
+
+        // Track which backend to use next (persisted in sessionStorage for user session)
+        let backendToggle = parseInt(sessionStorage.getItem('backendToggle') || '0');
+
+        /**
+         * Get the next API base URL using round-robin
+         * Alternates between Supabase (primary) and AWS (secondary) for each request
+         * @returns {string} - The API base URL to use
+         */
+        function getNextBackend() {
+            const backends = [BACKENDS.primary, BACKENDS.secondary];
+            const currentBackend = backends[backendToggle % 2];
+            backendToggle++;
+            sessionStorage.setItem('backendToggle', backendToggle.toString());
+            console.log(`🔄 Using backend: ${backendToggle % 2 === 1 ? 'Supabase (Primary)' : 'AWS Lambda (Secondary)'}`);
+            return currentBackend;
+        }
+
+        /**
+         * Make an API request with automatic failover
+         * If primary (Supabase) fails, tries secondary (AWS)
+         * @param {string} endpoint - API endpoint (e.g., '/api/health')
+         * @param {object} options - Fetch options
+         * @returns {Promise<Response>} - Fetch response
+         */
+        async function fetchWithFailover(endpoint, options = {}) {
+            const primaryUrl = getNextBackend();
+            const fallbackUrl = primaryUrl === BACKENDS.primary ? BACKENDS.secondary : BACKENDS.primary;
+
+            try {
+                const response = await fetch(`${primaryUrl}${endpoint}`, options);
+                if (response.ok || response.status < 500) {
+                    return response;
+                }
+                throw new Error(`Primary backend error: ${response.status}`);
+            } catch (primaryError) {
+                console.warn(`⚠️ Primary backend failed, trying fallback...`, primaryError.message);
+                try {
+                    const fallbackResponse = await fetch(`${fallbackUrl}${endpoint}`, options);
+                    return fallbackResponse;
+                } catch (fallbackError) {
+                    console.error('❌ Both backends failed:', fallbackError.message);
+                    throw fallbackError;
+                }
+            }
+        }
+
+        // Legacy compatibility - uses Supabase as primary
+        const API_BASE_URL = BACKENDS.primary;
+
 
         // ==================== SECURITY: INPUT VALIDATION UTILITIES ====================
 
@@ -6604,7 +7014,7 @@
                 const fromCode = extractAirportCode(from);
                 const toCode = extractAirportCode(to);
 
-                const response = await fetch(`${API_BASE_URL}/api/flights/search`, {
+                const response = await fetchWithFailover('/api/flights/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -6664,7 +7074,7 @@
             const sort = document.getElementById('unified-filter-hotel-sort')?.value || '';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/hotels/search`, {
+                const response = await fetchWithFailover('/api/hotels/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -6723,7 +7133,7 @@
             if (userPrefs) prefs.push(userPrefs);
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/itinerary/generate`, {
+                const response = await fetchWithFailover('/api/itinerary/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -8569,7 +8979,7 @@
                 // Generate single itinerary based on user preferences
                 const prompt = `Create a ${days || '5'}-day travel itinerary for ${dest}. ${prefs ? 'Preferences: ' + prefs : ''} Provide day-by-day breakdown with recommendations.`;
 
-                const response = await fetch(`${API_BASE_URL}/api/itinerary/generate`, {
+                const response = await fetchWithFailover('/api/itinerary/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -10686,8 +11096,256 @@
                 google.accounts.id.disableAutoSelect();
             }
 
+            // Also call Supabase logout if we have a token
+            const savedToken = localStorage.getItem('voya_token');
+            if (savedToken) {
+                fetch(`${API_BASE_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${savedToken}` }
+                }).catch(() => { }); // Ignore errors
+            }
+
+            localStorage.removeItem('voya_token');
+            localStorage.removeItem('voya_refresh_token');
+
             updateUIForLoggedOutUser();
             showToast('Signed out successfully', 'success');
+        }
+
+        // ==================== SUPABASE EMAIL/PASSWORD AUTHENTICATION ====================
+
+        // Open Auth Overlay
+        function openAuthOverlay(tab = 'login') {
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay) {
+                overlay.classList.add('active');
+                switchAuthTab(tab);
+                document.getElementById('auth-error').classList.remove('show');
+                document.getElementById('auth-success').classList.remove('show');
+            }
+        }
+
+        // Close Auth Overlay
+        function closeAuthOverlay() {
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                // Clear form inputs
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+                document.getElementById('signup-name').value = '';
+                document.getElementById('signup-email').value = '';
+                document.getElementById('signup-password').value = '';
+                document.getElementById('signup-confirm').value = '';
+            }
+        }
+
+        // Switch between Login and Signup tabs
+        function switchAuthTab(tab) {
+            const loginTab = document.getElementById('login-tab');
+            const signupTab = document.getElementById('signup-tab');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                loginForm.classList.add('active');
+                signupForm.classList.remove('active');
+            } else {
+                signupTab.classList.add('active');
+                loginTab.classList.remove('active');
+                signupForm.classList.add('active');
+                loginForm.classList.remove('active');
+            }
+
+            // Clear messages
+            document.getElementById('auth-error').classList.remove('show');
+            document.getElementById('auth-success').classList.remove('show');
+        }
+
+        // Show auth error
+        function showAuthError(message) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            document.getElementById('auth-success').classList.remove('show');
+        }
+
+        // Show auth success
+        function showAuthSuccess(message) {
+            const successEl = document.getElementById('auth-success');
+            successEl.textContent = message;
+            successEl.classList.add('show');
+            document.getElementById('auth-error').classList.remove('show');
+        }
+
+        // Handle Supabase Signup
+        async function handleSupabaseSignup(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm').value;
+
+            // Validation
+            if (!name || !email || !password) {
+                showAuthError('Please fill in all fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAuthError('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 8) {
+                showAuthError('Password must be at least 8 characters');
+                return;
+            }
+
+            const submitBtn = document.getElementById('signup-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+
+            try {
+                const response = await fetchWithFailover('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Signup failed');
+                }
+
+                if (data.session) {
+                    // Immediate login (email already confirmed or confirmation disabled)
+                    currentUser = data.user;
+                    localStorage.setItem('voya_user', JSON.stringify(currentUser));
+                    localStorage.setItem('voya_token', data.session.access_token);
+                    localStorage.setItem('voya_refresh_token', data.session.refresh_token);
+                    updateUIForLoggedInUser();
+                    closeAuthOverlay();
+                    showToast(`Welcome, ${currentUser.name}! 🎉`, 'success');
+                } else {
+                    // Email confirmation required
+                    showAuthSuccess('Account created! Please check your email to confirm.');
+                }
+            } catch (err) {
+                showAuthError(err.message || 'Signup failed. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        }
+
+        // Handle Supabase Login
+        async function handleSupabaseLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showAuthError('Please enter email and password');
+                return;
+            }
+
+            const submitBtn = document.getElementById('login-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
+
+            try {
+                const response = await fetchWithFailover('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                currentUser = data.user;
+                localStorage.setItem('voya_user', JSON.stringify(currentUser));
+                localStorage.setItem('voya_token', data.token);
+                localStorage.setItem('voya_refresh_token', data.refresh_token);
+
+                updateUIForLoggedInUser();
+                closeAuthOverlay();
+                showToast(`Welcome back, ${currentUser.name}! 🌍`, 'success');
+            } catch (err) {
+                showAuthError(err.message || 'Login failed. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
+            }
+        }
+
+        // Get auth token for API requests
+        function getAuthToken() {
+            return localStorage.getItem('voya_token') || null;
+        }
+
+        // Refresh auth token
+        async function refreshAuthToken() {
+            const refreshToken = localStorage.getItem('voya_refresh_token');
+            if (!refreshToken) return false;
+
+            try {
+                const response = await fetchWithFailover('/api/auth/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
+
+                const data = await response.json();
+                if (data.success && data.token) {
+                    localStorage.setItem('voya_token', data.token);
+                    localStorage.setItem('voya_refresh_token', data.refresh_token);
+                    return true;
+                }
+            } catch (err) {
+                console.error('Token refresh failed:', err);
+            }
+
+            return false;
+        }
+
+        // Make authenticated API request
+        async function authenticatedFetch(endpoint, options = {}) {
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error('Not authenticated');
+            }
+
+            options.headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+
+            const response = await fetchWithFailover(endpoint, options);
+
+            // If 401, try to refresh token
+            if (response.status === 401) {
+                const refreshed = await refreshAuthToken();
+                if (refreshed) {
+                    options.headers['Authorization'] = `Bearer ${getAuthToken()}`;
+                    return fetchWithFailover(endpoint, options);
+                } else {
+                    // Token refresh failed, log out
+                    handleSignOut();
+                    throw new Error('Session expired. Please sign in again.');
+                }
+            }
+
+            return response;
         }
 
         // View saved trips (placeholder)
@@ -10892,6 +11550,87 @@
 
 
     </script>
+
+    <!-- ==================== AUTH OVERLAY ==================== -->
+    <div id="auth-overlay" class="auth-overlay" onclick="if(event.target === this) closeAuthOverlay()">
+        <div class="auth-container">
+            <button class="auth-close" onclick="closeAuthOverlay()">&times;</button>
+
+            <div class="auth-header">
+                <h2>Welcome to VOYA</h2>
+                <p>Sign in to save your travel plans</p>
+            </div>
+
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button id="login-tab" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+                <button id="signup-tab" class="auth-tab" onclick="switchAuthTab('signup')">Create Account</button>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="auth-error" class="auth-error"></div>
+            <div id="auth-success" class="auth-success"></div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active" onsubmit="handleSupabaseLogin(event)">
+                <div class="auth-input-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="login-submit" class="auth-submit">Sign In</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form" onsubmit="handleSupabaseSignup(event)">
+                <div class="auth-input-group">
+                    <label for="signup-name">Full Name</label>
+                    <input type="text" id="signup-name" placeholder="John Doe" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="you@example.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" placeholder="Min. 8 characters" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-confirm">Confirm Password</label>
+                    <input type="password" id="signup-confirm" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="signup-submit" class="auth-submit">Create Account</button>
+            </form>
+
+            <!-- Divider -->
+            <div class="auth-divider">
+                <span>or continue with</span>
+            </div>
+
+            <!-- Google Sign In -->
+            <button class="google-signin-btn" onclick="handleGoogleSignIn(); closeAuthOverlay();">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4" />
+                    <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853" />
+                    <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05" />
+                    <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335" />
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
+
 </body>
 
 </html>
