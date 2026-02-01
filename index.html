@@ -7193,27 +7193,7 @@
                     </div>
                 `;
             } else if (tab === 'itinerary') {
-                filtersContainer.innerHTML = `
-                    <h4><i class="fas fa-sliders-h"></i> Itinerary Options</h4>
-                    <div class="sidebar-filter">
-                        <label>Trip Style</label>
-                        <select id="unified-filter-style">
-                            <option value="">Balanced</option>
-                            <option value="adventure">Adventure</option>
-                            <option value="relaxation">Relaxation</option>
-                            <option value="cultural">Cultural</option>
-                            <option value="foodie">Foodie</option>
-                        </select>
-                    </div>
-                    <div class="sidebar-filter">
-                        <label>Pace</label>
-                        <select id="unified-filter-pace">
-                            <option value="moderate">Moderate</option>
-                            <option value="relaxed">Relaxed</option>
-                            <option value="packed">Action-packed</option>
-                        </select>
-                    </div>
-                `;
+                filtersContainer.innerHTML = '';
             }
         }
 
