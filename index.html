@@ -7862,39 +7862,80 @@
             `;
 
             // Initialize Mapbox with GeoJSON data - use longer timeout to ensure DOM is ready
-            console.log('Scheduling map initialization with map_data:', map_data);
+            // Get the destination for fallback
+            const destInput = document.getElementById('unified-itinerary-dest');
+            const destName = destInput?.value || 'India';
+
+            console.log('Scheduling map initialization with map_data:', map_data, 'destination:', destName);
             setTimeout(() => {
                 console.log('Calling initializeMapboxWithGeoJSON now');
-                initializeMapboxWithGeoJSON(map_data);
+                initializeMapboxWithGeoJSON(map_data, destName);
             }, 300);
+        }
+
+        /**
+         * Fallback: Initialize map centered on destination when activities have no coordinates
+         */
+        async function initializeMapWithDestination(container, destination) {
+            console.log('initializeMapWithDestination called for:', destination);
+
+            // Show loading state
+            container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading map...</p></div>';
+
+            try {
+                // Geocode the destination using Mapbox
+                const token = mapboxgl.accessToken || 'pk.eyJ1Ijoibm90YWRpdHlhIiwiYSI6ImNtYmxwdWpveTAxdWcycXM3bGoyOWt6bHQifQ.DCn20muxERYO0lCL3X-u5A';
+                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(destination)}.json?access_token=${token}&limit=1`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Geocoding failed');
+
+                const data = await response.json();
+                if (!data.features || data.features.length === 0) throw new Error('No geocoding results');
+
+                const [lng, lat] = data.features[0].center;
+                console.log(`Geocoded "${destination}" to [${lng}, ${lat}]`);
+
+                // Clear container and create map
+                container.innerHTML = '';
+
+                const map = new mapboxgl.Map({
+                    container: container,
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: [lng, lat],
+                    zoom: 11
+                });
+
+                map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                // Add a marker for the destination
+                new mapboxgl.Marker({ color: '#ff6b35' })
+                    .setLngLat([lng, lat])
+                    .setPopup(new mapboxgl.Popup().setHTML(`<strong>${destination}</strong>`))
+                    .addTo(map);
+
+            } catch (err) {
+                console.error('Fallback map initialization failed:', err);
+                container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;flex-direction:column;gap:10px;">
+                    <i class="fas fa-map-marker-alt" style="font-size:2rem;color:#999;"></i>
+                    <p style="color:#666;">Map for ${destination}</p>
+                    <p style="color:#999;font-size:0.85rem;">Generating activity locations...</p>
+                </div>`;
+            }
         }
 
 
         /**
          * Initialize Mapbox map with GeoJSON feature collection
          */
-        function initializeMapboxWithGeoJSON(mapData) {
-            console.log('initializeMapboxWithGeoJSON called with:', mapData);
+        function initializeMapboxWithGeoJSON(mapData, destinationName) {
+            console.log('initializeMapboxWithGeoJSON called with:', mapData, 'destination:', destinationName);
 
             const mapContainer = document.getElementById('itinerary-map');
             if (!mapContainer) {
                 console.error('Map container #itinerary-map not found');
                 return;
             }
-
-            if (!mapData) {
-                console.warn('No map data provided');
-                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">No location data available</p></div>';
-                return;
-            }
-
-            if (!mapData.features || mapData.features.length === 0) {
-                console.warn('No features in map data');
-                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">No locations to display</p></div>';
-                return;
-            }
-
-            console.log('Map data features count:', mapData.features.length);
 
             // Check if Mapbox is available
             if (typeof mapboxgl === 'undefined') {
@@ -7903,20 +7944,49 @@
                 return;
             }
 
-            // Set access token (you may need to configure this)
-
+            // Set access token
             if (!mapboxgl.accessToken) {
                 mapboxgl.accessToken = 'pk.eyJ1Ijoibm90YWRpdHlhIiwiYSI6ImNtYmxwdWpveTAxdWcycXM3bGoyOWt6bHQifQ.DCn20muxERYO0lCL3X-u5A';
             }
 
+            // Get the destination for fallback geocoding
+            const destination = destinationName || document.getElementById('unified-itinerary-dest')?.value || 'India';
+
+            // Check if we have valid features
+            const hasValidFeatures = mapData && mapData.features && mapData.features.length > 0 &&
+                mapData.features.some(f => f.geometry && f.geometry.coordinates &&
+                    Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length === 2);
+
+            if (!hasValidFeatures) {
+                console.warn('No valid map features, falling back to destination geocoding');
+                // Fallback: Geocode the destination and show a basic map
+                initializeMapWithDestination(mapContainer, destination);
+                return;
+            }
+
+            console.log('Map data features count:', mapData.features.length);
+
             try {
                 // Calculate bounds from all features
                 const bounds = new mapboxgl.LngLatBounds();
+                let validCoords = 0;
+
                 mapData.features.forEach(feature => {
                     if (feature.geometry && feature.geometry.coordinates) {
-                        bounds.extend(feature.geometry.coordinates);
+                        const [lng, lat] = feature.geometry.coordinates;
+                        // Validate coordinates are in valid range
+                        if (lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
+                            bounds.extend([lng, lat]);
+                            validCoords++;
+                        }
                     }
                 });
+
+                if (validCoords === 0) {
+                    console.warn('No valid coordinates found in features, using destination fallback');
+                    initializeMapWithDestination(mapContainer, destination);
+                    return;
+                }
 
                 // Create map
                 const map = new mapboxgl.Map({
@@ -7937,6 +8007,7 @@
                     entertainment: '#3498db',
                     default: '#ff6b35'
                 };
+
 
                 // Add markers for each feature
                 map.on('load', () => {
