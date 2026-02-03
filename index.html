@@ -7990,14 +7990,35 @@
                             data: { type: 'Feature', geometry: { type: 'LineString', coordinates: routeCoords } }
                         });
 
+                        // Different dash patterns per day
+                        const dashPatterns = [
+                            [],          // Day 1: Solid
+                            [10, 5],     // Day 2: Dashed
+                            [2, 4],      // Day 3: Dotted
+                            [10, 5, 2, 5], // Day 4: Dash-dot
+                            [15, 10],    // Day 5: Long dash
+                            [5, 3],      // Day 6: Short dash
+                            [20, 5, 5, 5] // Day 7: Dash-dot-dot
+                        ];
+                        const dashArray = dashPatterns[(day - 1) % dashPatterns.length];
+
                         map.addLayer({
                             id: `route-${day}`,
                             type: 'line',
                             source: `route-${day}`,
-                            paint: { 'line-color': color, 'line-width': 3, 'line-opacity': 0.7 }
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': color,
+                                'line-width': 4,
+                                'line-opacity': 0.85,
+                                'line-dasharray': dashArray.length > 0 ? dashArray : [1, 0]
+                            }
                         });
 
-                        console.log(`📍 Route Day ${day}: ${routeCoords.length} points, color ${color}`);
+                        console.log(`📍 Route Day ${day}: ${routeCoords.length} points, color ${color}, pattern: ${dashArray.length > 0 ? 'dashed' : 'solid'}`);
                     });
 
                     // 6. Fit bounds
