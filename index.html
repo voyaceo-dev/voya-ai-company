@@ -7648,8 +7648,12 @@
          * Render structured JSON itinerary with GeoJSON map data
          */
         function renderStructuredItinerary(container, itinerary, responseData) {
-            const { itinerary_summary, map_data, travel_advice } = itinerary;
+            const { itinerary_summary, map_data, travel_advice, estimated_cost } = itinerary;
             const features = map_data?.features || [];
+
+            console.log('renderStructuredItinerary - map_data:', map_data);
+            console.log('renderStructuredItinerary - features count:', features.length);
+            console.log('renderStructuredItinerary - estimated_cost:', estimated_cost);
 
             // Group features by day
             const dayGroups = {};
@@ -7658,6 +7662,7 @@
                 if (!dayGroups[day]) dayGroups[day] = [];
                 dayGroups[day].push(feature);
             });
+
 
             // Category icons and colors
             const categoryStyles = {
@@ -7737,6 +7742,54 @@
                 `;
             }
 
+            // Cost estimate section
+            let costEstimateHTML = '';
+            if (estimated_cost) {
+                const breakdown = estimated_cost.breakdown || {};
+                costEstimateHTML = `
+                    <div style="background:linear-gradient(135deg,#059669 0%,#10b981 100%);border-radius:16px;padding:25px;margin-bottom:25px;color:#fff;box-shadow:0 4px 15px rgba(16,185,129,0.3);">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                            <i class="fas fa-dollar-sign" style="font-size:1.8rem;background:rgba(255,255,255,0.2);padding:12px;border-radius:50%;"></i>
+                            <div>
+                                <h4 style="margin:0;font-size:1.3rem;font-weight:700;">Estimated Trip Cost</h4>
+                                <p style="margin:5px 0 0;opacity:0.9;font-size:0.9rem;">Based on your selected budget tier</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
+                            <div style="flex:1;min-width:120px;">
+                                <p style="margin:0;font-size:0.85rem;opacity:0.85;">Total Estimate</p>
+                                <p style="margin:5px 0 0;font-size:1.8rem;font-weight:700;">${estimated_cost.total || 'N/A'}</p>
+                            </div>
+                            <div style="flex:1;min-width:120px;">
+                                <p style="margin:0;font-size:0.85rem;opacity:0.85;">Per Day</p>
+                                <p style="margin:5px 0 0;font-size:1.4rem;font-weight:600;">${estimated_cost.per_day || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:15px;">
+                            <p style="margin:0 0 12px;font-size:0.9rem;font-weight:600;">Cost Breakdown</p>
+                            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <i class="fas fa-bed" style="width:20px;"></i>
+                                    <span style="font-size:0.85rem;">${breakdown.accommodation || 'N/A'}</span>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <i class="fas fa-utensils" style="width:20px;"></i>
+                                    <span style="font-size:0.85rem;">${breakdown.food || 'N/A'}</span>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <i class="fas fa-ticket-alt" style="width:20px;"></i>
+                                    <span style="font-size:0.85rem;">${breakdown.activities || 'N/A'}</span>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <i class="fas fa-subway" style="width:20px;"></i>
+                                    <span style="font-size:0.85rem;">${breakdown.transportation || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <div class="itinerary-wrapper" style="display:flex;gap:25px;align-items:start;flex-wrap:wrap;">
                     <!-- Itinerary Content (Left) -->
@@ -7762,8 +7815,11 @@
                             ${daysHTML}
                         </div>
                         
+                        ${costEstimateHTML}
+                        
                         ${adviceHTML}
                     </div>
+
 
                     <!-- Map Container (Right/Sticky) -->
                     <div class="map-container-wrapper" style="flex:1;min-width:350px;position:sticky;top:20px;height:calc(100vh - 40px);">
