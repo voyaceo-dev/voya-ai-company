@@ -7590,24 +7590,55 @@
          */
         function displayUnifiedItineraryResults(data) {
             const container = document.getElementById('unified-results-content');
-            const rawItinerary = data.itinerary || data.html || data;
+            if (!container) return;
+
+            let rawItinerary = data.itinerary || data.html || data;
             const format = data.format || 'text';
 
-            // Handle new JSON format with GeoJSON
-            if (format === 'json' && typeof rawItinerary === 'object' && rawItinerary.map_data) {
+            console.log('displayUnifiedItineraryResults - format:', format, 'type:', typeof rawItinerary);
+
+            // Try to parse if it's a JSON string
+            if (typeof rawItinerary === 'string') {
+                // Check if it looks like JSON (starts with {)
+                const trimmed = rawItinerary.trim();
+                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                    try {
+                        // Try to extract JSON from markdown code blocks first
+                        const jsonMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+                        if (jsonMatch) {
+                            rawItinerary = JSON.parse(jsonMatch[1].trim());
+                        } else {
+                            rawItinerary = JSON.parse(trimmed);
+                        }
+                        console.log('Parsed JSON successfully:', rawItinerary);
+                    } catch (e) {
+                        console.log('JSON parse failed, treating as text:', e.message);
+                    }
+                }
+            }
+
+            // Handle new JSON format with GeoJSON map_data
+            if (typeof rawItinerary === 'object' && rawItinerary !== null && rawItinerary.map_data) {
+                console.log('Rendering structured itinerary with map_data');
+                renderStructuredItinerary(container, rawItinerary, data);
+            } else if (typeof rawItinerary === 'object' && rawItinerary !== null && rawItinerary.itinerary_summary) {
+                // Object with itinerary_summary but maybe no map_data
+                console.log('Rendering structured itinerary (no map_data)');
                 renderStructuredItinerary(container, rawItinerary, data);
             } else if (typeof rawItinerary === 'string') {
                 // Legacy text format - convert markdown to HTML
+                console.log('Rendering text itinerary');
                 renderTextItinerary(container, rawItinerary);
-            } else if (typeof rawItinerary === 'object' && rawItinerary.map_data) {
-                // Object without format flag but has map_data
-                renderStructuredItinerary(container, rawItinerary, data);
             } else {
+                // Fallback - show as formatted JSON or placeholder
+                console.log('Fallback - unknown format');
                 container.innerHTML = `
                     <div class="unified-placeholder">
                         <i class="fas fa-check-circle" style="color:#28a745;"></i>
                         <h3>Itinerary Generated!</h3>
                         <p>Your personalized travel plan is ready</p>
+                    </div>
+
                     </div>
                 `;
             }
@@ -7763,20 +7794,37 @@
          * Initialize Mapbox map with GeoJSON feature collection
          */
         function initializeMapboxWithGeoJSON(mapData) {
+            console.log('initializeMapboxWithGeoJSON called with:', mapData);
+
             const mapContainer = document.getElementById('itinerary-map');
-            if (!mapContainer || !mapData || !mapData.features || mapData.features.length === 0) {
-                console.warn('No map data or container available');
+            if (!mapContainer) {
+                console.error('Map container #itinerary-map not found');
                 return;
             }
 
+            if (!mapData) {
+                console.warn('No map data provided');
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">No location data available</p></div>';
+                return;
+            }
+
+            if (!mapData.features || mapData.features.length === 0) {
+                console.warn('No features in map data');
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">No locations to display</p></div>';
+                return;
+            }
+
+            console.log('Map data features count:', mapData.features.length);
+
             // Check if Mapbox is available
             if (typeof mapboxgl === 'undefined') {
-                console.warn('Mapbox GL JS not loaded');
-                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map loading...</p></div>';
+                console.error('Mapbox GL JS not loaded - mapboxgl is undefined');
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map library not loaded</p></div>';
                 return;
             }
 
             // Set access token (you may need to configure this)
+
             if (!mapboxgl.accessToken) {
                 mapboxgl.accessToken = 'pk.eyJ1Ijoibm90YWRpdHlhIiwiYSI6ImNtYmxwdWpveTAxdWcycXM3bGoyOWt6bHQifQ.DCn20muxERYO0lCL3X-u5A';
             }
