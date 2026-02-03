@@ -7570,58 +7570,22 @@
 
         /**
          * Display itinerary results in unified overlay
+         * Handles both new JSON format (with GeoJSON) and legacy text format
          */
         function displayUnifiedItineraryResults(data) {
             const container = document.getElementById('unified-results-content');
             const rawItinerary = data.itinerary || data.html || data;
+            const format = data.format || 'text';
 
-            if (typeof rawItinerary === 'string') {
-                // Convert markdown to beautiful HTML
-                const formattedHTML = convertItineraryToHTML(rawItinerary);
-
-                container.innerHTML = `
-                    <div class="itinerary-wrapper" style="display:flex;gap:25px;align-items:start;flex-wrap:wrap;">
-                        <!-- Itinerary Content (Left) -->
-                        <div class="itinerary-container" style="flex:1;min-width:350px;background:#fff;border-radius:16px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-                            <div class="itinerary-header" style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
-                                <h2 style="color:#1a1a2e;margin:0 0 10px 0;font-size:1.8rem;">
-                                    <i class="fas fa-map-marked-alt" style="color:#ff6b35;margin-right:10px;"></i>
-                                    Your Travel Itinerary
-                                </h2>
-                                <p style="color:#666;margin:0;">Generated with AI-powered travel planning</p>
-                            </div>
-                            <div class="itinerary-content">
-                                ${formattedHTML}
-                            </div>
-                        </div>
-
-                        <!-- Map Container (Right/Sticky) -->
-                        <div class="map-container-wrapper" style="flex:1;min-width:350px;position:sticky;top:20px;height:calc(100vh - 40px);">
-                            <div id="itinerary-map" style="width:100%;height:100%;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:1;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="itinerary-actions" style="margin-top:20px;display:flex;gap:15px;justify-content:center;">
-                        <button class="btn-outline" onclick="downloadItineraryPDF()">
-                            <i class="fas fa-download"></i> Download PDF
-                        </button>
-                        <button class="btn-outline" onclick="shareItinerary()">
-                            <i class="fas fa-share-alt"></i> Share
-                        </button>
-                        <button class="btn-outline" onclick="toggleMap()" id="btn-toggle-map" style="display:none;">
-                            <i class="fas fa-map"></i> Toggle Map
-                        </button>
-                    </div>
-                `;
-
-                // Initialize map using new Mapbox implementation
-                setTimeout(() => {
-                    const destination = document.getElementById('unified-ai-dest')?.value || 'Unknown';
-                    const parsedData = parseItineraryContent(rawItinerary);
-                    if (parsedData && parsedData.length > 0) {
-                        initializeItineraryMap(destination, parsedData);
-                    }
-                }, 100);
+            // Handle new JSON format with GeoJSON
+            if (format === 'json' && typeof rawItinerary === 'object' && rawItinerary.map_data) {
+                renderStructuredItinerary(container, rawItinerary, data);
+            } else if (typeof rawItinerary === 'string') {
+                // Legacy text format - convert markdown to HTML
+                renderTextItinerary(container, rawItinerary);
+            } else if (typeof rawItinerary === 'object' && rawItinerary.map_data) {
+                // Object without format flag but has map_data
+                renderStructuredItinerary(container, rawItinerary, data);
             } else {
                 container.innerHTML = `
                     <div class="unified-placeholder">
@@ -7632,6 +7596,330 @@
                 `;
             }
         }
+
+        /**
+         * Render structured JSON itinerary with GeoJSON map data
+         */
+        function renderStructuredItinerary(container, itinerary, responseData) {
+            const { itinerary_summary, map_data, travel_advice } = itinerary;
+            const features = map_data?.features || [];
+
+            // Group features by day
+            const dayGroups = {};
+            features.forEach(feature => {
+                const day = feature.properties?.day_number || 1;
+                if (!dayGroups[day]) dayGroups[day] = [];
+                dayGroups[day].push(feature);
+            });
+
+            // Category icons and colors
+            const categoryStyles = {
+                food: { icon: 'fas fa-utensils', color: '#e74c3c' },
+                culture: { icon: 'fas fa-landmark', color: '#9b59b6' },
+                nature: { icon: 'fas fa-tree', color: '#27ae60' },
+                shopping: { icon: 'fas fa-shopping-bag', color: '#f39c12' },
+                entertainment: { icon: 'fas fa-star', color: '#3498db' },
+                default: { icon: 'fas fa-map-marker-alt', color: '#ff6b35' }
+            };
+
+            // Build day cards HTML
+            let daysHTML = '';
+            Object.keys(dayGroups).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dayNum => {
+                const dayFeatures = dayGroups[dayNum];
+                daysHTML += `
+                    <div style="background:#fff;border-radius:16px;margin-bottom:25px;box-shadow:0 4px 20px rgba(0,0,0,0.08);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#ff6b35 0%,#f45c22 100%);padding:20px 25px;">
+                            <div style="display:flex;align-items:center;gap:18px;">
+                                <div style="width:55px;height:55px;background:rgba(255,255,255,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <span style="font-size:1.6rem;font-weight:700;color:#fff;">${dayNum}</span>
+                                </div>
+                                <div>
+                                    <h3 style="margin:0;color:#fff;font-size:1.5rem;font-weight:600;">Day ${dayNum}</h3>
+                                    <p style="margin:5px 0 0;color:rgba(255,255,255,0.9);font-size:0.95rem;">${dayFeatures.length} activities planned</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding:25px;">
+                            ${dayFeatures.map((feature, idx) => {
+                    const props = feature.properties || {};
+                    const cat = (props.category || 'default').toLowerCase();
+                    const style = categoryStyles[cat] || categoryStyles.default;
+                    return `
+                                    <div style="display:flex;gap:15px;align-items:flex-start;margin-bottom:${idx === dayFeatures.length - 1 ? '0' : '20px'};padding-bottom:${idx === dayFeatures.length - 1 ? '0' : '20px'};border-bottom:${idx === dayFeatures.length - 1 ? 'none' : '1px solid #eee'};">
+                                        <div style="width:44px;height:44px;background:${style.color}15;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="${style.icon}" style="color:${style.color};font-size:1.1rem;"></i>
+                                        </div>
+                                        <div style="flex:1;">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                                <h4 style="margin:0;color:#1a1a2e;font-size:1.05rem;font-weight:600;">${escapeHtml(props.name || 'Activity')}</h4>
+                                                <span style="font-size:0.85rem;color:#666;background:#f5f5f5;padding:4px 12px;border-radius:20px;">
+                                                    <i class="fas fa-clock" style="margin-right:5px;"></i>${props.arrival_time || 'Flexible'}
+                                                </span>
+                                            </div>
+                                            <p style="margin:0;color:#555;font-size:0.95rem;line-height:1.6;">${escapeHtml(props.activity_description || '')}</p>
+                                            <span style="display:inline-block;margin-top:10px;font-size:0.75rem;padding:4px 10px;background:${style.color}20;color:${style.color};border-radius:12px;text-transform:capitalize;">${cat}</span>
+                                        </div>
+                                    </div>
+                                `;
+                }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Travel advice section
+            let adviceHTML = '';
+            if (travel_advice && travel_advice.length > 0) {
+                adviceHTML = `
+                    <div style="background:#f0f9ff;border-radius:16px;padding:25px;margin-bottom:25px;border:1px solid #e0f2fe;">
+                        <div style="display:flex;align-items:flex-start;gap:15px;">
+                            <span style="font-size:1.5rem;">💡</span>
+                            <div style="flex:1;">
+                                <h4 style="margin:0 0 15px 0;color:#0369a1;font-size:1.2rem;">Travel Tips</h4>
+                                <ul style="margin:0;padding:0;list-style:none;">
+                                    ${travel_advice.map(tip => `
+                                        <li style="margin-bottom:10px;padding-left:25px;position:relative;color:#374151;font-size:0.95rem;line-height:1.6;">
+                                            <span style="position:absolute;left:0;color:#10b981;font-size:1.1rem;">✓</span>
+                                            ${escapeHtml(tip)}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="itinerary-wrapper" style="display:flex;gap:25px;align-items:start;flex-wrap:wrap;">
+                    <!-- Itinerary Content (Left) -->
+                    <div class="itinerary-container" style="flex:1;min-width:350px;background:#fff;border-radius:16px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                        <div class="itinerary-header" style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                            <h2 style="color:#1a1a2e;margin:0 0 10px 0;font-size:1.8rem;">
+                                <i class="fas fa-map-marked-alt" style="color:#ff6b35;margin-right:10px;"></i>
+                                Your Travel Itinerary
+                            </h2>
+                            <p style="color:#666;margin:0;">Generated with AI-powered travel planning</p>
+                        </div>
+                        
+                        ${itinerary_summary ? `
+                            <div style="background:#fef7ed;border:2px solid #fed7aa;padding:25px;border-radius:16px;margin-bottom:25px;">
+                                <div style="display:flex;align-items:flex-start;gap:15px;">
+                                    <i class="fas fa-info-circle" style="font-size:1.5rem;color:#ea580c;margin-top:3px;"></i>
+                                    <p style="margin:0;font-size:1rem;line-height:1.8;color:#374151;">${escapeHtml(itinerary_summary)}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="itinerary-content">
+                            ${daysHTML}
+                        </div>
+                        
+                        ${adviceHTML}
+                    </div>
+
+                    <!-- Map Container (Right/Sticky) -->
+                    <div class="map-container-wrapper" style="flex:1;min-width:350px;position:sticky;top:20px;height:calc(100vh - 40px);">
+                        <div id="itinerary-map" style="width:100%;height:100%;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:1;"></div>
+                    </div>
+                </div>
+                
+                <div class="itinerary-actions" style="margin-top:20px;display:flex;gap:15px;justify-content:center;">
+                    <button class="btn-outline" onclick="downloadItineraryPDF()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button class="btn-outline" onclick="shareItinerary()">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <button class="btn-outline" onclick="toggleMap()" id="btn-toggle-map" style="display:none;">
+                        <i class="fas fa-map"></i> Toggle Map
+                    </button>
+                </div>
+            `;
+
+            // Initialize Mapbox with GeoJSON data
+            setTimeout(() => {
+                initializeMapboxWithGeoJSON(map_data);
+            }, 100);
+        }
+
+        /**
+         * Initialize Mapbox map with GeoJSON feature collection
+         */
+        function initializeMapboxWithGeoJSON(mapData) {
+            const mapContainer = document.getElementById('itinerary-map');
+            if (!mapContainer || !mapData || !mapData.features || mapData.features.length === 0) {
+                console.warn('No map data or container available');
+                return;
+            }
+
+            // Check if Mapbox is available
+            if (typeof mapboxgl === 'undefined') {
+                console.warn('Mapbox GL JS not loaded');
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map loading...</p></div>';
+                return;
+            }
+
+            // Set access token (you may need to configure this)
+            if (!mapboxgl.accessToken) {
+                mapboxgl.accessToken = 'pk.eyJ1Ijoibm90YWRpdHlhIiwiYSI6ImNtYmxwdWpveTAxdWcycXM3bGoyOWt6bHQifQ.DCn20muxERYO0lCL3X-u5A';
+            }
+
+            try {
+                // Calculate bounds from all features
+                const bounds = new mapboxgl.LngLatBounds();
+                mapData.features.forEach(feature => {
+                    if (feature.geometry && feature.geometry.coordinates) {
+                        bounds.extend(feature.geometry.coordinates);
+                    }
+                });
+
+                // Create map
+                const map = new mapboxgl.Map({
+                    container: 'itinerary-map',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    bounds: bounds,
+                    fitBoundsOptions: { padding: 50 }
+                });
+
+                map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                // Category colors for markers
+                const categoryColors = {
+                    food: '#e74c3c',
+                    culture: '#9b59b6',
+                    nature: '#27ae60',
+                    shopping: '#f39c12',
+                    entertainment: '#3498db',
+                    default: '#ff6b35'
+                };
+
+                // Add markers for each feature
+                map.on('load', () => {
+                    mapData.features.forEach((feature, index) => {
+                        const coords = feature.geometry?.coordinates;
+                        if (!coords || coords.length < 2) return;
+
+                        const props = feature.properties || {};
+                        const cat = (props.category || 'default').toLowerCase();
+                        const color = categoryColors[cat] || categoryColors.default;
+
+                        // Create marker element
+                        const el = document.createElement('div');
+                        el.className = 'itinerary-marker';
+                        el.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:${color};border-radius:50%;color:#fff;font-weight:700;font-size:0.85rem;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #fff;">${props.day_number || index + 1}</span>`;
+
+                        // Create popup
+                        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                            <div style="padding:10px;max-width:250px;">
+                                <h4 style="margin:0 0 8px 0;color:#1a1a2e;font-size:1rem;">${escapeHtml(props.name || 'Activity')}</h4>
+                                <p style="margin:0 0 5px 0;color:#666;font-size:0.85rem;"><i class="fas fa-clock" style="margin-right:5px;"></i>${props.arrival_time || 'Flexible'}</p>
+                                <p style="margin:0;color:#444;font-size:0.9rem;line-height:1.4;">${escapeHtml(props.activity_description || '')}</p>
+                            </div>
+                        `);
+
+                        // Add marker to map
+                        new mapboxgl.Marker(el)
+                            .setLngLat(coords)
+                            .setPopup(popup)
+                            .addTo(map);
+                    });
+
+                    // Draw route line if there are multiple features
+                    if (mapData.features.length > 1) {
+                        const coordinates = mapData.features
+                            .filter(f => f.geometry?.coordinates)
+                            .map(f => f.geometry.coordinates);
+
+                        map.addSource('route', {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'Feature',
+                                'properties': {},
+                                'geometry': {
+                                    'type': 'LineString',
+                                    'coordinates': coordinates
+                                }
+                            }
+                        });
+
+                        map.addLayer({
+                            'id': 'route',
+                            'type': 'line',
+                            'source': 'route',
+                            'layout': {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            'paint': {
+                                'line-color': '#ff6b35',
+                                'line-width': 3,
+                                'line-opacity': 0.7,
+                                'line-dasharray': [2, 2]
+                            }
+                        });
+                    }
+                });
+
+                // Store map reference globally
+                window.itineraryMapInstance = map;
+            } catch (err) {
+                console.error('Error initializing Mapbox:', err);
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map unavailable</p></div>';
+            }
+        }
+
+        /**
+         * Render legacy text-based itinerary (markdown)
+         */
+        function renderTextItinerary(container, rawItinerary) {
+            const formattedHTML = convertItineraryToHTML(rawItinerary);
+
+            container.innerHTML = `
+                <div class="itinerary-wrapper" style="display:flex;gap:25px;align-items:start;flex-wrap:wrap;">
+                    <!-- Itinerary Content (Left) -->
+                    <div class="itinerary-container" style="flex:1;min-width:350px;background:#fff;border-radius:16px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                        <div class="itinerary-header" style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #f0f0f0;">
+                            <h2 style="color:#1a1a2e;margin:0 0 10px 0;font-size:1.8rem;">
+                                <i class="fas fa-map-marked-alt" style="color:#ff6b35;margin-right:10px;"></i>
+                                Your Travel Itinerary
+                            </h2>
+                            <p style="color:#666;margin:0;">Generated with AI-powered travel planning</p>
+                        </div>
+                        <div class="itinerary-content">
+                            ${formattedHTML}
+                        </div>
+                    </div>
+
+                    <!-- Map Container (Right/Sticky) -->
+                    <div class="map-container-wrapper" style="flex:1;min-width:350px;position:sticky;top:20px;height:calc(100vh - 40px);">
+                        <div id="itinerary-map" style="width:100%;height:100%;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:1;"></div>
+                    </div>
+                </div>
+                
+                <div class="itinerary-actions" style="margin-top:20px;display:flex;gap:15px;justify-content:center;">
+                    <button class="btn-outline" onclick="downloadItineraryPDF()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button class="btn-outline" onclick="shareItinerary()">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <button class="btn-outline" onclick="toggleMap()" id="btn-toggle-map" style="display:none;">
+                        <i class="fas fa-map"></i> Toggle Map
+                    </button>
+                </div>
+            `;
+
+            // Initialize map using legacy text parsing
+            setTimeout(() => {
+                const destination = document.getElementById('unified-ai-dest')?.value || 'Unknown';
+                const parsedData = parseItineraryContent(rawItinerary);
+                if (parsedData && parsedData.length > 0) {
+                    initializeItineraryMap(destination, parsedData);
+                }
+            }, 100);
+        }
+
 
         /**
          * Strip ALL markdown characters from text - COMPREHENSIVE VERSION
