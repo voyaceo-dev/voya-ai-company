@@ -7957,101 +7957,163 @@
                         .setPopup(new mapboxgl.Popup().setHTML(`<strong>${destination}</strong><br>Your destination`))
                         .addTo(map);
 
-                    // If we have activity data, add markers and routes
+                    // If we have activity data, geocode and add markers
                     if (mapData && mapData.features && mapData.features.length > 0) {
                         const bounds = new mapboxgl.LngLatBounds();
                         bounds.extend([centerLng, centerLat]);
 
+                        // Helper function to geocode an activity name
+                        async function geocodeActivity(activityName, destBias) {
+                            try {
+                                const searchQuery = `${activityName}, ${destBias}`;
+                                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${mapboxgl.accessToken}&limit=1&proximity=${centerLng},${centerLat}`;
+                                const resp = await fetch(url);
+                                if (!resp.ok) return null;
+                                const data = await resp.json();
+                                if (data.features && data.features.length > 0) {
+                                    return data.features[0].center;
+                                }
+                            } catch (e) {
+                                console.warn('Geocoding failed for:', activityName);
+                            }
+                            return null;
+                        }
+
+                        // Calculate distance between two points in km
+                        function distanceKm(lat1, lon1, lat2, lon2) {
+                            const R = 6371;
+                            const dLat = (lat2 - lat1) * Math.PI / 180;
+                            const dLon = (lon2 - lon1) * Math.PI / 180;
+                            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                        }
+
                         // Group features by day
                         const featuresByDay = {};
 
-                        mapData.features.forEach((feature, index) => {
-                            const coords = feature.geometry?.coordinates;
-                            if (!coords || !Array.isArray(coords) || coords.length !== 2) return;
+                        // Process each feature - geocode if needed
+                        const processFeatures = async () => {
+                            for (let index = 0; index < mapData.features.length; index++) {
+                                const feature = mapData.features[index];
+                                const props = feature.properties || {};
+                                const activityName = props.name || 'Activity';
+                                const dayNum = props.day_number || 1;
 
-                            const [lng, lat] = coords;
-                            if (typeof lng !== 'number' || typeof lat !== 'number') return;
-                            if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return;
-                            if (lng === 0 && lat === 0) return;
+                                let coords = feature.geometry?.coordinates;
+                                let needsGeocoding = true;
 
-                            const props = feature.properties || {};
-                            const dayNum = props.day_number || 1;
-
-                            if (!featuresByDay[dayNum]) {
-                                featuresByDay[dayNum] = [];
-                            }
-                            featuresByDay[dayNum].push({ coords: [lng, lat], props, index });
-
-                            // Add marker with day color
-                            const dayColor = dayColors[(dayNum - 1) % dayColors.length];
-                            const activityIndex = featuresByDay[dayNum].length;
-
-                            const el = document.createElement('div');
-                            el.innerHTML = `<div style="background:${dayColor};color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;">${dayNum}.${activityIndex}</div>`;
-
-                            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                                <div style="padding:8px;max-width:200px;">
-                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                                        <span style="background:${dayColor};color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Day ${dayNum}</span>
-                                    </div>
-                                    <h4 style="margin:0 0 5px 0;color:#1a1a2e;font-size:0.95rem;">${escapeHtml(props.name || 'Activity')}</h4>
-                                    <p style="margin:0;color:#666;font-size:0.8rem;">${props.arrival_time || ''}</p>
-                                    <p style="margin:4px 0 0;color:#444;font-size:0.85rem;">${escapeHtml(props.activity_description || '').substring(0, 100)}...</p>
-                                </div>
-                            `);
-
-                            new mapboxgl.Marker(el)
-                                .setLngLat([lng, lat])
-                                .setPopup(popup)
-                                .addTo(map);
-
-                            bounds.extend([lng, lat]);
-                        });
-
-                        // Draw routes for each day with different colors
-                        Object.keys(featuresByDay).forEach(dayNum => {
-                            const dayFeatures = featuresByDay[dayNum];
-                            if (dayFeatures.length < 2) return;
-
-                            const dayColor = dayColors[(dayNum - 1) % dayColors.length];
-                            const coordinates = dayFeatures.map(f => f.coords);
-
-                            map.addSource(`route-day-${dayNum}`, {
-                                'type': 'geojson',
-                                'data': {
-                                    'type': 'Feature',
-                                    'properties': { 'day': dayNum },
-                                    'geometry': {
-                                        'type': 'LineString',
-                                        'coordinates': coordinates
+                                // Check if existing coordinates are valid and near destination
+                                if (coords && Array.isArray(coords) && coords.length === 2) {
+                                    const [lng, lat] = coords;
+                                    if (typeof lng === 'number' && typeof lat === 'number' &&
+                                        lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90 &&
+                                        !(lng === 0 && lat === 0)) {
+                                        const distance = distanceKm(centerLat, centerLng, lat, lng);
+                                        if (distance < 100) { // Within 100km of destination
+                                            needsGeocoding = false;
+                                        } else {
+                                            console.warn(`Activity "${activityName}" is ${distance.toFixed(0)}km from ${destination}, will re-geocode`);
+                                        }
                                     }
                                 }
-                            });
 
-                            map.addLayer({
-                                'id': `route-day-${dayNum}`,
-                                'type': 'line',
-                                'source': `route-day-${dayNum}`,
-                                'layout': {
-                                    'line-join': 'round',
-                                    'line-cap': 'round'
-                                },
-                                'paint': {
-                                    'line-color': dayColor,
-                                    'line-width': 4,
-                                    'line-opacity': 0.8
+                                // Geocode if needed
+                                if (needsGeocoding) {
+                                    console.log(`🔍 Geocoding activity: "${activityName}" near ${destination}`);
+                                    const newCoords = await geocodeActivity(activityName, destination);
+                                    if (newCoords) {
+                                        coords = newCoords;
+                                        console.log(`✅ Geocoded "${activityName}" to [${coords[0]}, ${coords[1]}]`);
+                                    } else {
+                                        // Use destination center with slight offset
+                                        const offset = (index * 0.002) - (mapData.features.length * 0.001);
+                                        coords = [centerLng + offset, centerLat + offset];
+                                        console.warn(`⚠️ Could not geocode "${activityName}", using offset from center`);
+                                    }
                                 }
+
+                                if (!featuresByDay[dayNum]) {
+                                    featuresByDay[dayNum] = [];
+                                }
+                                featuresByDay[dayNum].push({ coords, props, index });
+
+                                // Add marker with day color
+                                const dayColor = dayColors[(dayNum - 1) % dayColors.length];
+                                const activityIndex = featuresByDay[dayNum].length;
+
+                                const el = document.createElement('div');
+                                el.innerHTML = `<div style="background:${dayColor};color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;">${dayNum}.${activityIndex}</div>`;
+
+                                const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                                    <div style="padding:8px;max-width:200px;">
+                                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                            <span style="background:${dayColor};color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Day ${dayNum}</span>
+                                        </div>
+                                        <h4 style="margin:0 0 5px 0;color:#1a1a2e;font-size:0.95rem;">${escapeHtml(activityName)}</h4>
+                                        <p style="margin:0;color:#666;font-size:0.8rem;">${props.arrival_time || ''}</p>
+                                        <p style="margin:4px 0 0;color:#444;font-size:0.85rem;">${escapeHtml(props.activity_description || '').substring(0, 100)}...</p>
+                                    </div>
+                                `);
+
+                                new mapboxgl.Marker(el)
+                                    .setLngLat(coords)
+                                    .setPopup(popup)
+                                    .addTo(map);
+
+                                bounds.extend(coords);
+                            }
+
+                            // Draw routes for each day with different colors
+                            Object.keys(featuresByDay).forEach(dayNum => {
+                                const dayFeatures = featuresByDay[dayNum];
+                                if (dayFeatures.length < 2) return;
+
+                                const dayColor = dayColors[(dayNum - 1) % dayColors.length];
+                                const coordinates = dayFeatures.map(f => f.coords);
+
+                                map.addSource(`route-day-${dayNum}`, {
+                                    'type': 'geojson',
+                                    'data': {
+                                        'type': 'Feature',
+                                        'properties': { 'day': dayNum },
+                                        'geometry': {
+                                            'type': 'LineString',
+                                            'coordinates': coordinates
+                                        }
+                                    }
+                                });
+
+                                map.addLayer({
+                                    'id': `route-day-${dayNum}`,
+                                    'type': 'line',
+                                    'source': `route-day-${dayNum}`,
+                                    'layout': {
+                                        'line-join': 'round',
+                                        'line-cap': 'round'
+                                    },
+                                    'paint': {
+                                        'line-color': dayColor,
+                                        'line-width': 4,
+                                        'line-opacity': 0.8
+                                    }
+                                });
+
+                                console.log(`📍 Drew route for Day ${dayNum} with ${coordinates.length} points`);
                             });
 
-                            console.log(`📍 Drew route for Day ${dayNum} with ${coordinates.length} points in color ${dayColor}`);
-                        });
+                            // Fit bounds if we added any points
+                            if (!bounds.isEmpty()) {
+                                map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
+                            }
+                        };
 
-                        // Fit bounds if we added any points
-                        if (!bounds.isEmpty()) {
-                            map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
-                        }
+                        // Run the async processing
+                        processFeatures().catch(err => console.error('Error processing features:', err));
                     }
                 });
+
 
                 map.on('error', (e) => {
                     console.error('❌ Mapbox error:', e);
