@@ -6917,7 +6917,23 @@
             }, 4000);
         }
 
+        /**
+         * Escape HTML special characters to prevent XSS
+         */
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
         function switchTab(event, tabName) {
+
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => tab.style.display = 'none');
 
@@ -7920,9 +7936,90 @@
             }, 100);
         }
 
+        /**
+         * Parse text itinerary content to extract activities and locations
+         * Returns array of activity objects for map display
+         */
+        function parseItineraryContent(rawItinerary) {
+            if (!rawItinerary || typeof rawItinerary !== 'string') return [];
+
+            const activities = [];
+
+            // Try to find day sections
+            const dayPattern = /Day\s+(\d+)[:\s]*([\s\S]*?)(?=Day\s+\d+[:\s]|$)/gi;
+            let dayMatch;
+
+            while ((dayMatch = dayPattern.exec(rawItinerary)) !== null) {
+                const dayNumber = parseInt(dayMatch[1]);
+                const dayContent = dayMatch[2].trim();
+
+                // Extract location names from the day content
+                // Look for patterns like "Visit X", "Explore X", "Head to X", etc.
+                const locationPatterns = [
+                    /(?:Visit|Explore|Head to|Go to|Stop at|Check out|Experience|Discover|See|Tour)\s+(?:the\s+)?([A-Z][^.!?\n]{3,40})/gi,
+                    /(?:at|in)\s+(?:the\s+)?([A-Z][A-Za-z\s&'-]{3,40}(?:Temple|Shrine|Museum|Park|Garden|Market|Tower|Palace|Castle|Beach|Restaurant|District|Area))/gi,
+                    /\b([A-Z][A-Za-z\s&'-]{3,30}(?:Temple|Shrine|Museum|Park|Garden|Market|Tower|Palace|Castle|Beach|Station|Tower))\b/g
+                ];
+
+                for (const pattern of locationPatterns) {
+                    let match;
+                    while ((match = pattern.exec(dayContent)) !== null) {
+                        const locationName = match[1].trim().replace(/[.,;:]$/, '');
+                        if (locationName.length > 3 && locationName.length < 50) {
+                            // Avoid duplicates
+                            if (!activities.find(a => a.name?.toLowerCase() === locationName.toLowerCase())) {
+                                activities.push({
+                                    name: locationName,
+                                    day: dayNumber,
+                                    category: guessCategory(locationName)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // If no activities found via patterns, try to extract any capitalized proper nouns
+            if (activities.length === 0) {
+                const properNounPattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g;
+                let match;
+                let count = 0;
+                while ((match = properNounPattern.exec(rawItinerary)) !== null && count < 8) {
+                    const name = match[1].trim();
+                    // Filter out common non-location words
+                    const excludeWords = ['Day One', 'Day Two', 'Day Three', 'Morning Visit', 'Afternoon Visit', 'Evening Visit'];
+                    if (!excludeWords.some(w => name.includes(w)) && name.length > 4) {
+                        activities.push({
+                            name: name,
+                            day: 1,
+                            category: 'default'
+                        });
+                        count++;
+                    }
+                }
+            }
+
+            return activities;
+        }
+
+        /**
+         * Guess activity category based on location name
+         */
+        function guessCategory(locationName) {
+            const lower = locationName.toLowerCase();
+            if (/temple|shrine|church|mosque|cathedral|monastery/i.test(lower)) return 'culture';
+            if (/museum|gallery|palace|castle|memorial|monument/i.test(lower)) return 'culture';
+            if (/park|garden|beach|mountain|forest|lake|river|falls|nature/i.test(lower)) return 'nature';
+            if (/market|mall|shopping|bazaar|store|outlet/i.test(lower)) return 'shopping';
+            if (/restaurant|cafe|food|street\s*food|ramen|sushi|dining/i.test(lower)) return 'food';
+            if (/bar|club|theater|cinema|entertainment|arcade|show/i.test(lower)) return 'entertainment';
+            return 'default';
+        }
+
 
         /**
          * Strip ALL markdown characters from text - COMPREHENSIVE VERSION
+
          */
         function stripAllMarkdown(text) {
             if (!text) return '';
@@ -8173,8 +8270,299 @@
         }
 
         // ==================== INTERACTIVE MAP INTEGRATION ====================
-        // Map functionality moved to Mapbox GL JS implementation (initializeItineraryMap)
-        // See the new implementation below using mapboxgl.Map
+        // Mapbox GL JS implementation for itinerary map
+
+        let itineraryMap = null;
+
+        /**
+         * Initialize the itinerary map with Mapbox GL JS
+         * @param {string} destination - The destination name
+         * @param {Array} activities - Array of parsed activities with location names
+         */
+        async function initializeItineraryMap(destination, activities) {
+            const mapContainer = document.getElementById('itinerary-map');
+            if (!mapContainer) {
+                console.warn('Map container not found');
+                return;
+            }
+
+            // Check if Mapbox is available
+            if (typeof mapboxgl === 'undefined') {
+                console.warn('Mapbox GL JS not loaded');
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map loading...</p></div>';
+                return;
+            }
+
+            // Set access token
+            mapboxgl.accessToken = 'pk.eyJ1Ijoibm90YWRpdHlhIiwiYSI6ImNtYmxwdWpveTAxdWcycXM3bGoyOWt6bHQifQ.DCn20muxERYO0lCL3X-u5A';
+
+            try {
+                // Geocode the destination to get initial center
+                const destCoords = await geocodeLocation(destination);
+                if (!destCoords) {
+                    mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Could not load map for this destination</p></div>';
+                    return;
+                }
+
+                // Remove existing map if any
+                if (itineraryMap) {
+                    itineraryMap.remove();
+                    itineraryMap = null;
+                }
+
+                // Create map
+                itineraryMap = new mapboxgl.Map({
+                    container: 'itinerary-map',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: [destCoords.lng, destCoords.lat],
+                    zoom: 12
+                });
+
+                itineraryMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                // Wait for map to load
+                itineraryMap.on('load', async () => {
+                    const markers = [];
+                    const bounds = new mapboxgl.LngLatBounds();
+                    bounds.extend([destCoords.lng, destCoords.lat]);
+
+                    // Category colors
+                    const categoryColors = {
+                        food: '#e74c3c',
+                        culture: '#9b59b6',
+                        nature: '#27ae60',
+                        shopping: '#f39c12',
+                        entertainment: '#3498db',
+                        default: '#ff6b35'
+                    };
+
+                    // Add markers for each activity
+                    for (let i = 0; i < activities.length; i++) {
+                        const activity = activities[i];
+                        const activityLocation = activity.location || activity.name || activity;
+
+                        // Geocode activity location
+                        const coords = await geocodeLocation(`${activityLocation}, ${destination}`);
+                        if (!coords) continue;
+
+                        // Determine marker color based on category
+                        const category = (activity.category || 'default').toLowerCase();
+                        const color = categoryColors[category] || categoryColors.default;
+
+                        // Create custom marker element
+                        const el = document.createElement('div');
+                        el.className = 'itinerary-marker';
+                        el.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:${color};border-radius:50%;color:#fff;font-weight:700;font-size:0.85rem;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #fff;">${i + 1}</span>`;
+
+                        // Create popup
+                        const popupContent = `
+                            <div style="padding:10px;max-width:220px;">
+                                <h4 style="margin:0 0 8px 0;color:#1a1a2e;font-size:1rem;">${escapeHtml(activity.name || activityLocation)}</h4>
+                                ${activity.time ? `<p style="margin:0 0 5px 0;color:#666;font-size:0.85rem;"><i class="fas fa-clock" style="margin-right:5px;"></i>${activity.time}</p>` : ''}
+                                ${activity.description ? `<p style="margin:0;color:#444;font-size:0.9rem;line-height:1.4;">${escapeHtml(activity.description.substring(0, 100))}${activity.description.length > 100 ? '...' : ''}</p>` : ''}
+                            </div>
+                        `;
+
+                        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
+
+                        // Add marker to map
+                        const marker = new mapboxgl.Marker(el)
+                            .setLngLat([coords.lng, coords.lat])
+                            .setPopup(popup)
+                            .addTo(itineraryMap);
+
+                        markers.push({ coords: [coords.lng, coords.lat], marker });
+                        bounds.extend([coords.lng, coords.lat]);
+                    }
+
+                    // Fit map to show all markers
+                    if (markers.length > 0) {
+                        itineraryMap.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+
+                        // Draw route line connecting markers
+                        if (markers.length > 1) {
+                            const routeCoords = markers.map(m => m.coords);
+
+                            if (!itineraryMap.getSource('route')) {
+                                itineraryMap.addSource('route', {
+                                    'type': 'geojson',
+                                    'data': {
+                                        'type': 'Feature',
+                                        'properties': {},
+                                        'geometry': {
+                                            'type': 'LineString',
+                                            'coordinates': routeCoords
+                                        }
+                                    }
+                                });
+
+                                itineraryMap.addLayer({
+                                    'id': 'route',
+                                    'type': 'line',
+                                    'source': 'route',
+                                    'layout': {
+                                        'line-join': 'round',
+                                        'line-cap': 'round'
+                                    },
+                                    'paint': {
+                                        'line-color': '#ff6b35',
+                                        'line-width': 3,
+                                        'line-opacity': 0.7,
+                                        'line-dasharray': [2, 2]
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error('Error initializing map:', err);
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map unavailable</p></div>';
+            }
+        }
+
+        /**
+         * Geocode a location name to coordinates using Mapbox Geocoding API
+         */
+        async function geocodeLocation(locationName) {
+            if (!locationName) return null;
+
+            try {
+                const query = encodeURIComponent(locationName);
+                const response = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${mapboxgl.accessToken}&limit=1`
+                );
+
+                if (!response.ok) return null;
+
+                const data = await response.json();
+                if (data.features && data.features.length > 0) {
+                    const [lng, lat] = data.features[0].center;
+                    return { lng, lat };
+                }
+            } catch (err) {
+                console.error('Geocoding error:', err);
+            }
+            return null;
+        }
+
+        /**
+         * Initialize Mapbox map with GeoJSON feature collection (for structured JSON response)
+         */
+        function initializeMapboxWithGeoJSON(mapData) {
+            const mapContainer = document.getElementById('itinerary-map');
+            if (!mapContainer || !mapData || !mapData.features || mapData.features.length === 0) {
+                console.warn('No map data or container available');
+                return;
+            }
+
+            if (typeof mapboxgl === 'undefined') {
+                console.warn('Mapbox GL JS not loaded');
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map loading...</p></div>';
+                return;
+            }
+
+            mapboxgl.accessToken = 'pk.eyJ1Ijoibm90YWRpdHlhIiwiYSI6ImNtYmxwdWpveTAxdWcycXM3bGoyOWt6bHQifQ.DCn20muxERYO0lCL3X-u5A';
+
+            try {
+                // Remove existing map
+                if (itineraryMap) {
+                    itineraryMap.remove();
+                    itineraryMap = null;
+                }
+
+                // Calculate bounds from features
+                const bounds = new mapboxgl.LngLatBounds();
+                mapData.features.forEach(feature => {
+                    if (feature.geometry && feature.geometry.coordinates) {
+                        bounds.extend(feature.geometry.coordinates);
+                    }
+                });
+
+                // Create map
+                itineraryMap = new mapboxgl.Map({
+                    container: 'itinerary-map',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    bounds: bounds,
+                    fitBoundsOptions: { padding: 50 }
+                });
+
+                itineraryMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                const categoryColors = {
+                    food: '#e74c3c',
+                    culture: '#9b59b6',
+                    nature: '#27ae60',
+                    shopping: '#f39c12',
+                    entertainment: '#3498db',
+                    default: '#ff6b35'
+                };
+
+                itineraryMap.on('load', () => {
+                    mapData.features.forEach((feature, index) => {
+                        const coords = feature.geometry?.coordinates;
+                        if (!coords || coords.length < 2) return;
+
+                        const props = feature.properties || {};
+                        const cat = (props.category || 'default').toLowerCase();
+                        const color = categoryColors[cat] || categoryColors.default;
+
+                        const el = document.createElement('div');
+                        el.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:${color};border-radius:50%;color:#fff;font-weight:700;font-size:0.85rem;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #fff;">${props.day_number || index + 1}</span>`;
+
+                        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                            <div style="padding:10px;max-width:250px;">
+                                <h4 style="margin:0 0 8px 0;color:#1a1a2e;font-size:1rem;">${escapeHtml(props.name || 'Activity')}</h4>
+                                <p style="margin:0 0 5px 0;color:#666;font-size:0.85rem;"><i class="fas fa-clock" style="margin-right:5px;"></i>${props.arrival_time || 'Flexible'}</p>
+                                <p style="margin:0;color:#444;font-size:0.9rem;line-height:1.4;">${escapeHtml(props.activity_description || '')}</p>
+                            </div>
+                        `);
+
+                        new mapboxgl.Marker(el)
+                            .setLngLat(coords)
+                            .setPopup(popup)
+                            .addTo(itineraryMap);
+                    });
+
+                    // Draw route line
+                    if (mapData.features.length > 1) {
+                        const coordinates = mapData.features
+                            .filter(f => f.geometry?.coordinates)
+                            .map(f => f.geometry.coordinates);
+
+                        itineraryMap.addSource('route', {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'Feature',
+                                'properties': {},
+                                'geometry': {
+                                    'type': 'LineString',
+                                    'coordinates': coordinates
+                                }
+                            }
+                        });
+
+                        itineraryMap.addLayer({
+                            'id': 'route',
+                            'type': 'line',
+                            'source': 'route',
+                            'layout': { 'line-join': 'round', 'line-cap': 'round' },
+                            'paint': {
+                                'line-color': '#ff6b35',
+                                'line-width': 3,
+                                'line-opacity': 0.7,
+                                'line-dasharray': [2, 2]
+                            }
+                        });
+                    }
+                });
+
+            } catch (err) {
+                console.error('Error initializing Mapbox with GeoJSON:', err);
+                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map unavailable</p></div>';
+            }
+        }
 
 
         /**
@@ -8197,8 +8585,10 @@
                 if (btn) btn.innerHTML = '<i class="fas fa-map"></i> Show Map';
             }
 
-            if (itineraryMap) setTimeout(() => itineraryMap.invalidateSize(), 100);
+            // Trigger Mapbox resize instead of Leaflet's invalidateSize
+            if (itineraryMap) setTimeout(() => itineraryMap.resize(), 100);
         }
+
 
         /**
          * Extract airport code from input (handles "City (CODE)" format)
