@@ -6932,6 +6932,26 @@
             return String(text).replace(/[&<>"']/g, m => map[m]);
         }
 
+        /**
+         * Redirect to Google Flights booking page
+         */
+        function bookFlight(from, to, date) {
+            // Build Google Flights URL
+            const baseUrl = 'https://www.google.com/travel/flights';
+            const params = new URLSearchParams();
+
+            // If we have airport codes, use them
+            if (from && to) {
+                // Google Flights deep linking format
+                const travelUrl = `${baseUrl}?q=flights%20from%20${encodeURIComponent(from)}%20to%20${encodeURIComponent(to)}`;
+                window.open(travelUrl, '_blank');
+            } else {
+                // Fallback to flights homepage
+                window.open(baseUrl, '_blank');
+            }
+            showToast('Opening Google Flights...', 'info');
+        }
+
         function switchTab(event, tabName) {
 
             const tabs = document.querySelectorAll('.tab-content');
@@ -7519,11 +7539,12 @@
                                     <div style="font-size:0.85rem;color:#666;">${departure.arrival_airport?.name || 'Arrival'}</div>
                                 </div>
                             </div>
-                            <button class="btn-book" onclick="alert('Redirecting to booking...')" style="background:linear-gradient(135deg,#28a745,#20c997);">
+                            <button class="btn-book" onclick="bookFlight('${departure.departure_airport?.id || ''}', '${departure.arrival_airport?.id || ''}', '${depTime}')" style="background:linear-gradient(135deg,#28a745,#20c997);">
                                 <i class="fas fa-ticket-alt"></i> Book Now
                             </button>
                         </div>
                     `;
+
             }).join('')}
             `;
         }
@@ -7840,11 +7861,14 @@
                 </div>
             `;
 
-            // Initialize Mapbox with GeoJSON data
+            // Initialize Mapbox with GeoJSON data - use longer timeout to ensure DOM is ready
+            console.log('Scheduling map initialization with map_data:', map_data);
             setTimeout(() => {
+                console.log('Calling initializeMapboxWithGeoJSON now');
                 initializeMapboxWithGeoJSON(map_data);
-            }, 100);
+            }, 300);
         }
+
 
         /**
          * Initialize Mapbox map with GeoJSON feature collection
