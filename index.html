@@ -7842,11 +7842,12 @@
                     </div>
 
 
-                    <!-- Map Container (Right) -->
-                    <div class="map-container-wrapper" style="flex:1;min-width:350px;min-height:500px;height:calc(100vh - 120px);max-height:700px;">
+                    <!-- Map Container (Right - Sticky) -->
+                    <div class="map-container-wrapper" style="flex:1;min-width:350px;min-height:500px;height:calc(100vh - 120px);max-height:700px;position:sticky;top:100px;align-self:flex-start;">
                         <div id="itinerary-map" style="width:100%;height:100%;min-height:500px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);overflow:hidden;"></div>
                     </div>
                 </div>
+
 
                 
                 <div class="itinerary-actions" style="margin-top:20px;display:flex;gap:15px;justify-content:center;">
@@ -7875,10 +7876,10 @@
         }
 
         /**
-         * Fallback: Initialize map centered on destination when activities have no coordinates
+         * Initialize map centered on destination with day-colored markers and routes
          */
-        async function initializeMapWithDestination(container, destination) {
-            console.log('🗺️ initializeMapWithDestination called for:', destination);
+        async function initializeMapWithDestination(container, destination, mapData = null) {
+            console.log('🗺️ initializeMapWithDestination called for:', destination, 'with mapData:', !!mapData);
 
             // Force container to have height - critical for Mapbox
             container.style.minHeight = '400px';
@@ -7887,6 +7888,17 @@
 
             // Show loading state
             container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:400px;background:#e8f4f8;border-radius:16px;"><p style="color:#0369a1;font-size:1.1rem;"><i class="fas fa-spinner fa-spin" style="margin-right:10px;"></i>Loading map for ' + destination + '...</p></div>';
+
+            // Day colors for routes and markers
+            const dayColors = [
+                '#3498db', // Day 1 - Blue
+                '#27ae60', // Day 2 - Green
+                '#9b59b6', // Day 3 - Purple
+                '#e67e22', // Day 4 - Orange
+                '#e91e63', // Day 5 - Pink
+                '#00bcd4', // Day 6 - Cyan
+                '#ff5722'  // Day 7 - Deep Orange
+            ];
 
             try {
                 // Ensure token is set
@@ -7912,8 +7924,8 @@
                     throw new Error('No geocoding results for: ' + destination);
                 }
 
-                const [lng, lat] = data.features[0].center;
-                console.log(`✅ Geocoded "${destination}" to [${lng}, ${lat}]`);
+                const [centerLng, centerLat] = data.features[0].center;
+                console.log(`✅ Geocoded "${destination}" to [${centerLng}, ${centerLat}]`);
 
                 // Clear container
                 container.innerHTML = '';
@@ -7923,30 +7935,130 @@
                     container.id = 'itinerary-map';
                 }
 
-                console.log('🗺️ Creating Mapbox map with center:', [lng, lat]);
+                console.log('🗺️ Creating Mapbox map with center:', [centerLng, centerLat]);
 
-                // Create map using container ID string (more reliable)
+                // Create map using container ID string
                 const map = new mapboxgl.Map({
                     container: container.id,
                     style: 'mapbox://styles/mapbox/streets-v12',
-                    center: [lng, lat],
+                    center: [centerLng, centerLat],
                     zoom: 12
                 });
 
                 map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-                // Add a marker for the destination
+                // When map loads, add markers and routes
                 map.on('load', () => {
                     console.log('✅ Map loaded successfully!');
+
+                    // Add destination marker
                     new mapboxgl.Marker({ color: '#ff6b35' })
-                        .setLngLat([lng, lat])
+                        .setLngLat([centerLng, centerLat])
                         .setPopup(new mapboxgl.Popup().setHTML(`<strong>${destination}</strong><br>Your destination`))
                         .addTo(map);
+
+                    // If we have activity data, add markers and routes
+                    if (mapData && mapData.features && mapData.features.length > 0) {
+                        const bounds = new mapboxgl.LngLatBounds();
+                        bounds.extend([centerLng, centerLat]);
+
+                        // Group features by day
+                        const featuresByDay = {};
+
+                        mapData.features.forEach((feature, index) => {
+                            const coords = feature.geometry?.coordinates;
+                            if (!coords || !Array.isArray(coords) || coords.length !== 2) return;
+
+                            const [lng, lat] = coords;
+                            if (typeof lng !== 'number' || typeof lat !== 'number') return;
+                            if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return;
+                            if (lng === 0 && lat === 0) return;
+
+                            const props = feature.properties || {};
+                            const dayNum = props.day_number || 1;
+
+                            if (!featuresByDay[dayNum]) {
+                                featuresByDay[dayNum] = [];
+                            }
+                            featuresByDay[dayNum].push({ coords: [lng, lat], props, index });
+
+                            // Add marker with day color
+                            const dayColor = dayColors[(dayNum - 1) % dayColors.length];
+                            const activityIndex = featuresByDay[dayNum].length;
+
+                            const el = document.createElement('div');
+                            el.innerHTML = `<div style="background:${dayColor};color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer;">${dayNum}.${activityIndex}</div>`;
+
+                            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                                <div style="padding:8px;max-width:200px;">
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                        <span style="background:${dayColor};color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Day ${dayNum}</span>
+                                    </div>
+                                    <h4 style="margin:0 0 5px 0;color:#1a1a2e;font-size:0.95rem;">${escapeHtml(props.name || 'Activity')}</h4>
+                                    <p style="margin:0;color:#666;font-size:0.8rem;">${props.arrival_time || ''}</p>
+                                    <p style="margin:4px 0 0;color:#444;font-size:0.85rem;">${escapeHtml(props.activity_description || '').substring(0, 100)}...</p>
+                                </div>
+                            `);
+
+                            new mapboxgl.Marker(el)
+                                .setLngLat([lng, lat])
+                                .setPopup(popup)
+                                .addTo(map);
+
+                            bounds.extend([lng, lat]);
+                        });
+
+                        // Draw routes for each day with different colors
+                        Object.keys(featuresByDay).forEach(dayNum => {
+                            const dayFeatures = featuresByDay[dayNum];
+                            if (dayFeatures.length < 2) return;
+
+                            const dayColor = dayColors[(dayNum - 1) % dayColors.length];
+                            const coordinates = dayFeatures.map(f => f.coords);
+
+                            map.addSource(`route-day-${dayNum}`, {
+                                'type': 'geojson',
+                                'data': {
+                                    'type': 'Feature',
+                                    'properties': { 'day': dayNum },
+                                    'geometry': {
+                                        'type': 'LineString',
+                                        'coordinates': coordinates
+                                    }
+                                }
+                            });
+
+                            map.addLayer({
+                                'id': `route-day-${dayNum}`,
+                                'type': 'line',
+                                'source': `route-day-${dayNum}`,
+                                'layout': {
+                                    'line-join': 'round',
+                                    'line-cap': 'round'
+                                },
+                                'paint': {
+                                    'line-color': dayColor,
+                                    'line-width': 4,
+                                    'line-opacity': 0.8
+                                }
+                            });
+
+                            console.log(`📍 Drew route for Day ${dayNum} with ${coordinates.length} points in color ${dayColor}`);
+                        });
+
+                        // Fit bounds if we added any points
+                        if (!bounds.isEmpty()) {
+                            map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
+                        }
+                    }
                 });
 
                 map.on('error', (e) => {
                     console.error('❌ Mapbox error:', e);
                 });
+
+                // Store reference
+                window.itineraryMapInstance = map;
 
             } catch (err) {
                 console.error('❌ Map initialization failed:', err);
@@ -8000,10 +8112,11 @@
                 });
 
             // ALWAYS use destination geocoding for now - it's most reliable
-            // This guarantees the map will show the destination
+            // This guarantees the map will show the destination, then add markers/routes
             console.log('hasValidFeatures:', hasValidFeatures, ' - using destination geocoding for reliability');
-            initializeMapWithDestination(mapContainer, destination);
+            initializeMapWithDestination(mapContainer, destination, mapData);
             return;
+
 
 
             console.log('Map data features count:', mapData.features.length);
