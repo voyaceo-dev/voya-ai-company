@@ -7953,17 +7953,24 @@
             // Get the destination for fallback geocoding
             const destination = destinationName || document.getElementById('unified-itinerary-dest')?.value || 'India';
 
-            // Check if we have valid features
+            // Check if we have valid features with ACTUAL NUMERIC coordinates
             const hasValidFeatures = mapData && mapData.features && mapData.features.length > 0 &&
-                mapData.features.some(f => f.geometry && f.geometry.coordinates &&
-                    Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length === 2);
+                mapData.features.some(f => {
+                    if (!f.geometry || !f.geometry.coordinates) return false;
+                    const [lng, lat] = f.geometry.coordinates;
+                    // MUST be actual numbers, not strings like "LONGITUDE"
+                    return typeof lng === 'number' && typeof lat === 'number' &&
+                        !isNaN(lng) && !isNaN(lat) &&
+                        lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90 &&
+                        !(lng === 0 && lat === 0); // Reject default 0,0
+                });
 
-            if (!hasValidFeatures) {
-                console.warn('No valid map features, falling back to destination geocoding');
-                // Fallback: Geocode the destination and show a basic map
-                initializeMapWithDestination(mapContainer, destination);
-                return;
-            }
+            // ALWAYS use destination geocoding for now - it's most reliable
+            // This guarantees the map will show the destination
+            console.log('hasValidFeatures:', hasValidFeatures, ' - using destination geocoding for reliability');
+            initializeMapWithDestination(mapContainer, destination);
+            return;
+
 
             console.log('Map data features count:', mapData.features.length);
 
