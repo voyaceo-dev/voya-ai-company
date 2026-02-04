@@ -6752,6 +6752,7 @@
 
         // ==================== DUAL BACKEND LOAD BALANCING ====================
         // Primary: Supabase Edge Functions | Secondary: AWS Lambda
+        // Flight search now uses Groq+Tavily as primary within these backends
         const BACKENDS = {
             primary: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
             secondary: 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws'
@@ -7298,6 +7299,7 @@
 
         /**
          * Handle unified flight search
+         * Uses FastAPI (Groq + Tavily) as primary, with Supabase/AWS fallback
          */
         async function handleUnifiedFlightSearch() {
             const from = document.getElementById('unified-flight-from').value.trim();
@@ -7328,6 +7330,7 @@
                 const fromCode = extractAirportCode(from);
                 const toCode = extractAirportCode(to);
 
+                // Call backend - Groq+Tavily is now PRIMARY within backend, SerpAPI is fallback
                 const response = await fetchWithFailover('/api/flights/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -7350,7 +7353,9 @@
                 }
 
                 const data = await response.json();
-                displayUnifiedFlightResults(data);
+                // Check if Groq+Tavily was used (source field from backend)
+                const usedGroq = data.source === 'groq-tavily';
+                displayUnifiedFlightResults(data, usedGroq);
 
             } catch (error) {
                 hideUnifiedSkeleton();
@@ -7362,6 +7367,7 @@
                 `;
             }
         }
+
 
         /**
          * Handle unified hotel search
@@ -7484,8 +7490,10 @@
 
         /**
          * Display flight results in unified overlay
+         * @param {Object} data - Flight search response
+         * @param {boolean} usedFastAPI - Whether FastAPI (Groq) was used
          */
-        function displayUnifiedFlightResults(data) {
+        function displayUnifiedFlightResults(data, usedFastAPI = false) {
             const container = document.getElementById('unified-results-content');
             const flights = data.flights || data.best_flights || [];
 
@@ -7500,25 +7508,38 @@
                 return;
             }
 
+            // Source badge
+            const sourceBadge = usedFastAPI
+                ? '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ Powered by Groq</span>'
+                : '';
+
             container.innerHTML = `
-                <div class="results-header" style="margin-bottom:20px;padding:15px;background:#fff;border-radius:12px;">
-                    <h3 style="margin:0;color:#1a1a2e;">${flights.length} Flights Found</h3>
+                <div class="results-header" style="margin-bottom:20px;padding:15px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:space-between;">
+                    <h3 style="margin:0;color:#1a1a2e;">${flights.length} Flights Found ${sourceBadge}</h3>
                 </div>
                 ${flights.map((flight, index) => {
+                // Handle both FastAPI format and SerpAPI format
                 const departure = flight.flights?.[0] || flight;
+                const airline = departure.airline || flight.airline || 'Airline';
+                const flightNum = flight.flight_number || departure.flight_number || '';
                 const price = flight.price || departure.price || 'N/A';
-                const airline = departure.airline || 'Airline';
-                const depTime = departure.departure_airport?.time || departure.departure_time || '--:--';
-                const arrTime = departure.arrival_airport?.time || departure.arrival_time || '--:--';
-                const duration = flight.total_duration || departure.duration || '--';
+                const depTime = departure.departure_airport?.time || departure.departure_time || flight.departure_time || '--:--';
+                const arrTime = departure.arrival_airport?.time || departure.arrival_time || flight.arrival_time || '--:--';
+                const duration = flight.total_duration || departure.duration || flight.duration || '--';
                 const stops = flight.layovers?.length || 0;
+                const bookingLink = flight.booking_link || '#';
 
                 return `
                         <div class="flight-card fade-in" style="animation-delay:${index * 0.1}s;background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                             <div class="flight-header">
                                 <div style="display:flex;align-items:center;gap:12px;">
-                                    <img src="${departure.airline_logo || 'https://via.placeholder.com/40'}" alt="${airline}" style="width:40px;height:40px;border-radius:8px;">
-                                    <span style="font-weight:600;color:#333;">${escapeHtml(airline)}</span>
+                                    <div style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#003580,#00a8ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">
+                                        ${airline.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <span style="font-weight:600;color:#333;">${escapeHtml(airline)}</span>
+                                        ${flightNum ? `<span style="font-size:0.8rem;color:#888;margin-left:8px;">${flightNum}</span>` : ''}
+                                    </div>
                                 </div>
                                 <div class="price-tag">₹${typeof price === 'number' ? price.toLocaleString() : price}</div>
                             </div>
@@ -7528,7 +7549,7 @@
                                     <div style="font-size:0.85rem;color:#666;">${departure.departure_airport?.name || 'Departure'}</div>
                                 </div>
                                 <div style="flex:1;text-align:center;padding:0 20px;">
-                                    <div style="font-size:0.85rem;color:#666;">${duration} min</div>
+                                    <div style="font-size:0.85rem;color:#666;">${duration}${typeof duration === 'number' ? ' min' : ''}</div>
                                     <div style="height:2px;background:linear-gradient(90deg,#003580,#00a8ff);margin:8px 0;position:relative;">
                                         <i class="fas fa-plane" style="position:absolute;right:-5px;top:-8px;color:#003580;"></i>
                                     </div>
@@ -7539,9 +7560,9 @@
                                     <div style="font-size:0.85rem;color:#666;">${departure.arrival_airport?.name || 'Arrival'}</div>
                                 </div>
                             </div>
-                            <button class="btn-book" onclick="bookFlight('${departure.departure_airport?.id || ''}', '${departure.arrival_airport?.id || ''}', '${depTime}')" style="background:linear-gradient(135deg,#28a745,#20c997);">
+                            <a href="${bookingLink}" target="_blank" class="btn-book" style="display:block;text-align:center;background:linear-gradient(135deg,#28a745,#20c997);text-decoration:none;color:white;padding:12px;border-radius:8px;">
                                 <i class="fas fa-ticket-alt"></i> Book Now
-                            </button>
+                            </a>
                         </div>
                     `;
 
