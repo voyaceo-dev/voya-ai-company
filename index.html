@@ -7513,6 +7513,7 @@
         function displayUnifiedFlightResults(data, usedFastAPI = false) {
             const container = document.getElementById('unified-results-content');
             const flights = data.flights || data.best_flights || [];
+            const source = data.source || '';
 
             if (!flights.length) {
                 container.innerHTML = `
@@ -7525,14 +7526,21 @@
                 return;
             }
 
-            // Source badge
-            const sourceBadge = usedFastAPI
-                ? '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ Powered by Groq</span>'
-                : '';
+            // Source badge - show which AI model or data source
+            let sourceBadge = '';
+            if (source.includes('groq')) {
+                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ Powered by Groq</span>';
+            } else if (source.includes('openrouter')) {
+                sourceBadge = '<span style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">🔄 Powered by OpenRouter</span>';
+            } else if (source.includes('ollama')) {
+                sourceBadge = '<span style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">🏠 Powered by Ollama</span>';
+            } else if (usedFastAPI) {
+                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ AI-Powered</span>';
+            }
 
             container.innerHTML = `
-                <div class="results-header" style="margin-bottom:20px;padding:15px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:space-between;">
-                    <h3 style="margin:0;color:#1a1a2e;">${flights.length} Flights Found ${sourceBadge}</h3>
+                <div class="results-header" style="margin-bottom:20px;padding:18px 20px;background:linear-gradient(135deg,#fff,#f8fafc);border-radius:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+                    <h3 style="margin:0;color:#1a1a2e;font-size:1.2rem;">${flights.length} Flights Found ${sourceBadge}</h3>
                 </div>
                 ${flights.map((flight, index) => {
                 // Handle both FastAPI format and SerpAPI format
@@ -7544,42 +7552,65 @@
                 const arrTime = departure.arrival_airport?.time || departure.arrival_time || flight.arrival_time || '--:--';
                 const duration = flight.total_duration || departure.duration || flight.duration || '--';
                 const stops = flight.layovers?.length || 0;
-                const bookingLink = flight.booking_link || '#';
+                const bookingLink = flight.booking_link || '';
+                const hasBookingLink = bookingLink && bookingLink !== '#' && bookingLink !== 'N/A';
+
+                // Generate airline color based on name
+                const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
 
                 return `
-                        <div class="flight-card fade-in" style="animation-delay:${index * 0.1}s;background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                            <div class="flight-header">
+                        <div class="flight-card fade-in" style="animation-delay:${index * 0.08}s;background:#fff;border-radius:16px;padding:0;margin-bottom:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);overflow:hidden;border:1px solid rgba(0,0,0,0.04);">
+                            <!-- Airline Header -->
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:linear-gradient(135deg,hsl(${hue},60%,50%),hsl(${hue + 30},60%,45%));color:white;">
                                 <div style="display:flex;align-items:center;gap:12px;">
-                                    <div style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#003580,#00a8ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">
+                                    <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem;">
                                         ${airline.substring(0, 2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <span style="font-weight:600;color:#333;">${escapeHtml(airline)}</span>
-                                        ${flightNum ? `<span style="font-size:0.8rem;color:#888;margin-left:8px;">${flightNum}</span>` : ''}
+                                        <div style="font-weight:600;font-size:1.1rem;">${escapeHtml(airline)}</div>
+                                        ${flightNum ? `<span style="font-size:0.8rem;opacity:0.85;">${flightNum}</span>` : ''}
                                     </div>
                                 </div>
-                                <div class="price-tag">₹${typeof price === 'number' ? price.toLocaleString() : price}</div>
-                            </div>
-                            <div class="flight-details" style="display:flex;justify-content:space-between;align-items:center;margin:15px 0;">
-                                <div style="text-align:center;">
-                                    <div style="font-size:1.5rem;font-weight:700;color:#1a1a2e;">${depTime}</div>
-                                    <div style="font-size:0.85rem;color:#666;">${departure.departure_airport?.name || 'Departure'}</div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:1.6rem;font-weight:700;">₹${typeof price === 'number' ? price.toLocaleString() : price}</div>
+                                    <div style="font-size:0.75rem;opacity:0.85;">per person</div>
                                 </div>
-                                <div style="flex:1;text-align:center;padding:0 20px;">
-                                    <div style="font-size:0.85rem;color:#666;">${duration}${typeof duration === 'number' ? ' min' : ''}</div>
-                                    <div style="height:2px;background:linear-gradient(90deg,#003580,#00a8ff);margin:8px 0;position:relative;">
-                                        <i class="fas fa-plane" style="position:absolute;right:-5px;top:-8px;color:#003580;"></i>
+                            </div>
+                            
+                            <!-- Flight Details -->
+                            <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;">
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:1.8rem;font-weight:700;color:#1a1a2e;">${depTime}</div>
+                                    <div style="font-size:0.85rem;color:#666;max-width:120px;margin:0 auto;">${departure.departure_airport?.name || 'Departure'}</div>
+                                </div>
+                                <div style="flex:1.5;text-align:center;padding:0 15px;">
+                                    <div style="font-size:0.85rem;color:#888;font-weight:500;">${duration}${typeof duration === 'number' ? ' min' : ''}</div>
+                                    <div style="height:2px;background:linear-gradient(90deg,hsl(${hue},60%,60%),hsl(${hue + 30},60%,55%));margin:10px 0;position:relative;border-radius:2px;">
+                                        <i class="fas fa-plane" style="position:absolute;right:-6px;top:-9px;color:hsl(${hue},60%,50%);font-size:1.1rem;"></i>
                                     </div>
-                                    <div style="font-size:0.85rem;color:#888;">${stops === 0 ? 'Non-stop' : stops + ' stop(s)'}</div>
+                                    <div style="font-size:0.85rem;color:${stops === 0 ? '#28a745' : '#f39c12'};font-weight:500;">
+                                        <i class="fas fa-${stops === 0 ? 'check-circle' : 'clock'}" style="margin-right:4px;"></i>
+                                        ${stops === 0 ? 'Non-stop' : stops + ' stop(s)'}
+                                    </div>
                                 </div>
-                                <div style="text-align:center;">
-                                    <div style="font-size:1.5rem;font-weight:700;color:#1a1a2e;">${arrTime}</div>
-                                    <div style="font-size:0.85rem;color:#666;">${departure.arrival_airport?.name || 'Arrival'}</div>
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:1.8rem;font-weight:700;color:#1a1a2e;">${arrTime}</div>
+                                    <div style="font-size:0.85rem;color:#666;max-width:120px;margin:0 auto;">${departure.arrival_airport?.name || 'Arrival'}</div>
                                 </div>
                             </div>
-                            <a href="${bookingLink}" target="_blank" class="btn-book" style="display:block;text-align:center;background:linear-gradient(135deg,#28a745,#20c997);text-decoration:none;color:white;padding:12px;border-radius:8px;">
-                                <i class="fas fa-ticket-alt"></i> Book Now
-                            </a>
+                            
+                            <!-- Book Now Button -->
+                            <div style="padding:0 20px 20px;">
+                                ${hasBookingLink ? `
+                                    <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;background:linear-gradient(135deg,#f39c12,#e67e22);text-decoration:none;color:white;padding:14px;border-radius:10px;font-weight:600;font-size:1rem;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(243,156,18,0.3);">
+                                        <i class="fas fa-external-link-alt"></i> Book Now
+                                    </a>
+                                ` : `
+                                    <button onclick="searchFlightBooking('${escapeHtml(airline)}', '${flightNum}', '${depTime}')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6c757d,#495057);color:white;padding:14px;border-radius:10px;border:none;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.3s ease;">
+                                        <i class="fas fa-search"></i> Find Booking
+                                    </button>
+                                `}
+                            </div>
                         </div>
                     `;
 
@@ -9977,6 +10008,21 @@
         function hideToast(toastId) {
             const toast = document.getElementById(toastId);
             if (toast) toast.remove();
+        }
+
+        /**
+         * Search for flight booking when no direct link is available
+         */
+        function searchFlightBooking(airline, flightNumber, departureTime) {
+            const searchQuery = `${decodeURIComponent(airline)} ${flightNumber || ''} flight booking ${departureTime || ''}`.trim();
+            const bookingUrl = `https://www.google.com/travel/flights?q=${encodeURIComponent(searchQuery)}&hl=en&gl=in&curr=INR`;
+
+            const newWindow = window.open(bookingUrl, '_blank', 'noopener,noreferrer');
+
+            if (!newWindow || newWindow.closed) {
+                showToast('Opening flight search...', 'info');
+                window.location.href = bookingUrl;
+            }
         }
 
         function bookHotel(hotelName, location, directLink) {
