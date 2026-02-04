@@ -6786,6 +6786,23 @@
             const primaryUrl = getNextBackend();
             const fallbackUrl = primaryUrl === BACKENDS.primary ? BACKENDS.secondary : BACKENDS.primary;
 
+            // 🔐 Auto-inject Authorization token if available
+            const token = localStorage.getItem('sb-swuycqihjhufpswhbewf-auth-token');
+            if (token) {
+                try {
+                    const parsed = JSON.parse(token);
+                    const accessToken = parsed?.access_token;
+                    if (accessToken) {
+                        options.headers = {
+                            ...options.headers,
+                            'Authorization': `Bearer ${accessToken}`
+                        };
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse auth token:', e.message);
+                }
+            }
+
             try {
                 const response = await fetch(`${primaryUrl}${endpoint}`, options);
                 if (response.ok || response.status < 500) {
@@ -8788,121 +8805,10 @@
         }
 
         /**
-         * Initialize Mapbox map with GeoJSON feature collection (for structured JSON response)
+         * NOTE: initializeMapboxWithGeoJSON is defined above (line ~8081)
+         * It properly geocodes all activity locations using Mapbox API
+         * A duplicate version was removed that used raw AI coordinates without geocoding
          */
-        function initializeMapboxWithGeoJSON(mapData) {
-            const mapContainer = document.getElementById('itinerary-map');
-            if (!mapContainer || !mapData || !mapData.features || mapData.features.length === 0) {
-                console.warn('No map data or container available');
-                return;
-            }
-
-            if (typeof mapboxgl === 'undefined') {
-                console.warn('Mapbox GL JS not loaded');
-                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map loading...</p></div>';
-                return;
-            }
-
-            mapboxgl.accessToken = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
-
-            try {
-                // Remove existing map
-                if (itineraryMap) {
-                    itineraryMap.remove();
-                    itineraryMap = null;
-                }
-
-                // Calculate bounds from features
-                const bounds = new mapboxgl.LngLatBounds();
-                mapData.features.forEach(feature => {
-                    if (feature.geometry && feature.geometry.coordinates) {
-                        bounds.extend(feature.geometry.coordinates);
-                    }
-                });
-
-                // Create map
-                itineraryMap = new mapboxgl.Map({
-                    container: 'itinerary-map',
-                    style: 'mapbox://styles/mapbox/streets-v12',
-                    bounds: bounds,
-                    fitBoundsOptions: { padding: 50 }
-                });
-
-                itineraryMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-                const categoryColors = {
-                    food: '#e74c3c',
-                    culture: '#9b59b6',
-                    nature: '#27ae60',
-                    shopping: '#f39c12',
-                    entertainment: '#3498db',
-                    default: '#ff6b35'
-                };
-
-                itineraryMap.on('load', () => {
-                    mapData.features.forEach((feature, index) => {
-                        const coords = feature.geometry?.coordinates;
-                        if (!coords || coords.length < 2) return;
-
-                        const props = feature.properties || {};
-                        const cat = (props.category || 'default').toLowerCase();
-                        const color = categoryColors[cat] || categoryColors.default;
-
-                        const el = document.createElement('div');
-                        el.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:${color};border-radius:50%;color:#fff;font-weight:700;font-size:0.85rem;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #fff;">${props.day_number || index + 1}</span>`;
-
-                        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                            <div style="padding:10px;max-width:250px;">
-                                <h4 style="margin:0 0 8px 0;color:#1a1a2e;font-size:1rem;">${escapeHtml(props.name || 'Activity')}</h4>
-                                <p style="margin:0 0 5px 0;color:#666;font-size:0.85rem;"><i class="fas fa-clock" style="margin-right:5px;"></i>${props.arrival_time || 'Flexible'}</p>
-                                <p style="margin:0;color:#444;font-size:0.9rem;line-height:1.4;">${escapeHtml(props.activity_description || '')}</p>
-                            </div>
-                        `);
-
-                        new mapboxgl.Marker(el)
-                            .setLngLat(coords)
-                            .setPopup(popup)
-                            .addTo(itineraryMap);
-                    });
-
-                    // Draw route line
-                    if (mapData.features.length > 1) {
-                        const coordinates = mapData.features
-                            .filter(f => f.geometry?.coordinates)
-                            .map(f => f.geometry.coordinates);
-
-                        itineraryMap.addSource('route', {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'Feature',
-                                'properties': {},
-                                'geometry': {
-                                    'type': 'LineString',
-                                    'coordinates': coordinates
-                                }
-                            }
-                        });
-
-                        itineraryMap.addLayer({
-                            'id': 'route',
-                            'type': 'line',
-                            'source': 'route',
-                            'layout': { 'line-join': 'round', 'line-cap': 'round' },
-                            'paint': {
-                                'line-color': '#ff6b35',
-                                'line-width': 3,
-                                'line-opacity': 0.7,
-                                'line-dasharray': [2, 2]
-                            }
-                        });
-                    }
-                });
-
-            } catch (err) {
-                console.error('Error initializing Mapbox with GeoJSON:', err);
-                mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f5f5f5;border-radius:16px;"><p style="color:#666;">Map unavailable</p></div>';
-            }
-        }
 
 
         /**
