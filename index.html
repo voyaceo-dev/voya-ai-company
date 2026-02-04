@@ -7255,15 +7255,33 @@
 
         /**
          * Reset the placeholder based on current tab
+         * IMPORTANT: Also destroys any map instances to prevent overlap
          */
         function resetUnifiedPlaceholder(tab) {
             const placeholder = document.getElementById('unified-placeholder');
             const skeleton = document.getElementById('unified-skeleton');
             const content = document.getElementById('unified-results-content');
 
-            placeholder.style.display = 'flex';
-            skeleton.style.display = 'none';
+            // 🗺️ CRITICAL: Destroy any existing map to prevent overlap
+            if (typeof itineraryMap !== 'undefined' && itineraryMap) {
+                try {
+                    itineraryMap.remove();
+                    itineraryMap = null;
+                    console.log('🗺️ Map destroyed on tab switch');
+                } catch (e) {
+                    console.warn('Failed to destroy map:', e);
+                }
+            }
+
+            // Force clear ALL content - remove all child nodes
+            while (content.firstChild) {
+                content.removeChild(content.firstChild);
+            }
             content.innerHTML = '';
+
+            // Show placeholder, hide skeleton
+            if (placeholder) placeholder.style.display = 'flex';
+            if (skeleton) skeleton.style.display = 'none';
 
             const icons = { flights: 'fa-plane', hotels: 'fa-hotel', itinerary: 'fa-route' };
             const titles = { flights: 'Search Flights', hotels: 'Find Hotels', itinerary: 'Plan Your Trip' };
@@ -7273,11 +7291,13 @@
                 itinerary: 'Let AI create a personalized itinerary for your adventure'
             };
 
-            placeholder.innerHTML = `
-                <i class="fas ${icons[tab]}"></i>
-                <h3>${titles[tab]}</h3>
-                <p>${descs[tab]}</p>
-            `;
+            if (placeholder) {
+                placeholder.innerHTML = `
+                    <i class="fas ${icons[tab]}"></i>
+                    <h3>${titles[tab]}</h3>
+                    <p>${descs[tab]}</p>
+                `;
+            }
         }
 
         /**
