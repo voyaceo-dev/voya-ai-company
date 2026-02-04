@@ -6787,20 +6787,13 @@
             const fallbackUrl = primaryUrl === BACKENDS.primary ? BACKENDS.secondary : BACKENDS.primary;
 
             // 🔐 Auto-inject Authorization token if available
-            const token = localStorage.getItem('sb-swuycqihjhufpswhbewf-auth-token');
+            // Use 'voya_token' which is set during login
+            const token = localStorage.getItem('voya_token');
             if (token) {
-                try {
-                    const parsed = JSON.parse(token);
-                    const accessToken = parsed?.access_token;
-                    if (accessToken) {
-                        options.headers = {
-                            ...options.headers,
-                            'Authorization': `Bearer ${accessToken}`
-                        };
-                    }
-                } catch (e) {
-                    console.warn('Failed to parse auth token:', e.message);
-                }
+                options.headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
             }
 
             try {
@@ -7512,6 +7505,9 @@
          */
         function displayUnifiedFlightResults(data, usedFastAPI = false) {
             const container = document.getElementById('unified-results-content');
+            const placeholder = document.getElementById('unified-placeholder');
+            if (placeholder) placeholder.style.display = 'none'; // Hide placeholder when showing results
+
             const flights = data.flights || data.best_flights || [];
             const source = data.source || '';
 
@@ -7623,6 +7619,9 @@
          */
         function displayUnifiedHotelResults(data) {
             const container = document.getElementById('unified-results-content');
+            const placeholder = document.getElementById('unified-placeholder');
+            if (placeholder) placeholder.style.display = 'none'; // Hide placeholder when showing results
+
             const hotels = data.properties || data.hotels || [];
 
             if (!hotels.length) {
@@ -7680,6 +7679,8 @@
          */
         function displayUnifiedItineraryResults(data) {
             const container = document.getElementById('unified-results-content');
+            const placeholder = document.getElementById('unified-placeholder');
+            if (placeholder) placeholder.style.display = 'none'; // Hide placeholder when showing results
             if (!container) return;
 
             let rawItinerary = data.itinerary || data.html || data;
