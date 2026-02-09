@@ -8060,9 +8060,11 @@
             `;
 
             // Initialize Mapbox with GeoJSON data - use longer timeout to ensure DOM is ready
-            // Get the destination for fallback
-            const destInput = document.getElementById('unified-itinerary-dest');
-            const destName = destInput?.value || 'India';
+            // Get destination from global state (set during itinerary generation), or fallback to input fields
+            const destName = window.currentDestination ||
+                document.getElementById('ai-dest')?.value ||
+                document.getElementById('unified-itinerary-dest')?.value ||
+                '';
 
             console.log('Scheduling map initialization with map_data:', map_data, 'destination:', destName);
             setTimeout(() => {
@@ -8258,7 +8260,11 @@
             }
 
             // Get the destination for fallback geocoding
-            const destination = destinationName || document.getElementById('unified-itinerary-dest')?.value || 'India';
+            const destination = destinationName ||
+                window.currentDestination ||
+                document.getElementById('ai-dest')?.value ||
+                document.getElementById('unified-itinerary-dest')?.value ||
+                'Paris';
 
             // Check if we have valid features with ACTUAL NUMERIC coordinates
             const hasValidFeatures = mapData && mapData.features && mapData.features.length > 0 &&
