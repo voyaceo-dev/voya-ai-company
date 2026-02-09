@@ -6750,44 +6750,122 @@
         // All API calls go through the secure backend
         // ====================================================================================
 
-        // ==================== DUAL BACKEND LOAD BALANCING ====================
-        // Primary: Supabase Edge Functions | Secondary: AWS Lambda
-        // Flight search now uses Groq+Tavily as primary within these backends
+        // ==================== MULTI-BACKEND LOAD BALANCING ====================
+        // Round-robin between Supabase and Convex, with AWS Lambda as fallback
         const BACKENDS = {
-            primary: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
-            secondary: 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws'
+            supabase: 'https://wd4k6efik7bprvccxphw7qtyjy0uasqc.lambda-url.eu-north-1.on.aws',
+            convex: 'https://kindred-meerkat-584.eu-west-1.convex.site',
+            awsFallback: 'https://wd4k6efik7bprvccxphw7qtyjy0uasqc.lambda-url.eu-north-1.on.aws', // AWS Lambda fallback
+            // Legacy aliases
+            primary: 'https://wd4k6efik7bprvccxphw7qtyjy0uasqc.lambda-url.eu-north-1.on.aws',
+            secondary: 'https://kindred-meerkat-584.eu-west-1.convex.site'
         };
 
-        // Track which backend to use next (persisted in sessionStorage for user session)
-        let backendToggle = parseInt(sessionStorage.getItem('backendToggle') || '0');
+        // Backend order for round-robin (alternates between Supabase and Convex)
+        const BACKEND_ORDER = ['supabase', 'convex'];
+
+        // Track which backend to use next (persisted in localStorage)
+        let backendToggle = parseInt(localStorage.getItem('voya_backend_toggle') || '0');
+
+        // Health cache to skip unhealthy backends
+        const backendHealth = {
+            supabase: { healthy: true, lastCheck: 0 },
+            convex: { healthy: true, lastCheck: 0 }
+        };
+        const HEALTH_CHECK_INTERVAL = 5000; // 5 seconds
 
         /**
          * Get the next API base URL using round-robin
-         * Alternates between Supabase (primary) and AWS (secondary) for each request
-         * @returns {string} - The API base URL to use
+         * Alternates between Supabase and Convex for each request
+         * @returns {object} - { name: string, url: string }
          */
         function getNextBackend() {
-            const backends = [BACKENDS.primary, BACKENDS.secondary];
-            const currentBackend = backends[backendToggle % 2];
+            const name = BACKEND_ORDER[backendToggle % BACKEND_ORDER.length];
+            const url = BACKENDS[name];
             backendToggle++;
-            sessionStorage.setItem('backendToggle', backendToggle.toString());
-            console.log(`🔄 Using backend: ${backendToggle % 2 === 1 ? 'Supabase (Primary)' : 'AWS Lambda (Secondary)'}`);
-            return currentBackend;
+            localStorage.setItem('voya_backend_toggle', backendToggle.toString());
+            console.log(`🔄 Backend #${backendToggle}: ${name.toUpperCase()} → ${url.split('//')[1].split('.')[0]}...`);
+            return { name, url };
+        }
+
+        /**
+         * Check if a backend should be skipped (was recently unhealthy)
+         */
+        function isBackendHealthy(name) {
+            const cache = backendHealth[name];
+            if (!cache) return true;
+            if (Date.now() - cache.lastCheck < HEALTH_CHECK_INTERVAL && !cache.healthy) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * Update health status for a backend
+         */
+        function updateBackendHealth(name, healthy) {
+            backendHealth[name] = { healthy, lastCheck: Date.now() };
+        }
+
+        /**
+         * Show backend indicator in UI
+         */
+        function showBackendIndicator(backendName, status = 'active') {
+            // Remove existing indicators
+            document.querySelectorAll('.backend-indicator').forEach(el => el.remove());
+
+            const indicator = document.createElement('div');
+            indicator.className = 'backend-indicator';
+            indicator.innerHTML = `
+                <span class="backend-dot ${status}"></span>
+                <span class="backend-name">${backendName}</span>
+            `;
+            indicator.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: rgba(0,0,0,0.8);
+                color: #fff;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                z-index: 9999;
+                animation: fadeIn 0.3s ease;
+            `;
+
+            const dot = indicator.querySelector('.backend-dot');
+            dot.style.cssText = `
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: ${status === 'active' ? '#4ade80' : status === 'fallback' ? '#fbbf24' : '#ef4444'};
+            `;
+
+            document.body.appendChild(indicator);
+
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                indicator.style.transition = 'opacity 0.3s';
+                setTimeout(() => indicator.remove(), 300);
+            }, 3000);
         }
 
         /**
          * Make an API request with automatic failover
-         * If primary (Supabase) fails, tries secondary (AWS)
+         * Primary: Round-robin between Supabase and Convex
+         * Fallback: AWS Lambda if both fail
          * @param {string} endpoint - API endpoint (e.g., '/api/health')
          * @param {object} options - Fetch options
          * @returns {Promise<Response>} - Fetch response
          */
         async function fetchWithFailover(endpoint, options = {}) {
-            const primaryUrl = getNextBackend();
-            const fallbackUrl = primaryUrl === BACKENDS.primary ? BACKENDS.secondary : BACKENDS.primary;
+            const errors = [];
 
             // 🔐 Auto-inject Authorization token if available
-            // Use 'voya_token' which is set during login
             const token = localStorage.getItem('voya_token');
             if (token) {
                 options.headers = {
@@ -6796,22 +6874,50 @@
                 };
             }
 
-            try {
-                const response = await fetch(`${primaryUrl}${endpoint}`, options);
-                if (response.ok || response.status < 500) {
-                    return response;
+            // Try primary backends in round-robin order
+            for (let attempt = 0; attempt < BACKEND_ORDER.length; attempt++) {
+                const { name, url } = getNextBackend();
+
+                // Skip unhealthy backends
+                if (!isBackendHealthy(name)) {
+                    console.log(`⏭️ Skipping unhealthy backend: ${name}`);
+                    continue;
                 }
-                throw new Error(`Primary backend error: ${response.status}`);
-            } catch (primaryError) {
-                console.warn(`⚠️ Primary backend failed, trying fallback...`, primaryError.message);
+
                 try {
-                    const fallbackResponse = await fetch(`${fallbackUrl}${endpoint}`, options);
-                    return fallbackResponse;
-                } catch (fallbackError) {
-                    console.error('❌ Both backends failed:', fallbackError.message);
-                    throw fallbackError;
+                    const response = await fetch(`${url}${endpoint}`, options);
+                    if (response.ok || response.status < 500) {
+                        updateBackendHealth(name, true);
+                        showBackendIndicator(name.charAt(0).toUpperCase() + name.slice(1), 'active');
+                        return response;
+                    }
+                    // Server error - mark unhealthy
+                    updateBackendHealth(name, false);
+                    errors.push({ backend: name, status: response.status });
+                    console.warn(`⚠️ ${name} returned ${response.status}, trying next...`);
+                } catch (err) {
+                    updateBackendHealth(name, false);
+                    errors.push({ backend: name, error: err.message });
+                    console.warn(`⚠️ ${name} failed: ${err.message}, trying next...`);
                 }
             }
+
+            // All primary backends failed - try AWS fallback
+            console.log('🆘 All primary backends failed, trying AWS fallback...');
+            showBackendIndicator('AWS Fallback', 'fallback');
+
+            try {
+                const response = await fetch(`${BACKENDS.awsFallback}${endpoint}`, options);
+                console.log(`✅ AWS fallback responded: ${response.status}`);
+                return response;
+            } catch (fallbackError) {
+                errors.push({ backend: 'aws-fallback', error: fallbackError.message });
+                console.error('❌ AWS fallback also failed:', fallbackError.message);
+                showBackendIndicator('All Failed', 'error');
+            }
+
+            // All backends failed - return error response
+            throw new Error(`All backends unavailable: ${JSON.stringify(errors)}`);
         }
 
         // Legacy compatibility - uses Supabase as primary
