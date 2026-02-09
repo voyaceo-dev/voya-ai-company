@@ -6753,11 +6753,11 @@
         // ==================== MULTI-BACKEND LOAD BALANCING ====================
         // Round-robin between Supabase and Convex, with AWS Lambda as fallback
         const BACKENDS = {
-            supabase: 'https://wd4k6efik7bprvccxphw7qtyjy0uasqc.lambda-url.eu-north-1.on.aws',
+            supabase: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
             convex: 'https://kindred-meerkat-584.eu-west-1.convex.site',
-            awsFallback: 'https://wd4k6efik7bprvccxphw7qtyjy0uasqc.lambda-url.eu-north-1.on.aws', // AWS Lambda fallback
+            awsFallback: 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws', // AWS Lambda fallback
             // Legacy aliases
-            primary: 'https://wd4k6efik7bprvccxphw7qtyjy0uasqc.lambda-url.eu-north-1.on.aws',
+            primary: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
             secondary: 'https://kindred-meerkat-584.eu-west-1.convex.site'
         };
 
