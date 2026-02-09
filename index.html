@@ -7608,6 +7608,9 @@
 
                 const data = await response.json();
 
+                // Store destination globally for map initialization
+                window.currentDestination = dest;
+
                 // Store itinerary data globally for PDF download
                 window.currentItineraryData = data;
 
@@ -8062,6 +8065,7 @@
             // Initialize Mapbox with GeoJSON data - use longer timeout to ensure DOM is ready
             // Get destination from global state (set during itinerary generation), or fallback to input fields
             const destName = window.currentDestination ||
+                document.getElementById('unified-ai-dest')?.value ||
                 document.getElementById('ai-dest')?.value ||
                 document.getElementById('unified-itinerary-dest')?.value ||
                 '';
@@ -8262,6 +8266,7 @@
             // Get the destination for fallback geocoding
             const destination = destinationName ||
                 window.currentDestination ||
+                document.getElementById('unified-ai-dest')?.value ||
                 document.getElementById('ai-dest')?.value ||
                 document.getElementById('unified-itinerary-dest')?.value ||
                 'Paris';
