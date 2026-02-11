@@ -7637,6 +7637,8 @@
             if (placeholder) placeholder.style.display = 'none'; // Hide placeholder when showing results
 
             const flights = data.flights || data.best_flights || [];
+            const returnFlights = data.return_flights || [];
+            const tripType = data.trip_type || '';
             const source = data.source || '';
 
             if (!flights.length) {
@@ -7662,18 +7664,14 @@
                 sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ AI-Powered</span>';
             }
 
-            container.innerHTML = `
-                <div class="results-header" style="margin-bottom:20px;padding:18px 20px;background:linear-gradient(135deg,#fff,#f8fafc);border-radius:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-                    <h3 style="margin:0;color:#1a1a2e;font-size:1.2rem;">${flights.length} Flights Found ${sourceBadge}</h3>
-                </div>
-                ${flights.map((flight, index) => {
-                // Handle both FastAPI format and SerpAPI format
+            // Helper: render a single flight card
+            const renderFlightCard = (flight, index, hueOffset = 0) => {
                 const outbound = flight.flights?.[0] || flight;
                 const returnLeg = flight.flights?.[1] || null;
                 const airline = outbound.airline || flight.airline || 'Airline';
                 const flightNum = flight.flight_number || outbound.flight_number || '';
                 const price = flight.price || outbound.price || 'N/A';
-                const tripType = flight.type || (returnLeg ? 'Round trip' : 'One way');
+                const cardTripType = flight.type || (returnLeg ? 'Round trip' : 'One way');
 
                 // Outbound details
                 const depTime = outbound.departure_airport?.time || outbound.departure_time || flight.departure_time || '--:--';
@@ -7683,7 +7681,7 @@
                 const duration = flight.total_duration || outbound.duration || flight.duration || '--';
                 const stops = flight.layovers?.length || 0;
 
-                // Return details (if round trip)
+                // Return details (SerpAPI embedded format)
                 const retDepTime = returnLeg?.departure_airport?.time || returnLeg?.departure_time || '';
                 const retArrTime = returnLeg?.arrival_airport?.time || returnLeg?.arrival_time || '';
                 const retDepName = returnLeg?.departure_airport?.name || returnLeg?.departure_airport?.id || '';
@@ -7696,7 +7694,7 @@
                 const hasBookingLink = bookingLink && bookingLink !== '#' && bookingLink !== 'N/A';
 
                 // Generate airline color based on name
-                const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
+                const hue = (airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360) + hueOffset;
 
                 return `
                         <div class="flight-card fade-in" style="animation-delay:${index * 0.08}s;background:#fff;border-radius:16px;padding:0;margin-bottom:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);overflow:hidden;border:1px solid rgba(0,0,0,0.04);">
@@ -7710,7 +7708,7 @@
                                         <div style="font-weight:600;font-size:1.1rem;">${escapeHtml(airline)}</div>
                                         <div style="display:flex;align-items:center;gap:8px;">
                                             ${flightNum ? `<span style="font-size:0.8rem;opacity:0.85;">${flightNum}</span>` : ''}
-                                            <span style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;">${tripType}</span>
+                                            <span style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;">${cardTripType}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -7720,7 +7718,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Outbound Flight -->
+                            <!-- Flight Route -->
                             <div style="padding:6px 20px 0;">
                                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                                     <i class="fas fa-plane-departure" style="color:hsl(${hue},60%,50%);font-size:0.85rem;"></i>
@@ -7756,7 +7754,7 @@
                                 </div>
                             </div>
 
-                            <!-- Return Flight -->
+                            <!-- Return Flight (SerpAPI embedded) -->
                             <div style="padding:14px 20px 0;">
                                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                                     <i class="fas fa-plane-arrival" style="color:#10b981;font-size:0.85rem;"></i>
@@ -7797,10 +7795,47 @@
                             </div>
                         </div>
                     `;
+            };
 
-            }).join('')}
+            // Build HTML
+            const isRoundTrip = tripType === 'round_trip' && returnFlights.length > 0;
+            const totalCount = isRoundTrip ? flights.length + returnFlights.length : flights.length;
+
+            let html = `
+                <div class="results-header" style="margin-bottom:20px;padding:18px 20px;background:linear-gradient(135deg,#fff,#f8fafc);border-radius:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+                    <h3 style="margin:0;color:#1a1a2e;font-size:1.2rem;">${totalCount} Flights Found ${sourceBadge}</h3>
+                </div>
             `;
+
+            if (isRoundTrip) {
+                // === Round-trip: Show outbound + return as separate sections ===
+                html += `
+                    <div style="margin-bottom:16px;padding:12px 18px;background:linear-gradient(135deg,#667eea20,#764ba220);border-radius:12px;border-left:4px solid #667eea;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-plane-departure" style="color:#667eea;font-size:1.1rem;"></i>
+                            <h4 style="margin:0;color:#1a1a2e;font-size:1rem;">Outbound Flights (${flights.length})</h4>
+                        </div>
+                    </div>
+                `;
+                html += flights.map((f, i) => renderFlightCard(f, i, 0)).join('');
+
+                html += `
+                    <div style="margin:28px 0 16px;padding:12px 18px;background:linear-gradient(135deg,#10b98120,#05966920);border-radius:12px;border-left:4px solid #10b981;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-plane-arrival" style="color:#10b981;font-size:1.1rem;"></i>
+                            <h4 style="margin:0;color:#1a1a2e;font-size:1rem;">Return Flights (${returnFlights.length})</h4>
+                        </div>
+                    </div>
+                `;
+                html += returnFlights.map((f, i) => renderFlightCard(f, i, 120)).join('');
+            } else {
+                // === One-way or SerpAPI format ===
+                html += flights.map((f, i) => renderFlightCard(f, i, 0)).join('');
+            }
+
+            container.innerHTML = html;
         }
+
 
         /**
          * Display hotel results in unified overlay
