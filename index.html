@@ -6754,11 +6754,11 @@
         // Round-robin between Supabase and Convex, with AWS Lambda as fallback
         const BACKENDS = {
             supabase: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
-            convex: 'https://lovely-koala-415.eu-west-1.convex.site',
+            convex: 'https://robust-terrier-351.eu-west-1.convex.site',
             awsFallback: 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws', // AWS Lambda fallback
             // Legacy aliases
             primary: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
-            secondary: 'https://lovely-koala-415.eu-west-1.convex.site'
+            secondary: 'https://robust-terrier-351.eu-west-1.convex.site'
         };
 
         // Backend order for round-robin (alternates between Supabase and Convex)
@@ -7627,14 +7627,29 @@
         }
 
         /**
+         * Escape HTML characters to prevent XSS
+         */
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        /**
+         * Open Google Flights search for a specific airline/flight when no direct booking link is available
+         */
+        function searchFlightBooking(airline, flightNum, depTime) {
+            const query = encodeURIComponent(`${airline} ${flightNum} flight booking ${depTime}`.trim());
+            window.open(`https://www.google.com/travel/flights?q=${query}`, '_blank');
+        }
+
+        /**
          * Display flight results in unified overlay
-         * @param {Object} data - Flight search response
-         * @param {boolean} usedFastAPI - Whether FastAPI (Groq) was used
+         * Redesigned: Skyscanner/ixigo-style horizontal cards
          */
         function displayUnifiedFlightResults(data, usedFastAPI = false) {
             const container = document.getElementById('unified-results-content');
             const placeholder = document.getElementById('unified-placeholder');
-            if (placeholder) placeholder.style.display = 'none'; // Hide placeholder when showing results
+            if (placeholder) placeholder.style.display = 'none';
 
             const flights = data.flights || data.best_flights || [];
             const returnFlights = data.return_flights || [];
@@ -7652,185 +7667,143 @@
                 return;
             }
 
-            // Source badge - show which AI model or data source
+            // Source badge
             let sourceBadge = '';
             if (source.includes('groq')) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ Powered by Groq</span>';
+                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">⚡ Groq AI</span>';
             } else if (source.includes('openrouter')) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">🔄 Powered by OpenRouter</span>';
-            } else if (source.includes('ollama')) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">🏠 Powered by Ollama</span>';
+                sourceBadge = '<span style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">🔄 OpenRouter</span>';
+            } else if (source.includes('serpapi') || !source.includes('ai')) {
+                sourceBadge = '<span style="background:#e5e7eb;color:#374151;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">Google Flights</span>';
             } else if (usedFastAPI) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.75rem;margin-left:10px;">⚡ AI-Powered</span>';
+                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">⚡ AI</span>';
             }
 
-            // Helper: render a single flight card
-            const renderFlightCard = (flight, index, hueOffset = 0) => {
+            // Helper: render a single flight leg row
+            const renderLegRow = (legData, label, labelColor) => {
+                const dep = legData.departure_airport?.time || legData.departure_time || '--:--';
+                const arr = legData.arrival_airport?.time || legData.arrival_time || '--:--';
+                const depCode = legData.departure_airport?.id || legData.departure_code || legData.from || '';
+                const arrCode = legData.arrival_airport?.id || legData.arrival_code || legData.to || '';
+                const dur = legData.duration || legData.total_duration || '--';
+                const stops = legData.layovers?.length || legData.stops || 0;
+                const stopsNum = typeof stops === 'string' ? parseInt(stops) || 0 : stops;
+                const isDirect = stopsNum === 0;
+
+                return `
+                    <div style="display:flex;align-items:center;gap:0;padding:8px 0;">
+                        <div style="width:70px;text-align:center;">
+                            <div style="font-size:1.3rem;font-weight:700;color:#1a1a2e;line-height:1.2;">${dep}</div>
+                            ${depCode ? `<div style="font-size:0.75rem;color:#6b7280;font-weight:500;">${depCode}</div>` : ''}
+                        </div>
+                        <div style="flex:1;text-align:center;padding:0 8px;position:relative;">
+                            <div style="font-size:0.75rem;color:#9ca3af;font-weight:500;">${dur}${typeof dur === 'number' ? ' min' : ''}</div>
+                            <div style="height:1px;background:#d1d5db;margin:6px 0;position:relative;">
+                                <div style="position:absolute;right:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:${labelColor};"></div>
+                                <div style="position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;border:2px solid ${labelColor};background:white;"></div>
+                            </div>
+                            <div style="font-size:0.72rem;font-weight:600;color:${isDirect ? '#10b981' : '#f59e0b'};">${isDirect ? 'Direct' : stopsNum + ' stop'}</div>
+                        </div>
+                        <div style="width:70px;text-align:center;">
+                            <div style="font-size:1.3rem;font-weight:700;color:#1a1a2e;line-height:1.2;">${arr}</div>
+                            ${arrCode ? `<div style="font-size:0.75rem;color:#6b7280;font-weight:500;">${arrCode}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            };
+
+            // Helper: render one flight card (horizontal layout)
+            const renderFlightCard = (flight, index, pairedReturn = null) => {
                 const outbound = flight.flights?.[0] || flight;
-                const returnLeg = flight.flights?.[1] || null;
+                const embeddedReturn = flight.flights?.[1] || null;
                 const airline = outbound.airline || flight.airline || 'Airline';
                 const flightNum = flight.flight_number || outbound.flight_number || '';
                 const price = flight.price || outbound.price || 'N/A';
-                const cardTripType = flight.type || (returnLeg ? 'Round trip' : 'One way');
+                const bookingLink = flight.booking_link || outbound.booking_link || '';
+                const hasBookingLink = bookingLink && bookingLink !== '#' && bookingLink !== 'N/A' && bookingLink.startsWith('http');
 
-                // Outbound details
-                const depTime = outbound.departure_airport?.time || outbound.departure_time || flight.departure_time || '--:--';
-                const arrTime = outbound.arrival_airport?.time || outbound.arrival_time || flight.arrival_time || '--:--';
-                const depName = outbound.departure_airport?.name || outbound.departure_airport?.id || 'Departure';
-                const arrName = outbound.arrival_airport?.name || outbound.arrival_airport?.id || 'Arrival';
-                const duration = flight.total_duration || outbound.duration || flight.duration || '--';
-                const stops = flight.layovers?.length || 0;
+                // Determine airline abbreviation & color
+                const airlineAbbr = airline.substring(0, 2).toUpperCase();
+                const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
+                const airlineColor = `hsl(${hue}, 65%, 45%)`;
 
-                // Return details (SerpAPI embedded format)
-                const retDepTime = returnLeg?.departure_airport?.time || returnLeg?.departure_time || '';
-                const retArrTime = returnLeg?.arrival_airport?.time || returnLeg?.arrival_time || '';
-                const retDepName = returnLeg?.departure_airport?.name || returnLeg?.departure_airport?.id || '';
-                const retArrName = returnLeg?.arrival_airport?.name || returnLeg?.arrival_airport?.id || '';
-                const retDuration = returnLeg?.duration || '';
-                const retAirline = returnLeg?.airline || airline;
-                const retFlightNum = returnLeg?.flight_number || '';
-
-                const bookingLink = flight.booking_link || '';
-                const hasBookingLink = bookingLink && bookingLink !== '#' && bookingLink !== 'N/A';
-
-                // Generate airline color based on name
-                const hue = (airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360) + hueOffset;
+                // The return leg to show (either embedded from SerpAPI or paired from AI)
+                const returnToShow = embeddedReturn || pairedReturn;
 
                 return `
-                        <div class="flight-card fade-in" style="animation-delay:${index * 0.08}s;background:#fff;border-radius:16px;padding:0;margin-bottom:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);overflow:hidden;border:1px solid rgba(0,0,0,0.04);">
-                            <!-- Airline Header -->
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:linear-gradient(135deg,hsl(${hue},60%,50%),hsl(${hue + 30},60%,45%));color:white;">
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                    <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1rem;">
-                                        ${airline.substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div style="font-weight:600;font-size:1.1rem;">${escapeHtml(airline)}</div>
-                                        <div style="display:flex;align-items:center;gap:8px;">
-                                            ${flightNum ? `<span style="font-size:0.8rem;opacity:0.85;">${flightNum}</span>` : ''}
-                                            <span style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;">${cardTripType}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="font-size:1.6rem;font-weight:700;">₹${typeof price === 'number' ? price.toLocaleString() : price}</div>
-                                    <div style="font-size:0.75rem;opacity:0.85;">per person</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Flight Route -->
-                            <div style="padding:6px 20px 0;">
-                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                    <i class="fas fa-plane-departure" style="color:hsl(${hue},60%,50%);font-size:0.85rem;"></i>
-                                    <span style="font-size:0.8rem;font-weight:600;color:hsl(${hue},60%,45%);text-transform:uppercase;letter-spacing:1px;">Outbound</span>
-                                </div>
-                            </div>
-                            <div style="padding:0 20px 16px;display:flex;justify-content:space-between;align-items:center;">
-                                <div style="text-align:center;flex:1;">
-                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${depTime}</div>
-                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${depName}</div>
-                                </div>
-                                <div style="flex:1.5;text-align:center;padding:0 10px;">
-                                    <div style="font-size:0.8rem;color:#888;font-weight:500;">${duration}${typeof duration === 'number' ? ' min' : ''}</div>
-                                    <div style="height:2px;background:linear-gradient(90deg,hsl(${hue},60%,60%),hsl(${hue + 30},60%,55%));margin:8px 0;position:relative;border-radius:2px;">
-                                        <i class="fas fa-plane" style="position:absolute;right:-6px;top:-9px;color:hsl(${hue},60%,50%);font-size:1rem;"></i>
-                                    </div>
-                                    <div style="font-size:0.8rem;color:${stops === 0 ? '#28a745' : '#f39c12'};font-weight:500;">
-                                        <i class="fas fa-${stops === 0 ? 'check-circle' : 'clock'}" style="margin-right:4px;"></i>
-                                        ${stops === 0 ? 'Non-stop' : stops + ' stop(s)'}
-                                    </div>
-                                </div>
-                                <div style="text-align:center;flex:1;">
-                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${arrTime}</div>
-                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${arrName}</div>
-                                </div>
-                            </div>
-
-                            ${returnLeg ? `
-                            <!-- Separator -->
-                            <div style="margin:0 20px;border-top:1px dashed #e0e0e0;position:relative;">
-                                <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#fff;padding:0 12px;">
-                                    <i class="fas fa-exchange-alt" style="color:#aaa;font-size:0.85rem;"></i>
-                                </div>
-                            </div>
-
-                            <!-- Return Flight (SerpAPI embedded) -->
-                            <div style="padding:14px 20px 0;">
-                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                    <i class="fas fa-plane-arrival" style="color:#10b981;font-size:0.85rem;"></i>
-                                    <span style="font-size:0.8rem;font-weight:600;color:#10b981;text-transform:uppercase;letter-spacing:1px;">Return</span>
-                                    ${retAirline !== airline ? `<span style="font-size:0.75rem;color:#888;">· ${escapeHtml(retAirline)}</span>` : ''}
-                                    ${retFlightNum ? `<span style="font-size:0.75rem;color:#aaa;">${retFlightNum}</span>` : ''}
-                                </div>
-                            </div>
-                            <div style="padding:0 20px 16px;display:flex;justify-content:space-between;align-items:center;">
-                                <div style="text-align:center;flex:1;">
-                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${retDepTime}</div>
-                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${retDepName}</div>
-                                </div>
-                                <div style="flex:1.5;text-align:center;padding:0 10px;">
-                                    <div style="font-size:0.8rem;color:#888;font-weight:500;">${retDuration}${typeof retDuration === 'number' ? ' min' : ''}</div>
-                                    <div style="height:2px;background:linear-gradient(90deg,#10b981,#059669);margin:8px 0;position:relative;border-radius:2px;">
-                                        <i class="fas fa-plane" style="position:absolute;left:-6px;top:-9px;color:#10b981;font-size:1rem;transform:scaleX(-1);"></i>
-                                    </div>
-                                </div>
-                                <div style="text-align:center;flex:1;">
-                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${retArrTime}</div>
-                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${retArrName}</div>
-                                </div>
-                            </div>
-                            ` : ''}
-                            
-                            <!-- Book Now Button -->
-                            <div style="padding:0 20px 20px;">
-                                ${hasBookingLink ? `
-                                    <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;background:linear-gradient(135deg,#f39c12,#e67e22);text-decoration:none;color:white;padding:14px;border-radius:10px;font-weight:600;font-size:1rem;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(243,156,18,0.3);">
-                                        <i class="fas fa-external-link-alt"></i> Book Now
-                                    </a>
-                                ` : `
-                                    <button onclick="searchFlightBooking('${escapeHtml(airline)}', '${flightNum}', '${depTime}')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6c757d,#495057);color:white;padding:14px;border-radius:10px;border:none;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.3s ease;">
-                                        <i class="fas fa-search"></i> Find Booking
-                                    </button>
-                                `}
+                <div class="flight-card fade-in" style="animation-delay:${index * 0.06}s;display:flex;background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;border:1px solid #e5e7eb;transition:box-shadow 0.2s,transform 0.2s;" onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)';this.style.transform='none'">
+                    <!-- Left: Flight Details -->
+                    <div style="flex:1;padding:18px 20px;">
+                        <!-- Airline Row -->
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                            <div style="width:36px;height:36px;border-radius:8px;background:${airlineColor}15;color:${airlineColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;border:1px solid ${airlineColor}30;">${airlineAbbr}</div>
+                            <div>
+                                <div style="font-weight:600;font-size:0.95rem;color:#1f2937;">${escapeHtml(airline)}</div>
+                                ${flightNum ? `<div style="font-size:0.72rem;color:#9ca3af;">${flightNum}</div>` : ''}
                             </div>
                         </div>
-                    `;
+
+                        <!-- Outbound Leg -->
+                        ${renderLegRow(outbound, 'Outbound', airlineColor)}
+
+                        ${returnToShow ? `
+                        <!-- Return Leg -->
+                        <div style="border-top:1px dashed #e5e7eb;margin:4px 0;"></div>
+                        ${renderLegRow(returnToShow, 'Return', '#10b981')}
+                        ` : ''}
+                    </div>
+
+                    <!-- Right: Price + Select -->
+                    <div style="width:155px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 16px;border-left:1px solid #e5e7eb;background:#f9fafb;">
+                        <div style="font-size:0.72rem;color:#9ca3af;margin-bottom:2px;">from</div>
+                        <div style="font-size:1.5rem;font-weight:800;color:#1f2937;line-height:1.1;">₹${typeof price === 'number' ? price.toLocaleString() : price}</div>
+                        <div style="font-size:0.68rem;color:#9ca3af;margin-bottom:12px;">per person</div>
+                        ${hasBookingLink ? `
+                            <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px 0;background:#1f2937;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.85rem;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#1f2937'">
+                                Select <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+                            </a>
+                        ` : `
+                            <button onclick="searchFlightBooking('${escapeHtml(airline)}', '${flightNum}', '${outbound.departure_time || ''}')" style="width:100%;padding:10px 0;background:#1f2937;color:white;border:none;border-radius:8px;font-weight:600;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#1f2937'">
+                                Select <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+                            </button>
+                        `}
+                    </div>
+                </div>
+                `;
             };
 
-            // Build HTML
+            // ===== Build the page =====
             const isRoundTrip = tripType === 'round_trip' && returnFlights.length > 0;
-            const totalCount = isRoundTrip ? flights.length + returnFlights.length : flights.length;
 
             let html = `
-                <div class="results-header" style="margin-bottom:20px;padding:18px 20px;background:linear-gradient(135deg,#fff,#f8fafc);border-radius:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-                    <h3 style="margin:0;color:#1a1a2e;font-size:1.2rem;">${totalCount} Flights Found ${sourceBadge}</h3>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:14px 18px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">${flights.length} ${isRoundTrip ? 'outbound' : ''} flights found</span>
+                        ${sourceBadge}
+                    </div>
                 </div>
             `;
 
             if (isRoundTrip) {
-                // === Round-trip: Show outbound + return as separate sections ===
+                // ROUND-TRIP: Show outbound cards, then return cards
                 html += `
-                    <div style="margin-bottom:16px;padding:12px 18px;background:linear-gradient(135deg,#667eea20,#764ba220);border-radius:12px;border-left:4px solid #667eea;">
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-plane-departure" style="color:#667eea;font-size:1.1rem;"></i>
-                            <h4 style="margin:0;color:#1a1a2e;font-size:1rem;">Outbound Flights (${flights.length})</h4>
-                        </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:10px;border-left:3px solid #6366f1;">
+                        <i class="fas fa-plane-departure" style="color:#6366f1;"></i>
+                        <span style="font-weight:600;color:#4338ca;font-size:0.9rem;">Outbound · ${flights.length} options</span>
                     </div>
                 `;
-                html += flights.map((f, i) => renderFlightCard(f, i, 0)).join('');
+                html += flights.map((f, i) => renderFlightCard(f, i, null)).join('');
 
                 html += `
-                    <div style="margin:28px 0 16px;padding:12px 18px;background:linear-gradient(135deg,#10b98120,#05966920);border-radius:12px;border-left:4px solid #10b981;">
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-plane-arrival" style="color:#10b981;font-size:1.1rem;"></i>
-                            <h4 style="margin:0;color:#1a1a2e;font-size:1rem;">Return Flights (${returnFlights.length})</h4>
-                        </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin:24px 0 12px;padding:10px 14px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:10px;border-left:3px solid #10b981;">
+                        <i class="fas fa-plane-arrival" style="color:#10b981;"></i>
+                        <span style="font-weight:600;color:#059669;font-size:0.9rem;">Return · ${returnFlights.length} options</span>
                     </div>
                 `;
-                html += returnFlights.map((f, i) => renderFlightCard(f, i, 120)).join('');
+                html += returnFlights.map((f, i) => renderFlightCard(f, i, null)).join('');
             } else {
-                // === One-way or SerpAPI format ===
-                html += flights.map((f, i) => renderFlightCard(f, i, 0)).join('');
+                // ONE-WAY or SerpAPI (may have embedded return)
+                html += flights.map((f, i) => renderFlightCard(f, i, null)).join('');
             }
 
             container.innerHTML = html;
