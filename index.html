@@ -7668,14 +7668,30 @@
                 </div>
                 ${flights.map((flight, index) => {
                 // Handle both FastAPI format and SerpAPI format
-                const departure = flight.flights?.[0] || flight;
-                const airline = departure.airline || flight.airline || 'Airline';
-                const flightNum = flight.flight_number || departure.flight_number || '';
-                const price = flight.price || departure.price || 'N/A';
-                const depTime = departure.departure_airport?.time || departure.departure_time || flight.departure_time || '--:--';
-                const arrTime = departure.arrival_airport?.time || departure.arrival_time || flight.arrival_time || '--:--';
-                const duration = flight.total_duration || departure.duration || flight.duration || '--';
+                const outbound = flight.flights?.[0] || flight;
+                const returnLeg = flight.flights?.[1] || null;
+                const airline = outbound.airline || flight.airline || 'Airline';
+                const flightNum = flight.flight_number || outbound.flight_number || '';
+                const price = flight.price || outbound.price || 'N/A';
+                const tripType = flight.type || (returnLeg ? 'Round trip' : 'One way');
+
+                // Outbound details
+                const depTime = outbound.departure_airport?.time || outbound.departure_time || flight.departure_time || '--:--';
+                const arrTime = outbound.arrival_airport?.time || outbound.arrival_time || flight.arrival_time || '--:--';
+                const depName = outbound.departure_airport?.name || outbound.departure_airport?.id || 'Departure';
+                const arrName = outbound.arrival_airport?.name || outbound.arrival_airport?.id || 'Arrival';
+                const duration = flight.total_duration || outbound.duration || flight.duration || '--';
                 const stops = flight.layovers?.length || 0;
+
+                // Return details (if round trip)
+                const retDepTime = returnLeg?.departure_airport?.time || returnLeg?.departure_time || '';
+                const retArrTime = returnLeg?.arrival_airport?.time || returnLeg?.arrival_time || '';
+                const retDepName = returnLeg?.departure_airport?.name || returnLeg?.departure_airport?.id || '';
+                const retArrName = returnLeg?.arrival_airport?.name || returnLeg?.arrival_airport?.id || '';
+                const retDuration = returnLeg?.duration || '';
+                const retAirline = returnLeg?.airline || airline;
+                const retFlightNum = returnLeg?.flight_number || '';
+
                 const bookingLink = flight.booking_link || '';
                 const hasBookingLink = bookingLink && bookingLink !== '#' && bookingLink !== 'N/A';
 
@@ -7692,7 +7708,10 @@
                                     </div>
                                     <div>
                                         <div style="font-weight:600;font-size:1.1rem;">${escapeHtml(airline)}</div>
-                                        ${flightNum ? `<span style="font-size:0.8rem;opacity:0.85;">${flightNum}</span>` : ''}
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            ${flightNum ? `<span style="font-size:0.8rem;opacity:0.85;">${flightNum}</span>` : ''}
+                                            <span style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;">${tripType}</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="text-align:right;">
@@ -7701,27 +7720,68 @@
                                 </div>
                             </div>
                             
-                            <!-- Flight Details -->
-                            <div style="padding:20px;display:flex;justify-content:space-between;align-items:center;">
-                                <div style="text-align:center;flex:1;">
-                                    <div style="font-size:1.8rem;font-weight:700;color:#1a1a2e;">${depTime}</div>
-                                    <div style="font-size:0.85rem;color:#666;max-width:120px;margin:0 auto;">${departure.departure_airport?.name || 'Departure'}</div>
+                            <!-- Outbound Flight -->
+                            <div style="padding:6px 20px 0;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                    <i class="fas fa-plane-departure" style="color:hsl(${hue},60%,50%);font-size:0.85rem;"></i>
+                                    <span style="font-size:0.8rem;font-weight:600;color:hsl(${hue},60%,45%);text-transform:uppercase;letter-spacing:1px;">Outbound</span>
                                 </div>
-                                <div style="flex:1.5;text-align:center;padding:0 15px;">
-                                    <div style="font-size:0.85rem;color:#888;font-weight:500;">${duration}${typeof duration === 'number' ? ' min' : ''}</div>
-                                    <div style="height:2px;background:linear-gradient(90deg,hsl(${hue},60%,60%),hsl(${hue + 30},60%,55%));margin:10px 0;position:relative;border-radius:2px;">
-                                        <i class="fas fa-plane" style="position:absolute;right:-6px;top:-9px;color:hsl(${hue},60%,50%);font-size:1.1rem;"></i>
+                            </div>
+                            <div style="padding:0 20px 16px;display:flex;justify-content:space-between;align-items:center;">
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${depTime}</div>
+                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${depName}</div>
+                                </div>
+                                <div style="flex:1.5;text-align:center;padding:0 10px;">
+                                    <div style="font-size:0.8rem;color:#888;font-weight:500;">${duration}${typeof duration === 'number' ? ' min' : ''}</div>
+                                    <div style="height:2px;background:linear-gradient(90deg,hsl(${hue},60%,60%),hsl(${hue + 30},60%,55%));margin:8px 0;position:relative;border-radius:2px;">
+                                        <i class="fas fa-plane" style="position:absolute;right:-6px;top:-9px;color:hsl(${hue},60%,50%);font-size:1rem;"></i>
                                     </div>
-                                    <div style="font-size:0.85rem;color:${stops === 0 ? '#28a745' : '#f39c12'};font-weight:500;">
+                                    <div style="font-size:0.8rem;color:${stops === 0 ? '#28a745' : '#f39c12'};font-weight:500;">
                                         <i class="fas fa-${stops === 0 ? 'check-circle' : 'clock'}" style="margin-right:4px;"></i>
                                         ${stops === 0 ? 'Non-stop' : stops + ' stop(s)'}
                                     </div>
                                 </div>
                                 <div style="text-align:center;flex:1;">
-                                    <div style="font-size:1.8rem;font-weight:700;color:#1a1a2e;">${arrTime}</div>
-                                    <div style="font-size:0.85rem;color:#666;max-width:120px;margin:0 auto;">${departure.arrival_airport?.name || 'Arrival'}</div>
+                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${arrTime}</div>
+                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${arrName}</div>
                                 </div>
                             </div>
+
+                            ${returnLeg ? `
+                            <!-- Separator -->
+                            <div style="margin:0 20px;border-top:1px dashed #e0e0e0;position:relative;">
+                                <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#fff;padding:0 12px;">
+                                    <i class="fas fa-exchange-alt" style="color:#aaa;font-size:0.85rem;"></i>
+                                </div>
+                            </div>
+
+                            <!-- Return Flight -->
+                            <div style="padding:14px 20px 0;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                    <i class="fas fa-plane-arrival" style="color:#10b981;font-size:0.85rem;"></i>
+                                    <span style="font-size:0.8rem;font-weight:600;color:#10b981;text-transform:uppercase;letter-spacing:1px;">Return</span>
+                                    ${retAirline !== airline ? `<span style="font-size:0.75rem;color:#888;">· ${escapeHtml(retAirline)}</span>` : ''}
+                                    ${retFlightNum ? `<span style="font-size:0.75rem;color:#aaa;">${retFlightNum}</span>` : ''}
+                                </div>
+                            </div>
+                            <div style="padding:0 20px 16px;display:flex;justify-content:space-between;align-items:center;">
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${retDepTime}</div>
+                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${retDepName}</div>
+                                </div>
+                                <div style="flex:1.5;text-align:center;padding:0 10px;">
+                                    <div style="font-size:0.8rem;color:#888;font-weight:500;">${retDuration}${typeof retDuration === 'number' ? ' min' : ''}</div>
+                                    <div style="height:2px;background:linear-gradient(90deg,#10b981,#059669);margin:8px 0;position:relative;border-radius:2px;">
+                                        <i class="fas fa-plane" style="position:absolute;left:-6px;top:-9px;color:#10b981;font-size:1rem;transform:scaleX(-1);"></i>
+                                    </div>
+                                </div>
+                                <div style="text-align:center;flex:1;">
+                                    <div style="font-size:1.6rem;font-weight:700;color:#1a1a2e;">${retArrTime}</div>
+                                    <div style="font-size:0.8rem;color:#666;max-width:100px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${retArrName}</div>
+                                </div>
+                            </div>
+                            ` : ''}
                             
                             <!-- Book Now Button -->
                             <div style="padding:0 20px 20px;">
@@ -7751,6 +7811,12 @@
             if (placeholder) placeholder.style.display = 'none'; // Hide placeholder when showing results
 
             const hotels = data.properties || data.hotels || [];
+            const source = data.source || '';
+            const sourceBadge = source === 'groq-tavily'
+                ? '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:3px 10px;border-radius:20px;font-size:0.75rem;margin-left:10px;"><i class="fas fa-robot"></i> AI-Powered</span>'
+                : source === 'serpapi'
+                    ? '<span style="background:#1a73e8;color:white;padding:3px 10px;border-radius:20px;font-size:0.75rem;margin-left:10px;"><i class="fas fa-google"></i> Google Hotels</span>'
+                    : '';
 
             if (!hotels.length) {
                 container.innerHTML = `
@@ -7764,34 +7830,56 @@
             }
 
             container.innerHTML = `
-                <div class="results-header" style="margin-bottom:20px;padding:15px;background:#fff;border-radius:12px;">
-                    <h3 style="margin:0;color:#1a1a2e;">${hotels.length} Hotels Found</h3>
+                <div class="results-header" style="margin-bottom:20px;padding:18px 20px;background:linear-gradient(135deg,#fff,#f8fafc);border-radius:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+                    <h3 style="margin:0;color:#1a1a2e;font-size:1.2rem;">${hotels.length} Hotels Found ${sourceBadge}</h3>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
                     ${hotels.map((hotel, index) => {
                 const name = hotel.name || 'Hotel';
-                const price = hotel.rate_per_night?.lowest || hotel.price || 'N/A';
+                // Handle both AI format (price_per_night) and SerpAPI format (rate_per_night)
+                const price = hotel.price_per_night || hotel.rate_per_night?.lowest || hotel.price || 'N/A';
+                const currency = hotel.currency || '₹';
                 const rating = hotel.overall_rating || hotel.rating || 0;
-                const image = hotel.images?.[0]?.thumbnail || hotel.image || 'https://via.placeholder.com/300x200';
-                const stars = hotel.hotel_class || Math.round(rating);
+                const image = hotel.image_url || hotel.images?.[0]?.thumbnail || hotel.image || 'https://via.placeholder.com/300x200';
+                const stars = hotel.stars || hotel.hotel_class || Math.round(rating);
+                const location = hotel.location || hotel.address || '';
+                const description = hotel.description || '';
+                const amenities = hotel.amenities || [];
+                const bookingLink = hotel.booking_link || hotel.link || '';
+                const hasBookingLink = bookingLink && bookingLink.startsWith('http');
+
+                // Generate hotel color based on name
+                const hue = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
 
                 return `
-                            <div class="hotel-card fade-in" style="animation-delay:${index * 0.1}s;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-                                <img src="${image}" alt="${escapeHtml(name)}" style="width:100%;height:180px;object-fit:cover;">
+                            <div class="hotel-card fade-in" style="animation-delay:${index * 0.1}s;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid rgba(0,0,0,0.04);transition:all 0.3s ease;">
+                                <div style="position:relative;">
+                                    <img src="${image}" alt="${escapeHtml(name)}" style="width:100%;height:180px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Hotel'">
+                                    ${stars ? `<div style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);color:#D4AF37;padding:4px 10px;border-radius:20px;font-size:0.85rem;">${'★'.repeat(Math.min(stars, 5))}</div>` : ''}
+                                    ${rating ? `<div style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);color:white;padding:4px 10px;border-radius:20px;font-size:0.85rem;"><i class="fas fa-star" style="color:#ffc107;margin-right:4px;"></i>${rating}</div>` : ''}
+                                </div>
                                 <div style="padding:20px;">
-                                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
-                                        <h4 style="margin:0;font-size:1.1rem;color:#1a1a2e;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</h4>
-                                        <div style="color:#D4AF37;">${'★'.repeat(stars)}</div>
-                                    </div>
-                                    <div style="font-size:0.85rem;color:#666;margin-bottom:15px;">
-                                        <i class="fas fa-star" style="color:#ffc107;"></i> ${rating}/5 rating
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <div>
-                                            <span style="font-size:1.3rem;font-weight:700;color:#003580;">${price}</span>
-                                            <span style="font-size:0.85rem;color:#888;">/night</span>
+                                    <h4 style="margin:0 0 6px;font-size:1.1rem;color:#1a1a2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</h4>
+                                    ${location ? `<div style="font-size:0.8rem;color:#888;margin-bottom:10px;"><i class="fas fa-map-marker-alt" style="color:#e74c3c;margin-right:4px;"></i>${escapeHtml(location)}</div>` : ''}
+                                    ${description ? `<div style="font-size:0.82rem;color:#666;margin-bottom:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(description)}</div>` : ''}
+                                    ${amenities.length ? `
+                                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+                                            ${amenities.slice(0, 4).map(a => `<span style="font-size:0.72rem;background:#f0f7ff;color:#003580;padding:3px 8px;border-radius:6px;">${escapeHtml(a)}</span>`).join('')}
+                                            ${amenities.length > 4 ? `<span style="font-size:0.72rem;color:#888;">+${amenities.length - 4}</span>` : ''}
                                         </div>
-                                        <button class="btn-book" style="padding:10px 20px;background:linear-gradient(135deg,#28a745,#20c997);">Book Now</button>
+                                    ` : ''}
+                                    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f0f0f0;">
+                                        <div>
+                                            <span style="font-size:1.4rem;font-weight:700;color:#003580;">${typeof price === 'number' ? currency + price.toLocaleString() : price}</span>
+                                            <span style="font-size:0.8rem;color:#888;">/night</span>
+                                        </div>
+                                        ${hasBookingLink ? `
+                                            <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:6px;padding:10px 20px;background:linear-gradient(135deg,#003580,#0056b3);text-decoration:none;color:white;border-radius:10px;font-weight:600;font-size:0.9rem;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(0,53,128,0.3);">
+                                                <i class="fas fa-external-link-alt"></i> Book Now
+                                            </a>
+                                        ` : `
+                                            <button onclick="searchHotelBooking('${escapeHtml(name)}')" style="padding:10px 20px;background:linear-gradient(135deg,#28a745,#20c997);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.9rem;cursor:pointer;transition:all 0.3s ease;">Book Now</button>
+                                        `}
                                     </div>
                                 </div>
                             </div>
@@ -7799,6 +7887,22 @@
             }).join('')}
                 </div>
             `;
+        }
+
+        /**
+         * Open Google search for flight booking (fallback when no direct link)
+         */
+        function searchFlightBooking(airline, flightNum, time) {
+            const query = encodeURIComponent(`${airline} ${flightNum} ${time} book flight`);
+            window.open(`https://www.google.com/search?q=${query}`, '_blank');
+        }
+
+        /**
+         * Open Google search for hotel booking (fallback when no direct link)
+         */
+        function searchHotelBooking(hotelName) {
+            const query = encodeURIComponent(`${hotelName} book hotel room`);
+            window.open(`https://www.google.com/search?q=${query}`, '_blank');
         }
 
         /**
