@@ -7537,9 +7537,8 @@
                         q: dest,
                         check_in_date: checkin,
                         check_out_date: checkout,
-                        adults: parseInt(guests),
-                        rooms: parseInt(rooms),
-                        sort_by: sort ? parseInt(sort) : undefined
+                        adults: String(guests || '1'),
+                        sort_by: sort || '3'
                     })
                 });
 
