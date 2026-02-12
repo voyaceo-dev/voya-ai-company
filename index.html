@@ -7327,6 +7327,14 @@
                         </select>
                     </div>
                 `;
+
+                // Add filter change handlers
+                setTimeout(() => {
+                    const stopsFilter = document.getElementById('unified-filter-stops');
+                    const sortFilter = document.getElementById('unified-filter-sort');
+                    if (stopsFilter) stopsFilter.addEventListener('change', applyFlightFilters);
+                    if (sortFilter) sortFilter.addEventListener('change', applyFlightFilters);
+                }, 100);
             } else if (tab === 'hotels') {
                 sidebarContainer.style.display = 'block';
                 resultsContainer.style.flex = '';
@@ -7767,7 +7775,7 @@
                         </div>
                         <div style="flex:1;text-align:center;padding:0 8px;position:relative;">
                             <div style="font-size:0.78rem;color:#6b7280;font-weight:600;">${formattedDur}</div>
-                            <div style="height:2px;background:linear-gradient(90deg,${labelColor}40,${labelColor});margin:6px 0;position:relative;border-radius:2px;">
+                            <div style="height:2px;background:linear-gradient(90deg,#d1d5db,${labelColor});margin:6px 0;position:relative;border-radius:2px;">
                                 <div style="position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:${labelColor};"></div>
                                 <div style="position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;border:2px solid ${labelColor};background:white;"></div>
                             </div>
@@ -7801,7 +7809,7 @@
                 const returnToShow = embeddedReturn || pairedReturn;
 
                 return `
-                <div class="flight-card fade-in" style="animation-delay:${index * 0.06}s;display:flex;background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;border:1px solid #e5e7eb;transition:box-shadow 0.2s,transform 0.2s;" onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)';this.style.transform='none'">
+                <div class="flight-card fade-in" data-stops="${(flight.flights?.[0]?.layovers?.length || flight.stops || 0)}" data-price="${typeof (flight.price || 0) === 'number' ? flight.price : parseInt(String(flight.price).replace(/[^0-9]/g, '')) || 0}" data-duration="${flight.flights?.[0]?.duration || flight.duration || 9999}" style="animation-delay:${index * 0.06}s;display:flex;background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;border:1px solid #e5e7eb;transition:box-shadow 0.2s,transform 0.2s;" onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)';this.style.transform='none'">
                     <!-- Left: Flight Details -->
                     <div style="flex:1;padding:18px 20px;">
                         <!-- Airline Row -->
@@ -7877,6 +7885,50 @@
             }
 
             container.innerHTML = html;
+
+            // Store flight data globally for filtering
+            window._currentFlightData = data;
+            window._usedFastAPI = usedFastAPI;
+        }
+
+        /**
+         * Apply flight filters (stops, sort) to displayed flight cards
+         */
+        function applyFlightFilters() {
+            const stopsVal = document.getElementById('unified-filter-stops')?.value || '0';
+            const sortVal = document.getElementById('unified-filter-sort')?.value || '1';
+            const cards = document.querySelectorAll('.flight-card');
+
+            cards.forEach(card => {
+                const cardStops = parseInt(card.dataset.stops) || 0;
+                let show = true;
+
+                // Filter by stops
+                if (stopsVal === '1' && cardStops !== 0) show = false;       // Non-stop only
+                else if (stopsVal === '2' && cardStops !== 1) show = false;  // 1 stop only
+                else if (stopsVal === '3' && cardStops < 2) show = false;    // 2+ stops only
+
+                card.style.display = show ? 'flex' : 'none';
+            });
+
+            // Sort visible cards
+            const container = document.getElementById('unified-results-content');
+            if (!container) return;
+
+            const visibleCards = Array.from(container.querySelectorAll('.flight-card[style*="flex"], .flight-card:not([style*="none"])'));
+            if (visibleCards.length < 2) return;
+
+            const parent = visibleCards[0].parentNode;
+            visibleCards.sort((a, b) => {
+                if (sortVal === '2') { // Cheapest
+                    return (parseInt(a.dataset.price) || 0) - (parseInt(b.dataset.price) || 0);
+                } else if (sortVal === '3') { // Fastest
+                    return (parseInt(a.dataset.duration) || 0) - (parseInt(b.dataset.duration) || 0);
+                }
+                return 0; // Best (default order)
+            });
+
+            visibleCards.forEach(card => parent.appendChild(card));
         }
 
 
@@ -9230,6 +9282,14 @@
                 'srinagar': 'SXR', 'amritsar': 'ATQ', 'patna': 'PAT', 'bhopal': 'BHO',
                 'coimbatore': 'CJB', 'thiruvananthapuram': 'TRV', 'trivandrum': 'TRV',
                 'mangalore': 'IXE', 'visakhapatnam': 'VTZ', 'vizag': 'VTZ',
+                'nashik': 'BOM', 'nasik': 'BOM', 'aurangabad': 'IXU', 'sambhajinagar': 'IXU',
+                'udaipur': 'UDR', 'jodhpur': 'JDH', 'shimla': 'SLV', 'dehradun': 'DED',
+                'rishikesh': 'DED', 'agra': 'AGR', 'ranchi': 'IXR', 'raipur': 'RPR',
+                'madurai': 'IXM', 'mysore': 'BLR', 'mysuru': 'BLR', 'manali': 'KUU',
+                'leh': 'IXL', 'ladakh': 'IXL', 'jammu': 'IXJ', 'dehradun': 'DED',
+                'mussoorie': 'DED', 'darjeeling': 'CCU', 'gangtok': 'BBI',
+                'trichy': 'TRZ', 'tiruchirappalli': 'TRZ', 'allahabad': 'IXD', 'prayagraj': 'IXD',
+                'rajkot': 'RAJ', 'surat': 'STV', 'vadodara': 'BDQ', 'baroda': 'BDQ',
                 'paris': 'CDG', 'tokyo': 'NRT', 'dubai': 'DXB', 'singapore': 'SIN',
                 'bangkok': 'BKK', 'hong kong': 'HKG', 'sydney': 'SYD', 'melbourne': 'MEL',
                 'los angeles': 'LAX', 'san francisco': 'SFO', 'chicago': 'ORD',
