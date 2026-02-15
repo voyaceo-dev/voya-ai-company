@@ -7546,7 +7546,7 @@
                 const toCode = extractAirportCode(to);
 
                 // Call backend - Groq+Tavily is now PRIMARY within backend, SerpAPI is fallback
-                const response = await fetchWithFailover('/api/flights/search', {
+                const response = await authenticatedFetch('/api/flights/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -7609,7 +7609,7 @@
             const sort = document.getElementById('unified-filter-hotel-sort')?.value || '';
 
             try {
-                const response = await fetchWithFailover('/api/hotels/search', {
+                const response = await authenticatedFetch('/api/hotels/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -7667,7 +7667,7 @@
             if (userPrefs) prefs.push(userPrefs);
 
             try {
-                const response = await fetchWithFailover('/api/itinerary/generate', {
+                const response = await authenticatedFetch('/api/itinerary/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
