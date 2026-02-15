@@ -7786,11 +7786,9 @@
             const tripType = data.trip_type || '';
             const source = data.source || '';
 
-            // Detect round-trip: check explicit trip_type, return_flights, 
-            // embedded return legs in SerpAPI flights, or return date input
-            const hasReturnDate = document.getElementById('unified-flight-return')?.value;
-            const hasEmbeddedReturn = allFlights.some(f => f.flights?.length > 1);
-            const isRoundTrip = (tripType === 'round_trip' && returnFlights.length > 0) || hasEmbeddedReturn;
+            // Detect round-trip: backend sends return_flights array from second SerpAPI call
+            // Note: flight.flights[1] is a CONNECTING segment (e.g. DEL→HYD for 1-stop), NOT a return leg
+            const isRoundTrip = returnFlights.length > 0 || tripType === 'round_trip';
 
             if (!allFlights.length) {
                 container.innerHTML = `
@@ -7856,9 +7854,8 @@
             };
 
             // Helper: render one flight card (horizontal layout)
-            const renderFlightCard = (flight, index, pairedReturn = null) => {
+            const renderFlightCard = (flight, index) => {
                 const outbound = flight.flights?.[0] || flight;
-                const embeddedReturn = flight.flights?.[1] || null;
                 const airline = outbound.airline || flight.airline || 'Airline';
                 const flightNum = flight.flight_number || outbound.flight_number || '';
                 const price = flight.price || outbound.price || 'N/A';
@@ -7869,9 +7866,6 @@
                 const airlineAbbr = airline.substring(0, 2).toUpperCase();
                 const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
                 const airlineColor = `hsl(${hue}, 65%, 45%)`;
-
-                // The return leg to show (either embedded from SerpAPI or paired from AI)
-                const returnToShow = embeddedReturn || pairedReturn;
 
                 return `
                 <div class="flight-card fade-in" data-stops="${(flight.flights?.[0]?.layovers?.length || flight.stops || 0)}" data-price="${typeof (flight.price || 0) === 'number' ? flight.price : parseInt(String(flight.price).replace(/[^0-9]/g, '')) || 0}" data-duration="${flight.flights?.[0]?.duration || flight.duration || 9999}" style="animation-delay:${index * 0.06}s;display:flex;background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;border:1px solid #e5e7eb;transition:box-shadow 0.2s,transform 0.2s;" onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)';this.style.transform='none'">
@@ -7889,11 +7883,7 @@
                         <!-- Outbound Leg -->
                         ${renderLegRow(outbound, 'Outbound', airlineColor)}
 
-                        ${returnToShow ? `
-                        <!-- Return Leg -->
-                        <div style="border-top:1px dashed #e5e7eb;margin:4px 0;"></div>
-                        ${renderLegRow(returnToShow, 'Return', '#10b981')}
-                        ` : ''}
+
                     </div>
 
                     <!-- Right: Price + Select -->
@@ -7926,14 +7916,14 @@
             `;
 
             if (isRoundTrip && returnFlights.length > 0) {
-                // AI ROUND-TRIP: Separate outbound and return sections
+                // ROUND-TRIP: Separate outbound and return sections
                 html += `
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:10px;border-left:3px solid #6366f1;">
                         <i class="fas fa-plane-departure" style="color:#6366f1;"></i>
-                        <span style="font-weight:600;color:#4338ca;font-size:0.9rem;">Outbound · ${flights.length} options</span>
+                        <span style="font-weight:600;color:#4338ca;font-size:0.9rem;">Outbound · ${allFlights.length} options</span>
                     </div>
                 `;
-                html += flights.map((f, i) => renderFlightCard(f, i, null)).join('');
+                html += allFlights.map((f, i) => renderFlightCard(f, i)).join('');
 
                 html += `
                     <div style="display:flex;align-items:center;gap:8px;margin:24px 0 12px;padding:10px 14px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:10px;border-left:3px solid #10b981;">
@@ -7941,10 +7931,10 @@
                         <span style="font-weight:600;color:#059669;font-size:0.9rem;">Return · ${returnFlights.length} options</span>
                     </div>
                 `;
-                html += returnFlights.map((f, i) => renderFlightCard(f, i, null)).join('');
+                html += returnFlights.map((f, i) => renderFlightCard(f, i)).join('');
             } else {
-                // ONE-WAY or SERPAPI ROUND-TRIP (each card already shows both legs)
-                html += allFlights.map((f, i) => renderFlightCard(f, i, null)).join('');
+                // ONE-WAY flights
+                html += allFlights.map((f, i) => renderFlightCard(f, i)).join('');
             }
 
             container.innerHTML = html;
