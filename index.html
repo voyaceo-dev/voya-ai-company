@@ -7929,7 +7929,8 @@
             const { outbound, return: retLeg, price, badges, airline, source } = card;
 
             // Airline Info
-            const airlineName = airline || 'Airline';
+            // Airline Info
+            const airlineName = String(airline || 'Airline');
             const airlineAbbr = airlineName.substring(0, 2).toUpperCase();
             const hue = airlineName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
             const airlineColor = `hsl(${hue}, 65%, 45%)`;
@@ -8980,7 +8981,7 @@
 
             // First, fully clean the markdown to identify structure
             let html = '';
-            const content = markdown;
+            const content = String(markdown || '');
 
             // Find all "Day X" patterns (various formats)
             const dayPattern = /(?:#{1,3}\s*)?(?:\*\*)?[Dd]ay\s*(\d+)[:\s\-–—]*([^\n]*)/g;
@@ -9273,7 +9274,7 @@
                             <div style="padding:10px;max-width:220px;">
                                 <h4 style="margin:0 0 8px 0;color:#1a1a2e;font-size:1rem;">${escapeHtml(activity.name || activityLocation)}</h4>
                                 ${activity.time ? `<p style="margin:0 0 5px 0;color:#666;font-size:0.85rem;"><i class="fas fa-clock" style="margin-right:5px;"></i>${activity.time}</p>` : ''}
-                                ${activity.description ? `<p style="margin:0;color:#444;font-size:0.9rem;line-height:1.4;">${escapeHtml(activity.description.substring(0, 100))}${activity.description.length > 100 ? '...' : ''}</p>` : ''}
+                                ${activity.description ? `<p style="margin:0;color:#444;font-size:0.9rem;line-height:1.4;">${escapeHtml(String(activity.description).substring(0, 100))}${String(activity.description).length > 100 ? '...' : ''}</p>` : ''}
                             </div>
                         `;
 
