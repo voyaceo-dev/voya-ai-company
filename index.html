@@ -5674,6 +5674,59 @@
             flex: 1;
             min-width: 150px;
             transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .city-autocomplete {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .city-autocomplete.show {
+            display: block;
+        }
+
+        .city-autocomplete-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .city-autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .city-autocomplete-item:hover {
+            background: #eef2ff;
+        }
+
+        .city-autocomplete-item .city-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.9rem;
+        }
+
+        .city-autocomplete-item .city-code {
+            font-weight: 700;
+            color: #003580;
+            font-size: 0.82rem;
+            background: #eef2ff;
+            padding: 2px 8px;
+            border-radius: 6px;
         }
 
         .unified-input-group:focus-within {
@@ -6764,6 +6817,9 @@
         // Backend order for round-robin (alternates between Supabase and Convex)
         const BACKEND_ORDER = ['supabase', 'convex'];
 
+        // Mapbox token (single declaration for map rendering + geocoding)
+        const MAPBOX_TOKEN = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
+
         // Track which backend to use next (persisted in localStorage)
         let backendToggle = parseInt(localStorage.getItem('voya_backend_toggle') || '0');
 
@@ -7723,11 +7779,20 @@
             if (placeholder) placeholder.style.display = 'none';
 
             const flights = data.flights || data.best_flights || [];
+            // Also include other_flights from SerpAPI
+            const otherFlights = data.other_flights || [];
+            const allFlights = [...flights, ...otherFlights];
             const returnFlights = data.return_flights || [];
             const tripType = data.trip_type || '';
             const source = data.source || '';
 
-            if (!flights.length) {
+            // Detect round-trip: check explicit trip_type, return_flights, 
+            // embedded return legs in SerpAPI flights, or return date input
+            const hasReturnDate = document.getElementById('unified-flight-return')?.value;
+            const hasEmbeddedReturn = allFlights.some(f => f.flights?.length > 1);
+            const isRoundTrip = (tripType === 'round_trip' && returnFlights.length > 0) || hasEmbeddedReturn;
+
+            if (!allFlights.length) {
                 container.innerHTML = `
                     <div class="unified-placeholder">
                         <i class="fas fa-plane-slash"></i>
@@ -7851,19 +7916,17 @@
             };
 
             // ===== Build the page =====
-            const isRoundTrip = tripType === 'round_trip' && returnFlights.length > 0;
-
             let html = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:14px 18px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">${flights.length} ${isRoundTrip ? 'outbound' : ''} flights found</span>
+                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">${allFlights.length} ${isRoundTrip ? 'round-trip' : ''} flights found</span>
                         ${sourceBadge}
                     </div>
                 </div>
             `;
 
-            if (isRoundTrip) {
-                // ROUND-TRIP: Show outbound cards, then return cards
+            if (isRoundTrip && returnFlights.length > 0) {
+                // AI ROUND-TRIP: Separate outbound and return sections
                 html += `
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:10px;border-left:3px solid #6366f1;">
                         <i class="fas fa-plane-departure" style="color:#6366f1;"></i>
@@ -7880,8 +7943,8 @@
                 `;
                 html += returnFlights.map((f, i) => renderFlightCard(f, i, null)).join('');
             } else {
-                // ONE-WAY or SerpAPI (may have embedded return)
-                html += flights.map((f, i) => renderFlightCard(f, i, null)).join('');
+                // ONE-WAY or SERPAPI ROUND-TRIP (each card already shows both legs)
+                html += allFlights.map((f, i) => renderFlightCard(f, i, null)).join('');
             }
 
             container.innerHTML = html;
@@ -8329,7 +8392,7 @@
             container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e8f4f8;border-radius:16px;"><p style="color:#0369a1;"><i class="fas fa-spinner fa-spin"></i> Loading map...</p></div>';
 
             // Set token
-            mapboxgl.accessToken = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
+            mapboxgl.accessToken = MAPBOX_TOKEN;
 
             try {
                 // 1. Geocode destination
@@ -8515,7 +8578,7 @@
 
             // Set access token
             if (!mapboxgl.accessToken) {
-                mapboxgl.accessToken = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
+                mapboxgl.accessToken = MAPBOX_TOKEN;
             }
 
             // Get the destination for fallback geocoding
@@ -9078,7 +9141,7 @@
             }
 
             // Set access token
-            mapboxgl.accessToken = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
+            mapboxgl.accessToken = MAPBOX_TOKEN;
 
             try {
                 // Geocode the destination to get initial center
@@ -9263,55 +9326,52 @@
         }
 
 
-        /**
-         * Extract airport code from input (handles "City (CODE)" format)
-         */
+        // Shared city-to-IATA airport code dictionary (used by autocomplete and extractAirportCode)
+        const CITY_TO_AIRPORT = {
+            'london': 'LHR', 'new york': 'JFK', 'new delhi': 'DEL', 'delhi': 'DEL',
+            'mumbai': 'BOM', 'bombay': 'BOM', 'bangalore': 'BLR', 'bengaluru': 'BLR',
+            'chennai': 'MAA', 'madras': 'MAA', 'kolkata': 'CCU', 'calcutta': 'CCU',
+            'hyderabad': 'HYD', 'ahmedabad': 'AMD', 'pune': 'PNQ', 'goa': 'GOI',
+            'jaipur': 'JAI', 'lucknow': 'LKO', 'kochi': 'COK', 'cochin': 'COK',
+            'chandigarh': 'IXC', 'indore': 'IDR', 'nagpur': 'NAG', 'varanasi': 'VNS',
+            'srinagar': 'SXR', 'amritsar': 'ATQ', 'patna': 'PAT', 'bhopal': 'BHO',
+            'coimbatore': 'CJB', 'thiruvananthapuram': 'TRV', 'trivandrum': 'TRV',
+            'mangalore': 'IXE', 'visakhapatnam': 'VTZ', 'vizag': 'VTZ',
+            'nashik': 'BOM', 'nasik': 'BOM', 'aurangabad': 'IXU', 'sambhajinagar': 'IXU',
+            'udaipur': 'UDR', 'jodhpur': 'JDH', 'shimla': 'SLV', 'dehradun': 'DED',
+            'rishikesh': 'DED', 'agra': 'AGR', 'ranchi': 'IXR', 'raipur': 'RPR',
+            'madurai': 'IXM', 'mysore': 'BLR', 'mysuru': 'BLR', 'manali': 'KUU',
+            'leh': 'IXL', 'ladakh': 'IXL', 'jammu': 'IXJ',
+            'mussoorie': 'DED', 'darjeeling': 'CCU', 'gangtok': 'BBI',
+            'trichy': 'TRZ', 'tiruchirappalli': 'TRZ', 'allahabad': 'IXD', 'prayagraj': 'IXD',
+            'rajkot': 'RAJ', 'surat': 'STV', 'vadodara': 'BDQ', 'baroda': 'BDQ',
+            'paris': 'CDG', 'tokyo': 'NRT', 'dubai': 'DXB', 'singapore': 'SIN',
+            'bangkok': 'BKK', 'hong kong': 'HKG', 'sydney': 'SYD', 'melbourne': 'MEL',
+            'los angeles': 'LAX', 'san francisco': 'SFO', 'chicago': 'ORD',
+            'miami': 'MIA', 'toronto': 'YYZ', 'vancouver': 'YVR',
+            'istanbul': 'IST', 'rome': 'FCO', 'berlin': 'BER', 'madrid': 'MAD',
+            'amsterdam': 'AMS', 'barcelona': 'BCN', 'zurich': 'ZRH', 'vienna': 'VIE',
+            'moscow': 'SVO', 'beijing': 'PEK', 'shanghai': 'PVG', 'seoul': 'ICN',
+            'kuala lumpur': 'KUL', 'manila': 'MNL', 'jakarta': 'CGK',
+            'cairo': 'CAI', 'nairobi': 'NBO', 'johannesburg': 'JNB',
+            'doha': 'DOH', 'riyadh': 'RUH', 'muscat': 'MCT', 'abu dhabi': 'AUH',
+            'colombo': 'CMB', 'kathmandu': 'KTM', 'dhaka': 'DAC', 'male': 'MLE',
+            'bali': 'DPS', 'denpasar': 'DPS', 'phuket': 'HKT',
+            'frankfurt': 'FRA', 'munich': 'MUC', 'lisbon': 'LIS', 'athens': 'ATH',
+            'helsinki': 'HEL', 'oslo': 'OSL', 'stockholm': 'ARN', 'copenhagen': 'CPH',
+            'dublin': 'DUB', 'edinburgh': 'EDI', 'manchester': 'MAN',
+            'washington': 'IAD', 'boston': 'BOS', 'seattle': 'SEA', 'denver': 'DEN',
+            'houston': 'IAH', 'dallas': 'DFW', 'atlanta': 'ATL', 'orlando': 'MCO',
+            'las vegas': 'LAS', 'honolulu': 'HNL', 'san diego': 'SAN',
+            'auckland': 'AKL', 'perth': 'PER', 'brisbane': 'BNE',
+            'taipei': 'TPE', 'osaka': 'KIX', 'hanoi': 'HAN',
+            'ho chi minh': 'SGN', 'saigon': 'SGN', 'phnom penh': 'PNH'
+        };
+
         function extractAirportCode(input) {
             // Check for explicit code in parentheses, e.g. "London (LHR)"
             const match = input.match(/\(([A-Z]{3})\)/);
             if (match) return match[1];
-
-            // City-to-IATA airport code dictionary
-            const CITY_TO_AIRPORT = {
-                'london': 'LHR', 'new york': 'JFK', 'new delhi': 'DEL', 'delhi': 'DEL',
-                'mumbai': 'BOM', 'bombay': 'BOM', 'bangalore': 'BLR', 'bengaluru': 'BLR',
-                'chennai': 'MAA', 'madras': 'MAA', 'kolkata': 'CCU', 'calcutta': 'CCU',
-                'hyderabad': 'HYD', 'ahmedabad': 'AMD', 'pune': 'PNQ', 'goa': 'GOI',
-                'jaipur': 'JAI', 'lucknow': 'LKO', 'kochi': 'COK', 'cochin': 'COK',
-                'chandigarh': 'IXC', 'indore': 'IDR', 'nagpur': 'NAG', 'varanasi': 'VNS',
-                'srinagar': 'SXR', 'amritsar': 'ATQ', 'patna': 'PAT', 'bhopal': 'BHO',
-                'coimbatore': 'CJB', 'thiruvananthapuram': 'TRV', 'trivandrum': 'TRV',
-                'mangalore': 'IXE', 'visakhapatnam': 'VTZ', 'vizag': 'VTZ',
-                'nashik': 'BOM', 'nasik': 'BOM', 'aurangabad': 'IXU', 'sambhajinagar': 'IXU',
-                'udaipur': 'UDR', 'jodhpur': 'JDH', 'shimla': 'SLV', 'dehradun': 'DED',
-                'rishikesh': 'DED', 'agra': 'AGR', 'ranchi': 'IXR', 'raipur': 'RPR',
-                'madurai': 'IXM', 'mysore': 'BLR', 'mysuru': 'BLR', 'manali': 'KUU',
-                'leh': 'IXL', 'ladakh': 'IXL', 'jammu': 'IXJ', 'dehradun': 'DED',
-                'mussoorie': 'DED', 'darjeeling': 'CCU', 'gangtok': 'BBI',
-                'trichy': 'TRZ', 'tiruchirappalli': 'TRZ', 'allahabad': 'IXD', 'prayagraj': 'IXD',
-                'rajkot': 'RAJ', 'surat': 'STV', 'vadodara': 'BDQ', 'baroda': 'BDQ',
-                'paris': 'CDG', 'tokyo': 'NRT', 'dubai': 'DXB', 'singapore': 'SIN',
-                'bangkok': 'BKK', 'hong kong': 'HKG', 'sydney': 'SYD', 'melbourne': 'MEL',
-                'los angeles': 'LAX', 'san francisco': 'SFO', 'chicago': 'ORD',
-                'miami': 'MIA', 'toronto': 'YYZ', 'vancouver': 'YVR',
-                'istanbul': 'IST', 'rome': 'FCO', 'berlin': 'BER', 'madrid': 'MAD',
-                'amsterdam': 'AMS', 'barcelona': 'BCN', 'zurich': 'ZRH', 'vienna': 'VIE',
-                'moscow': 'SVO', 'beijing': 'PEK', 'shanghai': 'PVG', 'seoul': 'ICN',
-                'kuala lumpur': 'KUL', 'manila': 'MNL', 'jakarta': 'CGK',
-                'cairo': 'CAI', 'nairobi': 'NBO', 'johannesburg': 'JNB',
-                'doha': 'DOH', 'riyadh': 'RUH', 'muscat': 'MCT', 'abu dhabi': 'AUH',
-                'colombo': 'CMB', 'kathmandu': 'KTM', 'dhaka': 'DAC', 'male': 'MLE',
-                'bali': 'DPS', 'denpasar': 'DPS', 'phuket': 'HKT',
-                'frankfurt': 'FRA', 'munich': 'MUC', 'lisbon': 'LIS', 'athens': 'ATH',
-                'helsinki': 'HEL', 'oslo': 'OSL', 'stockholm': 'ARN', 'copenhagen': 'CPH',
-                'dublin': 'DUB', 'edinburgh': 'EDI', 'manchester': 'MAN',
-                'washington': 'IAD', 'boston': 'BOS', 'seattle': 'SEA', 'denver': 'DEN',
-                'houston': 'IAH', 'dallas': 'DFW', 'atlanta': 'ATL', 'orlando': 'MCO',
-                'las vegas': 'LAS', 'honolulu': 'HNL', 'san diego': 'SAN',
-                'auckland': 'AKL', 'perth': 'PER', 'brisbane': 'BNE',
-                'taipei': 'TPE', 'osaka': 'KIX', 'hanoi': 'HAN',
-                'ho chi minh': 'SGN', 'saigon': 'SGN', 'phnom penh': 'PNH'
-            };
 
             const normalized = input.trim().toLowerCase();
             if (CITY_TO_AIRPORT[normalized]) return CITY_TO_AIRPORT[normalized];
@@ -9323,6 +9383,78 @@
             // Last resort: slice first 3 chars
             return cleaned.slice(0, 3);
         }
+
+        /**
+         * Setup city autocomplete on a flight input field
+         */
+        function setupCityAutocomplete(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            const parent = input.closest('.unified-input-group');
+            if (!parent) return;
+
+            // Create dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'city-autocomplete';
+            dropdown.id = inputId + '-autocomplete';
+            parent.appendChild(dropdown);
+
+            // Deduplicate cities (remove alternate names that map to same code)
+            const seen = new Set();
+            const uniqueCities = [];
+            for (const [city, code] of Object.entries(CITY_TO_AIRPORT)) {
+                const key = city + ':' + code;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueCities.push({ city, code });
+                }
+            }
+
+            input.addEventListener('input', () => {
+                const val = input.value.trim().toLowerCase();
+                if (val.length < 1) { dropdown.classList.remove('show'); return; }
+
+                const matches = uniqueCities.filter(c =>
+                    c.city.includes(val) || c.code.toLowerCase().includes(val)
+                ).slice(0, 8);
+
+                if (!matches.length) { dropdown.classList.remove('show'); return; }
+
+                dropdown.innerHTML = matches.map(m => `
+                    <div class="city-autocomplete-item" data-city="${m.city}" data-code="${m.code}">
+                        <span class="city-name">${m.city.charAt(0).toUpperCase() + m.city.slice(1)}</span>
+                        <span class="city-code">${m.code}</span>
+                    </div>
+                `).join('');
+
+                dropdown.classList.add('show');
+
+                // Click handler for items
+                dropdown.querySelectorAll('.city-autocomplete-item').forEach(item => {
+                    item.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        const city = item.dataset.city;
+                        const code = item.dataset.code;
+                        input.value = city.charAt(0).toUpperCase() + city.slice(1) + ' (' + code + ')';
+                        dropdown.classList.remove('show');
+                    });
+                });
+            });
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => dropdown.classList.remove('show'), 150);
+            });
+            input.addEventListener('focus', () => {
+                if (input.value.trim().length >= 1) input.dispatchEvent(new Event('input'));
+            });
+        }
+
+        // Initialize autocomplete on both flight input fields
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCityAutocomplete('unified-flight-from');
+            setupCityAutocomplete('unified-flight-to');
+        });
 
         // ==================== TRIP TYPE SELECTION ====================
 
@@ -11443,7 +11575,7 @@
 
             // Use Mapbox geocoding API
             try {
-                const token = mapboxgl.accessToken || 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
+                const token = mapboxgl.accessToken || MAPBOX_TOKEN;
                 const response = await fetch(
                     `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(destination)}.json?access_token=${token}&limit=1`
                 );
@@ -11546,7 +11678,7 @@
             const currentGenerationId = mapGenerationId;
 
             // mapbox token
-            mapboxgl.accessToken = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWwwZG85c2owOTQzM2VxczUxNHhwMXhsIn0.VimrSd-UaXdO4jAI6ShvyQ';
+            mapboxgl.accessToken = MAPBOX_TOKEN;
 
             // Default coordinates (will be geocoded based on destination)
             let defaultCoords = await getDestinationCoordinates(destination);
