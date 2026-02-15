@@ -7778,19 +7778,15 @@
             const placeholder = document.getElementById('unified-placeholder');
             if (placeholder) placeholder.style.display = 'none';
 
-            const flights = data.flights || data.best_flights || [];
-            // Also include other_flights from SerpAPI
-            const otherFlights = data.other_flights || [];
-            const allFlights = [...flights, ...otherFlights];
-            const returnFlights = data.return_flights || [];
-            const tripType = data.trip_type || '';
-            const source = data.source || '';
+            const outboundList = data.flights || data.best_flights || [];
+            const returnList = data.return_flights || [];
+            // Backend might send "trip_type" or we infer from return list
+            const isRoundTrip = (data.trip_type === 'round_trip') || (returnList.length > 0);
 
-            // Detect round-trip: backend sends return_flights array from second SerpAPI call
-            // Note: flight.flights[1] is a CONNECTING segment (e.g. DEL→HYD for 1-stop), NOT a return leg
-            const isRoundTrip = returnFlights.length > 0 || tripType === 'round_trip';
+            // Collect all unique sources for the top summary
+            const sources = data.sources || (data.source ? [data.source] : []);
 
-            if (!allFlights.length) {
+            if (!outboundList.length) {
                 container.innerHTML = `
                     <div class="unified-placeholder">
                         <i class="fas fa-plane-slash"></i>
@@ -7801,147 +7797,207 @@
                 return;
             }
 
-            // Source badge
-            let sourceBadge = '';
-            if (source.includes('groq')) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">⚡ Groq AI</span>';
-            } else if (source.includes('openrouter')) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">🔄 OpenRouter</span>';
-            } else if (source.includes('serpapi') || !source.includes('ai')) {
-                sourceBadge = '<span style="background:#e5e7eb;color:#374151;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">Google Flights</span>';
-            } else if (usedFastAPI) {
-                sourceBadge = '<span style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:500;">⚡ AI</span>';
+            // --- PAIRING LOGIC ---
+            let displayCards = [];
+
+            if (!isRoundTrip) {
+                // One-way: just wrap outbound flights
+                displayCards = outboundList.map(f => ({
+                    outbound: f,
+                    return: null,
+                    price: extractPrice(f.price),
+                    duration: extractDuration(f.duration),
+                    airline: f.airline,
+                    stops: f.stops || f.flights?.[0]?.layovers?.length || 0,
+                    source: f.source || data.source
+                }));
+            } else {
+                // Round-trip: Create Combined Itineraries
+                // Strategy: For each outbound, find the Best fitting return (Same Airline > Cheapest)
+
+                // Sort returns by price for easier "cheapest" pick
+                const sortedReturns = [...returnList].sort((a, b) => extractPrice(a.price) - extractPrice(b.price));
+
+                displayCards = outboundList.map(out => {
+                    const outAirline = out.airline;
+                    // Try to find same airline return
+                    let bestRet = sortedReturns.find(r => r.airline === outAirline);
+                    // Fallback to cheapest return
+                    if (!bestRet) bestRet = sortedReturns[0];
+
+                    if (!bestRet) return null; // Should not happen if returns exist
+
+                    // Combined Price calculation
+                    // If backend gives per-leg pricing, sum them. If SerpAPI gives total, use outbound's price (often total)
+                    // We assume data.price is per leg usually in our new parallel backend
+                    const outPrice = extractPrice(out.price);
+                    const retPrice = extractPrice(bestRet.price);
+                    const totalPrice = outPrice + retPrice;
+
+                    return {
+                        outbound: out,
+                        return: bestRet,
+                        price: totalPrice,
+                        duration: extractDuration(out.duration) + extractDuration(bestRet.duration),
+                        airline: out.airline, // Primary airline
+                        stops: (out.stops || 0), // Use outbound stops for filtering primary
+                        source: out.source || data.source
+                    };
+                }).filter(Boolean);
             }
 
-            // Helper: render a single flight leg row
-            const renderLegRow = (legData, label, labelColor) => {
-                const depRaw = legData.departure_airport?.time || legData.departure_time || '--:--';
-                const arrRaw = legData.arrival_airport?.time || legData.arrival_time || '--:--';
-                const dep = formatFlightTime(depRaw);
-                const arr = formatFlightTime(arrRaw);
-                const depDate = formatFlightDate(depRaw);
-                const arrDate = formatFlightDate(arrRaw);
-                const depCode = legData.departure_airport?.id || legData.departure_code || legData.from || '';
-                const arrCode = legData.arrival_airport?.id || legData.arrival_code || legData.to || '';
-                const dur = legData.duration || legData.total_duration || '--';
-                const formattedDur = formatDuration(dur);
-                const stops = legData.layovers?.length || legData.stops || 0;
-                const stopsNum = typeof stops === 'string' ? parseInt(stops) || 0 : stops;
-                const isDirect = stopsNum === 0;
+            // --- CALCULATE BADGES ---
+            // Find Min Price, Min Duration for scoring
+            let minPrice = Infinity;
+            let minDur = Infinity;
+            displayCards.forEach(c => {
+                if (c.price < minPrice) minPrice = c.price;
+                if (c.duration < minDur) minDur = c.duration;
+            });
 
-                return `
-                    <div style="display:flex;align-items:center;gap:0;padding:8px 0;">
-                        <div style="width:90px;text-align:center;">
-                            <div style="font-size:1.3rem;font-weight:700;color:#1a1a2e;line-height:1.2;">${dep}</div>
-                            ${depDate ? `<div style="font-size:0.68rem;color:#9ca3af;margin-top:1px;">${depDate}</div>` : ''}
-                            ${depCode ? `<div style="font-size:0.75rem;color:#6b7280;font-weight:500;">${depCode}</div>` : ''}
-                        </div>
-                        <div style="flex:1;text-align:center;padding:0 8px;position:relative;">
-                            <div style="font-size:0.78rem;color:#6b7280;font-weight:600;">${formattedDur}</div>
-                            <div style="height:2px;background:linear-gradient(90deg,#d1d5db,${labelColor});margin:6px 0;position:relative;border-radius:2px;">
-                                <div style="position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:${labelColor};"></div>
-                                <div style="position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;border:2px solid ${labelColor};background:white;"></div>
-                            </div>
-                            <div style="font-size:0.72rem;font-weight:600;color:${isDirect ? '#10b981' : '#f59e0b'};">${isDirect ? '✈ Non-stop' : stopsNum + (stopsNum === 1 ? ' stop' : ' stops')}</div>
-                        </div>
-                        <div style="width:90px;text-align:center;">
-                            <div style="font-size:1.3rem;font-weight:700;color:#1a1a2e;line-height:1.2;">${arr}</div>
-                            ${arrDate ? `<div style="font-size:0.68rem;color:#9ca3af;margin-top:1px;">${arrDate}</div>` : ''}
-                            ${arrCode ? `<div style="font-size:0.75rem;color:#6b7280;font-weight:500;">${arrCode}</div>` : ''}
-                        </div>
-                    </div>
-                `;
-            };
+            // Score: 50% Price, 30% Duration, 20% Stops
+            displayCards.forEach(c => {
+                const priceScore = (c.price - minPrice) / (minPrice || 1);
+                const durScore = (c.duration - minDur) / (minDur || 1);
+                c.score = (priceScore * 0.5) + (durScore * 0.3) + (c.stops * 0.1);
+                c.badges = [];
+                if (c.price === minPrice) c.badges.push('cheapest');
+                if (c.duration === minDur) c.badges.push('fastest');
+            });
 
-            // Helper: render one flight card (horizontal layout)
-            const renderFlightCard = (flight, index) => {
-                const outbound = flight.flights?.[0] || flight;
-                const airline = outbound.airline || flight.airline || 'Airline';
-                const flightNum = flight.flight_number || outbound.flight_number || '';
-                const price = flight.price || outbound.price || 'N/A';
-                const bookingLink = flight.booking_link || outbound.booking_link || '';
-                const hasBookingLink = bookingLink && bookingLink !== '#' && bookingLink !== 'N/A' && bookingLink.startsWith('http');
-
-                // Determine airline abbreviation & color
-                const airlineAbbr = airline.substring(0, 2).toUpperCase();
-                const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
-                const airlineColor = `hsl(${hue}, 65%, 45%)`;
-
-                return `
-                <div class="flight-card fade-in" data-stops="${(flight.flights?.[0]?.layovers?.length || flight.stops || 0)}" data-price="${typeof (flight.price || 0) === 'number' ? flight.price : parseInt(String(flight.price).replace(/[^0-9]/g, '')) || 0}" data-duration="${flight.flights?.[0]?.duration || flight.duration || 9999}" style="animation-delay:${index * 0.06}s;display:flex;background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;border:1px solid #e5e7eb;transition:box-shadow 0.2s,transform 0.2s;" onmouseenter="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.12)';this.style.transform='translateY(-2px)'" onmouseleave="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)';this.style.transform='none'">
-                    <!-- Left: Flight Details -->
-                    <div style="flex:1;padding:18px 20px;">
-                        <!-- Airline Row -->
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                            <div style="width:36px;height:36px;border-radius:8px;background:${airlineColor}15;color:${airlineColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;border:1px solid ${airlineColor}30;">${airlineAbbr}</div>
-                            <div>
-                                <div style="font-weight:600;font-size:0.95rem;color:#1f2937;">${escapeHtml(airline)}</div>
-                                ${flightNum ? `<div style="font-size:0.72rem;color:#9ca3af;">${flightNum}</div>` : ''}
-                            </div>
-                        </div>
-
-                        <!-- Outbound Leg -->
-                        ${renderLegRow(outbound, 'Outbound', airlineColor)}
+            // Mark Best (lowest score)
+            const bestCard = displayCards.reduce((prev, curr) => (prev.score < curr.score ? prev : curr), displayCards[0]);
+            if (bestCard) bestCard.badges.push('best');
 
 
-                    </div>
+            // --- RENDER FUNCTIONS ---
+            const sourcesText = sources.map(s => {
+                if (s.includes('groq')) return '⚡ Groq AI';
+                if (s.includes('serp')) return 'Google Flights';
+                if (s.includes('tavily')) return 'Tavily';
+                return 'AI';
+            }).join(' + ');
 
-                    <!-- Right: Price + Select -->
-                    <div style="width:155px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 16px;border-left:1px solid #e5e7eb;background:#f9fafb;">
-                        <div style="font-size:0.72rem;color:#9ca3af;margin-bottom:2px;">from</div>
-                        <div style="font-size:1.5rem;font-weight:800;color:#1f2937;line-height:1.1;">₹${typeof price === 'number' ? price.toLocaleString() : price}</div>
-                        <div style="font-size:0.68rem;color:#9ca3af;margin-bottom:12px;">per person</div>
-                        ${hasBookingLink ? `
-                            <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px 0;background:#1f2937;color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.85rem;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#1f2937'">
-                                Select <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </a>
-                        ` : `
-                            <button onclick="searchFlightBooking('${escapeHtml(airline)}', '${flightNum}', '${outbound.departure_time || ''}')" style="width:100%;padding:10px 0;background:#1f2937;color:white;border:none;border-radius:8px;font-weight:600;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#1f2937'">
-                                Select <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </button>
-                        `}
-                    </div>
-                </div>
-                `;
-            };
-
-            // ===== Build the page =====
             let html = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:14px 18px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">${allFlights.length} ${isRoundTrip ? 'round-trip' : ''} flights found</span>
-                        ${sourceBadge}
+                        <span style="font-size:1.05rem;font-weight:700;color:#1f2937;">${displayCards.length} options found</span>
+                        ${sourcesText ? `<span style="background:#f3f4f6;color:#4b5563;padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;">via ${sourcesText}</span>` : ''}
                     </div>
                 </div>
             `;
 
-            if (isRoundTrip && returnFlights.length > 0) {
-                // ROUND-TRIP: Separate outbound and return sections
-                html += `
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:10px;border-left:3px solid #6366f1;">
-                        <i class="fas fa-plane-departure" style="color:#6366f1;"></i>
-                        <span style="font-weight:600;color:#4338ca;font-size:0.9rem;">Outbound · ${allFlights.length} options</span>
-                    </div>
-                `;
-                html += allFlights.map((f, i) => renderFlightCard(f, i)).join('');
-
-                html += `
-                    <div style="display:flex;align-items:center;gap:8px;margin:24px 0 12px;padding:10px 14px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:10px;border-left:3px solid #10b981;">
-                        <i class="fas fa-plane-arrival" style="color:#10b981;"></i>
-                        <span style="font-weight:600;color:#059669;font-size:0.9rem;">Return · ${returnFlights.length} options</span>
-                    </div>
-                `;
-                html += returnFlights.map((f, i) => renderFlightCard(f, i)).join('');
-            } else {
-                // ONE-WAY flights
-                html += allFlights.map((f, i) => renderFlightCard(f, i)).join('');
-            }
+            html += displayCards.map((card, index) => renderCombinedCard(card, index)).join('');
 
             container.innerHTML = html;
+            window._currentFlightCards = displayCards; // Store for filtering
+        }
 
-            // Store flight data globally for filtering
-            window._currentFlightData = data;
-            window._usedFastAPI = usedFastAPI;
+        // Helper: Extract numeric price
+        function extractPrice(price) {
+            if (typeof price === 'number') return price;
+            if (!price) return 0;
+            return parseInt(String(price).replace(/[^0-9]/g, '')) || 0;
+        }
+
+        // Helper: Extract duration in minutes
+        function extractDuration(durStr) {
+            if (!durStr) return 0;
+            // Format: "2h 15m" or "145" (minutes)
+            if (String(durStr).match(/^\d+$/)) return parseInt(durStr);
+            const h = durStr.match(/(\d+)h/);
+            const m = durStr.match(/(\d+)m/);
+            return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0);
+        }
+
+        function renderCombinedCard(card, index) {
+            const { outbound, return: retLeg, price, badges, airline, source } = card;
+
+            // Airline Info
+            const airlineAbbr = airline.substring(0, 2).toUpperCase();
+            const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
+            const airlineColor = `hsl(${hue}, 65%, 45%)`;
+
+            // Badges HTML
+            let badgesHtml = '';
+            if (badges.includes('cheapest')) badgesHtml += `<span style="background:#dcfce7;color:#166534;padding:4px 8px;border-radius:4px;font-size:0.7rem;font-weight:700;margin-right:6px;">CHEAPEST</span>`;
+            if (badges.includes('best')) badgesHtml += `<span style="background:#dbeafe;color:#1e40af;padding:4px 8px;border-radius:4px;font-size:0.7rem;font-weight:700;margin-right:6px;">BEST</span>`;
+            if (badges.includes('fastest')) badgesHtml += `<span style="background:#ffedd5;color:#9a3412;padding:4px 8px;border-radius:4px;font-size:0.7rem;font-weight:700;margin-right:6px;">FASTEST</span>`;
+
+            // Source Badge
+            let sourceBadge = '';
+            if (source?.includes('groq')) sourceBadge = `<span style="color:#7c3aed;font-size:0.7rem;font-weight:600;margin-left:auto;"><i class="fas fa-bolt"></i> Groq</span>`;
+            else if (source?.includes('serp')) sourceBadge = `<span style="color:#4b5563;font-size:0.7rem;font-weight:600;margin-left:auto;"><i class="fab fa-google"></i> Google</span>`;
+
+            return `
+            <div class="flight-card fade-in" data-stops="${card.stops}" data-price="${price}" data-duration="${card.duration}" style="animation-delay:${index * 0.05}s;background:#fff;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:1px solid #e5e7eb;overflow:hidden;transition:transform 0.2s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform='none'">
+                ${badgesHtml ? `<div style="padding:8px 16px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;">${badgesHtml} ${sourceBadge}</div>` : ''}
+                
+                <div style="display:flex;">
+                    <!-- FLIGHT LEGS -->
+                    <div style="flex:1;padding:16px 20px;">
+                        
+                        <!-- Header: Airline -->
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                            <div style="width:32px;height:32px;border-radius:6px;background:${airlineColor}15;color:${airlineColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;">${airlineAbbr}</div>
+                            <div style="font-weight:700;color:#1f2937;font-size:0.95rem;">${escapeHtml(airline)}</div>
+                        </div>
+
+                        <!-- Outbound Row -->
+                        ${renderLegRowSimple(outbound, 'Outbound')}
+                        
+                        ${retLeg ? `
+                            <div style="border-top:1px dashed #e5e7eb;margin:12px 0;"></div>
+                            <!-- Return Row -->
+                            ${renderLegRowSimple(retLeg, 'Return')}
+                        ` : ''}
+                    </div>
+
+                    <!-- PRICE & ACTION -->
+                    <div style="width:160px;background:#f9fafb;border-left:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+                        <div style="font-size:1.6rem;font-weight:800;color:#111827;">₹${price.toLocaleString()}</div>
+                        <div style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">total price</div>
+                        <button onclick="searchFlightBooking('${escapeHtml(airline)}', '${escapeHtml(card.outbound.flight_number)}', '${escapeHtml(card.outbound.departure_time)}')" style="width:100%;padding:10px;background:#111827;color:white;border-radius:8px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#111827'">
+                            Select <i class="fas fa-arrow-right" style="font-size:0.8rem;margin-left:4px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderLegRowSimple(leg, type) {
+            const dep = formatFlightTime(leg.departure_airport?.time || leg.departure_time);
+            const arr = formatFlightTime(leg.arrival_airport?.time || leg.arrival_time);
+            const dur = formatDuration(leg.duration || leg.total_duration);
+            const stops = leg.layovers?.length || leg.stops || 0;
+            const stopsText = stops === 0 ? 'Direct' : `${stops} stop${stops > 1 ? 's' : ''}`;
+            const stopsColor = stops === 0 ? '#16a34a' : '#ea580c';
+            const codeFrom = leg.departure_airport?.id || leg.departure_code || leg.from || '';
+            const codeTo = leg.arrival_airport?.id || leg.arrival_code || leg.to || '';
+
+            return `
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div style="width:60px;text-align:right;">
+                        <div style="font-size:1.2rem;font-weight:700;color:#1f2937;line-height:1;">${dep}</div>
+                        <div style="font-size:0.8rem;color:#6b7280;">${codeFrom}</div>
+                    </div>
+                    
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:0 10px;">
+                        <div style="font-size:0.8rem;color:#4b5563;margin-bottom:2px;">${dur}</div>
+                        <div style="width:100%;height:2px;background:#e5e7eb;position:relative;">
+                            <div style="position:absolute;top:-3px;right:0;width:8px;height:8px;border-radius:50%;background:#9ca3af;"></div>
+                            <i class="fas fa-plane" style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);color:#9ca3af;font-size:0.8rem;"></i>
+                        </div>
+                        <div style="font-size:0.75rem;color:${stopsColor};font-weight:600;margin-top:4px;">${stopsText}</div>
+                    </div>
+
+                    <div style="width:60px;text-align:left;">
+                        <div style="font-size:1.2rem;font-weight:700;color:#1f2937;line-height:1;">${arr}</div>
+                        <div style="font-size:0.8rem;color:#6b7280;">${codeTo}</div>
+                    </div>
+                </div>
+            `;
         }
 
         /**
@@ -7961,27 +8017,32 @@
                 else if (stopsVal === '2' && cardStops !== 1) show = false;  // 1 stop only
                 else if (stopsVal === '3' && cardStops < 2) show = false;    // 2+ stops only
 
-                card.style.display = show ? 'flex' : 'none';
+                // UI: Use empty string to revert to CSS default (block), 'none' to hide
+                card.style.display = show ? '' : 'none';
             });
 
             // Sort visible cards
             const container = document.getElementById('unified-results-content');
             if (!container) return;
 
-            const visibleCards = Array.from(container.querySelectorAll('.flight-card[style*="flex"], .flight-card:not([style*="none"])'));
+            const visibleCards = Array.from(container.querySelectorAll('.flight-card')).filter(c => c.style.display !== 'none');
+
             if (visibleCards.length < 2) return;
 
-            const parent = visibleCards[0].parentNode;
+            // Find the parent wrapper (or container itself)
+            // Note: visibleCards are children of container
+
             visibleCards.sort((a, b) => {
                 if (sortVal === '2') { // Cheapest
                     return (parseInt(a.dataset.price) || 0) - (parseInt(b.dataset.price) || 0);
                 } else if (sortVal === '3') { // Fastest
                     return (parseInt(a.dataset.duration) || 0) - (parseInt(b.dataset.duration) || 0);
                 }
-                return 0; // Best (default order)
+                return 0; // Best (default order, preserved from initial render)
             });
 
-            visibleCards.forEach(card => parent.appendChild(card));
+            // Re-append in new order
+            visibleCards.forEach(card => container.appendChild(card));
         }
 
 
