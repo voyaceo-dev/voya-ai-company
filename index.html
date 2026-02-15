@@ -6995,6 +6995,21 @@
         }
 
         /**
+         * Extract airport code from string like "New York (JFK)" or just "JFK"
+         * @param {string} str - Input string
+         * @returns {string} - Extracted 3-letter code or original string
+         */
+        function extractAirportCode(str) {
+            if (!str) return '';
+            // Match 3 letters inside parentheses
+            const match = str.match(/\(([A-Z]{3})\)/);
+            if (match) return match[1];
+            // Or just 3 uppercase letters if that's the whole string
+            if (/^[A-Z]{3}$/.test(str.trim())) return str.trim();
+            return str.trim(); // Fallback
+        }
+
+        /**
          * SECURITY: Validate airport code (exactly 3 letters A-Z)
          * @param {string} code - Airport code to validate
          * @returns {boolean} - True if valid
@@ -7807,7 +7822,7 @@
                     return: null,
                     price: extractPrice(f.price),
                     duration: extractDuration(f.duration),
-                    airline: f.airline,
+                    airline: f.airline || 'Airline',
                     stops: f.stops || f.flights?.[0]?.layovers?.length || 0,
                     source: f.source || data.source
                 }));
@@ -7819,9 +7834,9 @@
                 const sortedReturns = [...returnList].sort((a, b) => extractPrice(a.price) - extractPrice(b.price));
 
                 displayCards = outboundList.map(out => {
-                    const outAirline = out.airline;
+                    const outAirline = out.airline || 'Airline';
                     // Try to find same airline return
-                    let bestRet = sortedReturns.find(r => r.airline === outAirline);
+                    let bestRet = sortedReturns.find(r => (r.airline || 'Airline') === outAirline);
                     // Fallback to cheapest return
                     if (!bestRet) bestRet = sortedReturns[0];
 
@@ -7839,7 +7854,7 @@
                         return: bestRet,
                         price: totalPrice,
                         duration: extractDuration(out.duration) + extractDuration(bestRet.duration),
-                        airline: out.airline, // Primary airline
+                        airline: outAirline, // Primary airline
                         stops: (out.stops || 0), // Use outbound stops for filtering primary
                         source: out.source || data.source
                     };
@@ -7914,8 +7929,9 @@
             const { outbound, return: retLeg, price, badges, airline, source } = card;
 
             // Airline Info
-            const airlineAbbr = airline.substring(0, 2).toUpperCase();
-            const hue = airline.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
+            const airlineName = airline || 'Airline';
+            const airlineAbbr = airlineName.substring(0, 2).toUpperCase();
+            const hue = airlineName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360;
             const airlineColor = `hsl(${hue}, 65%, 45%)`;
 
             // Badges HTML
@@ -7940,7 +7956,7 @@
                         <!-- Header: Airline -->
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                             <div style="width:32px;height:32px;border-radius:6px;background:${airlineColor}15;color:${airlineColor};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;">${airlineAbbr}</div>
-                            <div style="font-weight:700;color:#1f2937;font-size:0.95rem;">${escapeHtml(airline)}</div>
+                            <div style="font-weight:700;color:#1f2937;font-size:0.95rem;">${escapeHtml(airlineName)}</div>
                         </div>
 
                         <!-- Outbound Row -->
@@ -7957,7 +7973,7 @@
                     <div style="width:160px;background:#f9fafb;border-left:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
                         <div style="font-size:1.6rem;font-weight:800;color:#111827;">₹${price.toLocaleString()}</div>
                         <div style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">total price</div>
-                        <button onclick="searchFlightBooking('${escapeHtml(airline)}', '${escapeHtml(card.outbound.flight_number)}', '${escapeHtml(card.outbound.departure_time)}')" style="width:100%;padding:10px;background:#111827;color:white;border-radius:8px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#111827'">
+                        <button onclick="searchFlightBooking('${escapeHtml(airlineName)}', '${escapeHtml(card.outbound.flight_number)}', '${escapeHtml(card.outbound.departure_time)}')" style="width:100%;padding:10px;background:#111827;color:white;border-radius:8px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#111827'">
                             Select <i class="fas fa-arrow-right" style="font-size:0.8rem;margin-left:4px;"></i>
                         </button>
                     </div>
