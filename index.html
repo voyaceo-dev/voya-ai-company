@@ -7873,6 +7873,32 @@
                 }).filter(Boolean);
             }
 
+            // --- FILTER: Discard incomplete flight data (safety net) ---
+            displayCards = displayCards.filter(card => {
+                const o = card.outbound;
+                if (!o) return false;
+                // Must have real airline name
+                const airline = (card.airline || '').toLowerCase().trim();
+                if (!airline || airline === 'airline' || airline === 'n/a' || airline === 'unknown') return false;
+                // Must have valid departure time (not --:-- or empty)
+                const dep = o.departure_airport?.time || o.departure_time || o.time || o.dep_time || '';
+                if (!dep || dep === '--:--' || dep === 'N/A') return false;
+                // Must have valid price
+                if (!card.price || card.price <= 0) return false;
+                return true;
+            });
+
+            if (!displayCards.length) {
+                container.innerHTML = `
+                    <div class="unified-placeholder">
+                        <i class="fas fa-plane-slash"></i>
+                        <h3>No Flights Found</h3>
+                        <p>Could not find flights with complete data. Try different dates or routes.</p>
+                    </div>
+                `;
+                return;
+            }
+
             // --- CALCULATE BADGES ---
             // Find Min Price, Min Duration for scoring
             let minPrice = Infinity;
@@ -7989,9 +8015,13 @@
                     <div style="width:160px;background:#f9fafb;border-left:1px solid #e5e7eb;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
                         <div style="font-size:1.6rem;font-weight:800;color:#111827;">₹${price.toLocaleString()}</div>
                         <div style="font-size:0.75rem;color:#6b7280;margin-bottom:12px;">total price</div>
-                        <button onclick="searchFlightBooking('${escapeHtml(airlineName)}', '${escapeHtml(card.outbound.flight_number)}', '${escapeHtml(card.outbound.departure_time)}')" style="width:100%;padding:10px;background:#111827;color:white;border-radius:8px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#111827'">
+                        ${card.outbound.booking_link ? `
+                        <a href="${escapeHtml(card.outbound.booking_link)}" target="_blank" rel="noopener noreferrer" style="width:100%;padding:10px;background:#111827;color:white;border-radius:8px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:background 0.2s;text-align:center;text-decoration:none;display:block;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#111827'">
                             Select <i class="fas fa-arrow-right" style="font-size:0.8rem;margin-left:4px;"></i>
-                        </button>
+                        </a>` : `
+                        <button onclick="searchFlightBooking('${escapeHtml(airlineName)}', '${escapeHtml(card.outbound.flight_number || '')}', '${escapeHtml(card.outbound.departure_time || '')}')" style="width:100%;padding:10px;background:#111827;color:white;border-radius:8px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:background 0.2s;" onmouseenter="this.style.background='#374151'" onmouseleave="this.style.background='#111827'">
+                            Select <i class="fas fa-arrow-right" style="font-size:0.8rem;margin-left:4px;"></i>
+                        </button>`}
                     </div>
                 </div>
             </div>
