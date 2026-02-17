@@ -13008,22 +13008,22 @@
             return false;
         }
 
-        // Make authenticated API request
+        // Make authenticated API request - proceeds without auth if not logged in
         async function authenticatedFetch(endpoint, options = {}) {
             const token = getAuthToken();
-            if (!token) {
-                throw new Error('Not authenticated');
-            }
 
-            options.headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${token}`
-            };
+            // Always ensure headers object exists
+            if (!options.headers) options.headers = {};
+
+            // If we have a token, attach it; otherwise proceed without auth
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
 
             const response = await fetchWithFailover(endpoint, options);
 
-            // If 401, try to refresh token
-            if (response.status === 401) {
+            // If 401 and we had a token, try to refresh
+            if (response.status === 401 && token) {
                 const refreshed = await refreshAuthToken();
                 if (refreshed) {
                     options.headers['Authorization'] = `Bearer ${getAuthToken()}`;
