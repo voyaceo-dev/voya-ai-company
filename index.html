@@ -6807,14 +6807,14 @@
         // Round-robin between Supabase and Convex, with AWS Lambda as fallback
         const BACKENDS = {
             supabase: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
-            convex: 'https://robust-terrier-351.eu-west-1.convex.site',
+            convex: 'https://lovely-koala-415.eu-west-1.convex.site',
             awsFallback: 'https://v7zixtn6d5c4xae376p7oezlbm0vkdop.lambda-url.eu-north-1.on.aws', // AWS Lambda fallback
             // Legacy aliases
             primary: 'https://tgrconhncsvfwmdnfsgf.supabase.co/functions/v1/swift-api',
-            secondary: 'https://robust-terrier-351.eu-west-1.convex.site'
+            secondary: 'https://lovely-koala-415.eu-west-1.convex.site'
         };
 
-        // Backend order for round-robin (alternates between Supabase and Convex)
+        // Backend order for round-robin (both backends now have API keys configured)
         const BACKEND_ORDER = ['supabase', 'convex'];
 
         // Mapbox token (single declaration for map rendering + geocoding)
