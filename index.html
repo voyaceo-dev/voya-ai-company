@@ -4,29 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOYA 🌍 AI | Travel Smarter</title>
+    <title>NexTravel ✈️ | Travel Smarter</title>
 
     <!-- SEO Meta Tags -->
     <meta name="description"
-        content="VOYA AI is your intelligent travel companion. Plan flights, hotels, and AI-powered itineraries in seconds. Travel smarter with personalized recommendations.">
+        content="NexTravel is your intelligent travel companion. Plan flights, hotels, and AI-powered itineraries in seconds. Travel smarter with personalized recommendations.">
     <meta name="keywords"
-        content="AI travel planner, flight search, hotel booking, itinerary generator, travel app, smart travel, VOYA AI">
-    <meta name="author" content="VOYA AI">
+        content="AI travel planner, flight search, hotel booking, itinerary generator, travel app, smart travel, NexTravel">
+    <meta name="author" content="NexTravel">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://voya-ai-company.vercel.app/">
 
     <!-- Open Graph (Facebook, LinkedIn, Discord) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://voya-ai-company.vercel.app/">
-    <meta property="og:title" content="VOYA AI | Travel Smarter with AI">
+    <meta property="og:title" content="NexTravel | Travel Smarter with AI">
     <meta property="og:description"
         content="Plan your perfect journey in seconds. AI-powered flights, hotels, and personalized itineraries.">
     <meta property="og:image" content="https://voya-ai-company.vercel.app/og-preview.png">
-    <meta property="og:site_name" content="VOYA AI">
+    <meta property="og:site_name" content="NexTravel">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="VOYA AI | Travel Smarter with AI">
+    <meta name="twitter:title" content="NexTravel | Travel Smarter with AI">
     <meta name="twitter:description"
         content="Plan your perfect journey in seconds. AI-powered flights, hotels, and personalized itineraries.">
     <meta name="twitter:image" content="https://voya-ai-company.vercel.app/og-preview.png">
@@ -44,7 +44,7 @@
     {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "VOYA AI",
+        "name": "NexTravel",
         "applicationCategory": "TravelApplication",
         "operatingSystem": "Web",
         "description": "AI-powered travel planning app for flights, hotels, and personalized itineraries.",
@@ -71,12 +71,12 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
-            --primary-bg: #1a1a1a;
+            --primary-bg: #f5f7fa;
             --card-bg: #ffffff;
-            --accent-blue: #003580;
-            --text-dark: #333333;
-            --text-light: #f4f4f4;
-            --gray: #666;
+            --accent-blue: #4F8FEA;
+            --text-dark: #1a2b4a;
+            --text-light: #1a2b4a;
+            --gray: #6b7c93;
             --success: #28a745;
         }
 
@@ -89,13 +89,13 @@
 
         body {
             background-color: var(--primary-bg);
-            color: var(--text-light);
+            color: var(--text-dark);
             line-height: 1.6;
         }
 
         header {
             height: 70px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(255, 255, 255, 0.95);
             padding: 1rem 5%;
             display: flex;
             justify-content: space-between;
@@ -103,18 +103,19 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #e0e6ed;
+            backdrop-filter: blur(10px);
         }
 
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #fff;
+            color: #4F8FEA;
             text-decoration: none;
         }
 
         nav a {
-            color: #ccc;
+            color: #4a5568;
             text-decoration: none;
             margin: 0 15px;
             font-size: 0.9rem;
@@ -942,8 +943,8 @@
 
         .itinerary-fullpage-nav .back-btn {
             background: transparent;
-            border: 2px solid #003580;
-            color: #003580;
+            border: 2px solid #4F8FEA;
+            color: #4F8FEA;
             padding: 10px 20px;
             border-radius: 8px;
             font-weight: 600;
@@ -955,7 +956,7 @@
         }
 
         .itinerary-fullpage-nav .back-btn:hover {
-            background: #003580;
+            background: #4F8FEA;
             color: white;
             transform: translateX(-5px);
         }
@@ -972,7 +973,7 @@
         }
 
         .itinerary-fullpage-nav .nav-actions button {
-            background: #003580;
+            background: #4F8FEA;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -1067,12 +1068,12 @@
         }
 
         .compact-search-bar .search-detail strong {
-            color: #003580;
+            color: #4F8FEA;
             font-weight: 600;
         }
 
         .compact-search-bar .modify-search-btn {
-            background: #003580;
+            background: #4F8FEA;
             color: white;
             border: none;
             padding: 10px 24px;
@@ -4094,7 +4095,7 @@
     </div>
 
     <header>
-        <a href="#" class="logo">VOYA 🌍 AI</a>
+        <a href="#" class="logo">NexTravel ✈️</a>
         <div class="header-actions">
             <!-- Sign In Button (shown when logged out) -->
             <button class="btn-signin" id="signin-btn" onclick="openAuthOverlay()">Sign In</button>
@@ -4458,7 +4459,7 @@
             left: 0;
             width: 60px;
             height: 3px;
-            background: linear-gradient(90deg, #003580, #D4AF37);
+            background: linear-gradient(90deg, #4F8FEA, #D4AF37);
             border-radius: 2px;
         }
 
@@ -4516,7 +4517,7 @@
             position: absolute;
             top: 15px;
             left: 15px;
-            background: linear-gradient(135deg, #003580 0%, #0060FF 100%);
+            background: linear-gradient(135deg, #4F8FEA 0%, #0060FF 100%);
             color: #fff;
             padding: 6px 14px;
             border-radius: 20px;
@@ -4634,14 +4635,14 @@
             align-items: center;
             justify-content: center;
             font-size: 1.1rem;
-            color: #003580;
+            color: #4F8FEA;
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
             z-index: 10;
             transition: all 0.3s ease;
         }
 
         .blog-scroll-btn:hover {
-            background: #003580;
+            background: #4F8FEA;
             color: #fff;
             transform: translateY(-50%) scale(1.1);
         }
@@ -4701,7 +4702,7 @@
         }
 
         .blog-back-btn:hover {
-            background: #003580;
+            background: #4F8FEA;
             color: #fff;
         }
 
@@ -4723,9 +4724,9 @@
         }
 
         .blog-share-actions button:hover {
-            background: #003580;
+            background: #4F8FEA;
             color: #fff;
-            border-color: #003580;
+            border-color: #4F8FEA;
         }
 
         .blog-overlay-content {
@@ -4793,7 +4794,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            border: 3px solid #003580;
+            border: 3px solid #4F8FEA;
         }
 
         .blog-article-author-info span {
@@ -4835,7 +4836,7 @@
 
         .blog-article-body h3 {
             font-size: 1.4rem;
-            color: #003580;
+            color: #4F8FEA;
             margin: 1.5em 0 0.8em;
         }
 
@@ -4848,7 +4849,7 @@
 
         .blog-article-body blockquote {
             background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-            border-left: 4px solid #003580;
+            border-left: 4px solid #4F8FEA;
             padding: 25px 30px;
             margin: 2em 0;
             border-radius: 0 16px 16px 0;
@@ -4882,7 +4883,7 @@
         }
 
         .blog-cta-section {
-            background: linear-gradient(135deg, #003580 0%, #0060FF 100%);
+            background: linear-gradient(135deg, #4F8FEA 0%, #0060FF 100%);
             border-radius: 20px;
             padding: 40px;
             text-align: center;
@@ -5236,7 +5237,7 @@
                     </div>
                     <div class="blog-cta-section">
                         <h3>Ready to Explore ${blog.title.split(':')[0]}?</h3>
-                        <p>Let VOYA AI create your perfect itinerary</p>
+                        <p>Let NexTravel create your perfect itinerary</p>
                         <button class="blog-cta-btn" onclick="closeBlogOverlay(); openUnifiedOverlay('itinerary'); document.getElementById('unified-ai-dest').value='${blog.title.split(':')[0]}';">
                             Plan My Trip <i class="fas fa-arrow-right"></i>
                         </button>
@@ -5266,7 +5267,7 @@
         function shareBlogArticle() {
             if (navigator.share) {
                 navigator.share({
-                    title: 'VOYA Travel Blog',
+                    title: 'NexTravel Blog',
                     url: window.location.href
                 });
             } else {
@@ -5350,7 +5351,7 @@
         <div class="unified-header">
             <div class="unified-header-inner">
                 <div class="unified-logo">
-                    <span class="logo-text">VOYA</span>
+                    <span class="logo-text">NexTravel</span>
                     <span class="logo-ai">AI</span>
                 </div>
                 <div class="unified-tabs">
@@ -5613,7 +5614,7 @@
 
         .unified-tab.active {
             background: #fff;
-            color: #003580;
+            color: #4F8FEA;
             border-color: #fff;
         }
 
@@ -5722,7 +5723,7 @@
 
         .city-autocomplete-item .city-code {
             font-weight: 700;
-            color: #003580;
+            color: #4F8FEA;
             font-size: 0.82rem;
             background: #eef2ff;
             padding: 2px 8px;
@@ -5730,7 +5731,7 @@
         }
 
         .unified-input-group:focus-within {
-            border-color: #003580;
+            border-color: #4F8FEA;
             box-shadow: 0 0 0 3px rgba(0, 53, 128, 0.1);
         }
 
@@ -5756,7 +5757,7 @@
         }
 
         .unified-input-group i {
-            color: #003580;
+            color: #4F8FEA;
             font-size: 1rem;
         }
 
@@ -5786,21 +5787,21 @@
             border: 2px solid #e0e0e0;
             background: #fff;
             border-radius: 50%;
-            color: #003580;
+            color: #4F8FEA;
             cursor: pointer;
             transition: all 0.3s ease;
             flex-shrink: 0;
         }
 
         .swap-btn:hover {
-            background: #003580;
+            background: #4F8FEA;
             color: #fff;
-            border-color: #003580;
+            border-color: #4F8FEA;
             transform: rotate(180deg);
         }
 
         .unified-search-btn {
-            background: linear-gradient(135deg, #003580 0%, #00509e 100%);
+            background: linear-gradient(135deg, #4F8FEA 0%, #00509e 100%);
             color: #fff;
             border: none;
             padding: 14px 32px;
@@ -6056,16 +6057,16 @@
             gap: 8px;
             padding: 12px 24px;
             background: transparent;
-            border: 2px solid #003580;
+            border: 2px solid #4F8FEA;
             border-radius: 10px;
-            color: #003580;
+            color: #4F8FEA;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .btn-outline:hover {
-            background: #003580;
+            background: #4F8FEA;
             color: #fff;
         }
 
@@ -6081,7 +6082,7 @@
         .price-tag {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #003580;
+            color: #4F8FEA;
         }
 
         /* Toast notification styles */
@@ -6798,7 +6799,7 @@
 
     <script>
         // ====================================================================================
-        // VOYA AI Frontend - Security Hardened
+        // NexTravel Frontend - Security Hardened
         // SECURITY: No API keys should EVER be stored in client-side code
         // All API calls go through the secure backend
         // ====================================================================================
@@ -8191,17 +8192,17 @@
                                     ${description ? `<div style="font-size:0.82rem;color:#666;margin-bottom:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(description)}</div>` : ''}
                                     ${amenities.length ? `
                                         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
-                                            ${amenities.slice(0, 4).map(a => `<span style="font-size:0.72rem;background:#f0f7ff;color:#003580;padding:3px 8px;border-radius:6px;">${escapeHtml(a)}</span>`).join('')}
+                                            ${amenities.slice(0, 4).map(a => `<span style="font-size:0.72rem;background:#f0f7ff;color:#4F8FEA;padding:3px 8px;border-radius:6px;">${escapeHtml(a)}</span>`).join('')}
                                             ${amenities.length > 4 ? `<span style="font-size:0.72rem;color:#888;">+${amenities.length - 4}</span>` : ''}
                                         </div>
                                     ` : ''}
                                     <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f0f0f0;">
                                         <div>
-                                            <span style="font-size:1.4rem;font-weight:700;color:#003580;">${typeof price === 'number' ? currency + price.toLocaleString() : price}</span>
+                                            <span style="font-size:1.4rem;font-weight:700;color:#4F8FEA;">${typeof price === 'number' ? currency + price.toLocaleString() : price}</span>
                                             <span style="font-size:0.8rem;color:#888;">/night</span>
                                         </div>
                                         ${hasBookingLink ? `
-                                            <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:6px;padding:10px 20px;background:linear-gradient(135deg,#003580,#0056b3);text-decoration:none;color:white;border-radius:10px;font-weight:600;font-size:0.9rem;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(0,53,128,0.3);">
+                                            <a href="${bookingLink}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:6px;padding:10px 20px;background:linear-gradient(135deg,#4F8FEA,#0056b3);text-decoration:none;color:white;border-radius:10px;font-weight:600;font-size:0.9rem;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(0,53,128,0.3);">
                                                 <i class="fas fa-external-link-alt"></i> Book Now
                                             </a>
                                         ` : `
@@ -10054,7 +10055,7 @@
             try {
                 // SECURITY: All API calls go through secure backend - no client-side API keys
                 console.log('Calling secure backend API for flights...');
-                updateSearchStatus('Connecting to VOYA servers...', 'Fetching live prices');
+                updateSearchStatus('Connecting to NexTravel servers...', 'Fetching live prices');
 
                 const response = await fetch(`${API_BASE_URL}/api/flights/search`, {
                     method: 'POST',
@@ -10185,7 +10186,7 @@
                 const stopPlanes = numStops > 0 ? '✈️'.repeat(Math.min(numStops, 3)) : '';
 
                 const isReturn = sectionType === 'return';
-                const headerBg = '#003580'; // Dark blue header like MakeMyTrip
+                const headerBg = '#4F8FEA'; // Dark blue header like MakeMyTrip
                 const routeText = `${legData.from} → ${legData.to}`;
                 const dateText = dep.fullDate || dep.date || '';
 
@@ -10237,9 +10238,9 @@
                                 <div style="text-align:center;">
                                     <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">${isMissingTime ? 'TBC' : legData.duration}</div>
                                     <div style="position:relative;height:2px;background:#ddd;margin:0 10px;">
-                                        <div style="position:absolute;left:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
+                                        <div style="position:absolute;left:0;top:-2px;width:6px;height:6px;background:#4F8FEA;border-radius:50%;"></div>
                                         ${numStops > 0 ? `<div style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:0.7rem;letter-spacing:2px;">${stopPlanes}</div>` : ''}
-                                        <div style="position:absolute;right:0;top:-2px;width:6px;height:6px;background:#003580;border-radius:50%;"></div>
+                                        <div style="position:absolute;right:0;top:-2px;width:6px;height:6px;background:#4F8FEA;border-radius:50%;"></div>
                                     </div>
                                     <div style="font-size:0.7rem;color:${stopsColor};margin-top:4px;font-weight:600;">${stopsText}</div>
                                 </div>
@@ -10253,7 +10254,7 @@
                                 ${price ? `
                                 <!-- Price Column -->
                                 <div style="text-align:right;">
-                                    <div style="font-size:1.2rem;font-weight:700;color:#003580;">${price}</div>
+                                    <div style="font-size:1.2rem;font-weight:700;color:#4F8FEA;">${price}</div>
                                     <div style="font-size:0.65rem;color:#888;">/adult</div>
                                 </div>
                                 ` : ''}
@@ -10283,7 +10284,7 @@
                     }, 'onward', { name: flight.airline, logo: flight.airlineLogo }, flight.price)}
                         
                         <div style="padding:12px 16px;background:#f8f9fa;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;">
-                            <button onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')" style="background:linear-gradient(135deg, #003580 0%, #1a73e8 100%);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:600;font-size:0.9rem;cursor:pointer;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,53,128,0.3);">
+                            <button onclick="bookFlight('${flight.from}', '${flight.to}', '${flight.airline}', '${flight.bookingToken || ''}')" style="background:linear-gradient(135deg, #4F8FEA 0%, #1a73e8 100%);color:#fff;border:none;padding:10px 28px;border-radius:8px;font-weight:600;font-size:0.9rem;cursor:pointer;transition:all 0.3s ease;box-shadow:0 2px 8px rgba(0,53,128,0.3);">
                                 <i class="fas fa-bolt" style="margin-right:6px;"></i>Book Now
                             </button>
                         </div>
@@ -10338,7 +10339,7 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:20px;">
                             <div style="text-align:right;">
-                                <div style="font-size:1.5rem;font-weight:700;color:#003580;">${flight.price}</div>
+                                <div style="font-size:1.5rem;font-weight:700;color:#4F8FEA;">${flight.price}</div>
                                 <div style="font-size:0.7rem;color:#888;">Total Price</div>
                             </div>
                             <div style="display:flex;flex-direction:column;gap:6px;">
@@ -10657,7 +10658,7 @@
                 <div id="booking-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
                     <div style="background:white;border-radius:12px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;color:#333;">
                         <div style="padding:20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
-                            <h3 style="margin:0;color:#003580;">✈️ Book ${airline} - ${from} → ${to}</h3>
+                            <h3 style="margin:0;color:#4F8FEA;">✈️ Book ${airline} - ${from} → ${to}</h3>
                             <button onclick="closeBookingModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">&times;</button>
                         </div>
                         <div style="padding:20px;">
@@ -10674,7 +10675,7 @@
                                             ${opt.option_title ? `<div style="color:#666;font-size:0.85rem;margin-top:4px;">${opt.option_title}</div>` : ''}
                                         </div>
                                         <div style="text-align:right;">
-                                            <div style="font-size:1.25rem;font-weight:bold;color:#003580;">${opt.price_formatted}</div>
+                                            <div style="font-size:1.25rem;font-weight:bold;color:#4F8FEA;">${opt.price_formatted}</div>
                                         </div>
                                     </div>
                                     ${opt.baggage_prices && opt.baggage_prices.length > 0 ? `
@@ -10706,7 +10707,7 @@
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             toast.id = 'toast-' + Date.now();
-            toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'info' ? '#003580' : '#28a745'};color:white;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s ease;`;
+            toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type === 'info' ? '#4F8FEA' : '#28a745'};color:white;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s ease;`;
             toast.innerHTML = `<i class="fas fa-external-link-alt" style="margin-right:8px;"></i>${message}`;
             document.body.appendChild(toast);
 
@@ -11501,7 +11502,7 @@
 
         function shareItinerary() {
             const destination = window.currentDestination || 'destination';
-            const shareText = `Check out my ${destination} itinerary created with VOYA AI Travel Planner!`;
+            const shareText = `Check out my ${destination} itinerary created with NexTravel!`;
 
             if (navigator.share) {
                 navigator.share({
@@ -11547,12 +11548,12 @@
                     <div class="compact-search-bar">
                         <div class="search-summary">
                             <div class="search-detail">
-                                <i class="fas fa-plane-departure" style="color: #003580;"></i>
+                                <i class="fas fa-plane-departure" style="color: #4F8FEA;"></i>
                                 <span><strong>${from || 'Origin'}</strong></span>
                             </div>
                             <i class="fas fa-arrow-right" style="color: #999;"></i>
                             <div class="search-detail">
-                                <i class="fas fa-plane-arrival" style="color: #003580;"></i>
+                                <i class="fas fa-plane-arrival" style="color: #4F8FEA;"></i>
                                 <span><strong>${to || 'Destination'}</strong></span>
                             </div>
                         </div>
@@ -11634,7 +11635,7 @@
                     <div class="compact-search-bar">
                         <div class="search-summary">
                             <div class="search-detail">
-                                <i class="fas fa-map-marker-alt" style="color: #003580;"></i>
+                                <i class="fas fa-map-marker-alt" style="color: #4F8FEA;"></i>
                                 <span><strong>${destination || 'Destination'}</strong></span>
                             </div>
                         </div>
@@ -11952,7 +11953,7 @@
                     const el = document.createElement('div');
                     el.className = 'trip-marker';
                     el.innerText = markerNum;
-                    el.style.backgroundColor = '#003580';
+                    el.style.backgroundColor = '#4F8FEA';
                     el.style.color = 'white';
                     el.style.width = '30px';
                     el.style.height = '30px';
@@ -12414,10 +12415,10 @@
                 printWindow.document.write(`
                     <html>
                     <head>
-                        <title>VOYA AI - Travel Itinerary</title>
+                        <title>NexTravel - Travel Itinerary</title>
                         <style>
                             body { font-family: 'Segoe UI', sans-serif; padding: 20px; }
-                            h1 { color: #003580; }
+                            h1 { color: #4F8FEA; }
                             h2 { color: #1a73e8; margin-top: 20px; }
                             ul { margin: 10px 0; }
                             li { margin: 5px 0; }
@@ -12457,7 +12458,7 @@
             // Get destination for filename and header
             const destination = document.getElementById('ai-dest').value.trim() || 'Travel';
             const duration = document.getElementById('ai-days').value.trim() || '';
-            const filename = `VOYA-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
+            const filename = `NexTravel-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
 
             // Create a complete standalone HTML document for PDF generation
             const pdfContent = document.createElement('div');
@@ -12466,8 +12467,8 @@
             // Build clean HTML content with all styles inline
             let cleanHTML = `
                 <div style="font-family: Arial, sans-serif; padding: 25px; background: #ffffff; color: #333333; min-height: 100%;">
-                    <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #003580;">
-                        <h1 style="color: #003580; font-size: 24px; margin: 0 0 8px 0; font-weight: bold;">VOYA AI Travel Itinerary</h1>
+                    <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #4F8FEA;">
+                        <h1 style="color: #4F8FEA; font-size: 24px; margin: 0 0 8px 0; font-weight: bold;">NexTravel Itinerary</h1>
                         <p style="color: #666; font-size: 14px; margin: 0;">Your personalized travel plan for ${destination}${duration ? ' • ' + duration : ''}</p>
                     </div>
             `;
@@ -12499,8 +12500,8 @@
                 });
 
                 cleanHTML += `
-                    <div style="background: #f8f9fa; border-left: 4px solid #003580; padding: 15px 20px; margin: 15px 0; border-radius: 6px; page-break-inside: avoid;">
-                        <h2 style="color: #003580; font-size: 16px; margin: 0 0 12px 0; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 8px;">📅 ${dayTitle}</h2>
+                    <div style="background: #f8f9fa; border-left: 4px solid #4F8FEA; padding: 15px 20px; margin: 15px 0; border-radius: 6px; page-break-inside: avoid;">
+                        <h2 style="color: #4F8FEA; font-size: 16px; margin: 0 0 12px 0; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 8px;">📅 ${dayTitle}</h2>
                         ${cardContent}
                     </div>
                 `;
@@ -12537,13 +12538,13 @@
                 table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px;';
             });
             pdfContent.querySelectorAll('th').forEach(th => {
-                th.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left; background: #003580; color: white; font-weight: bold;';
+                th.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left; background: #4F8FEA; color: white; font-weight: bold;';
             });
             pdfContent.querySelectorAll('td').forEach(td => {
                 td.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left;';
             });
             pdfContent.querySelectorAll('strong').forEach(s => {
-                s.style.cssText = 'color: #003580; font-weight: bold;';
+                s.style.cssText = 'color: #4F8FEA; font-weight: bold;';
             });
             pdfContent.querySelectorAll('em').forEach(e => {
                 e.style.cssText = 'color: #1a73e8; font-style: italic;';
@@ -12891,7 +12892,7 @@
                 signupForm.classList.remove('active');
                 // Update header and footer
                 if (authHeader) authHeader.textContent = 'Welcome back';
-                if (authSubtext) authSubtext.textContent = 'Continue your adventure with VOYA AI';
+                if (authSubtext) authSubtext.textContent = 'Continue your adventure with NexTravel';
                 if (footerText) footerText.innerHTML = 'Don\'t have an account? <a href="#" onclick="switchAuthTab(\'signup\'); return false;">Sign up</a>';
             } else {
                 signupTab.classList.add('active');
@@ -12900,7 +12901,7 @@
                 loginForm.classList.remove('active');
                 // Update header and footer
                 if (authHeader) authHeader.textContent = 'Create Account';
-                if (authSubtext) authSubtext.textContent = 'Start your journey with VOYA AI today';
+                if (authSubtext) authSubtext.textContent = 'Start your journey with NexTravel today';
                 if (footerText) footerText.innerHTML = 'Already have an account? <a href="#" onclick="switchAuthTab(\'login\'); return false;">Sign in</a>';
             }
 
@@ -13307,7 +13308,7 @@
                 <div class="auth-hero-content">
                     <div class="auth-hero-logo">
                         <div class="logo-icon">🌍</div>
-                        <span class="logo-text">VOYA</span>
+                        <span class="logo-text">NexTravel</span>
                         <span class="logo-ai">AI</span>
                     </div>
 
@@ -13343,7 +13344,7 @@
 
                 <div class="auth-header">
                     <h2>Welcome back</h2>
-                    <p>Continue your adventure with VOYA AI</p>
+                    <p>Continue your adventure with NexTravel</p>
                 </div>
 
                 <!-- Auth Tabs -->
