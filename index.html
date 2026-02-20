@@ -12652,7 +12652,7 @@
             }
         }
 
-        // Handle Google Sign In
+        // Handle Google Sign In — renders Google's official button inside the auth overlay
         function handleGoogleSignIn() {
             // Check if Google Identity Services is loaded
             if (typeof google === 'undefined' || !google.accounts) {
@@ -12665,67 +12665,32 @@
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleGoogleCredentialResponse,
                 auto_select: false,
-                cancel_on_tap_outside: true
+                cancel_on_tap_outside: false
             });
 
-            // Show Google One Tap or prompt
-            google.accounts.id.prompt((notification) => {
-                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                    // If One Tap is not displayed, use OAuth popup
-                    initiateGoogleOAuthPopup();
-                }
-            });
-        }
+            // Replace the "Continue with Google" custom button with Google's official rendered button
+            const googleBtn = document.querySelector('.google-signin-btn');
+            if (googleBtn) {
+                // Create a wrapper for Google's official button
+                const wrapper = document.createElement('div');
+                wrapper.id = 'google-signin-wrapper';
+                wrapper.style.cssText = 'display:flex;justify-content:center;margin:0;';
+                googleBtn.parentNode.replaceChild(wrapper, googleBtn);
 
-        // Initiate Google OAuth using the popup button approach
-        function initiateGoogleOAuthPopup() {
-            if (!GOOGLE_CLIENT_ID) {
-                showToast('Google OAuth is not configured. Please set up Google Cloud credentials.', 'error');
-                console.error('GOOGLE_CLIENT_ID is not set.');
-                return;
+                // Render Google's official sign-in button inside the auth overlay
+                google.accounts.id.renderButton(
+                    wrapper,
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        type: 'standard',
+                        text: 'continue_with',
+                        shape: 'rectangular',
+                        logo_alignment: 'left',
+                        width: 320
+                    }
+                );
             }
-
-            // Create a temporary container for Google's button
-            let googleBtnContainer = document.getElementById('google-btn-container');
-            if (!googleBtnContainer) {
-                googleBtnContainer = document.createElement('div');
-                googleBtnContainer.id = 'google-btn-container';
-                googleBtnContainer.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;background:white;padding:40px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
-
-                const closeBtn = document.createElement('button');
-                closeBtn.innerHTML = '&times;';
-                closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;border:none;background:#f0f0f0;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1.2rem;';
-                closeBtn.onclick = () => googleBtnContainer.remove();
-                googleBtnContainer.appendChild(closeBtn);
-
-                const title = document.createElement('p');
-                title.textContent = 'Sign in with your Google account';
-                title.style.cssText = 'margin-bottom:20px;font-weight:600;color:#333;';
-                googleBtnContainer.appendChild(title);
-
-                const btnWrapper = document.createElement('div');
-                btnWrapper.id = 'google-signin-wrapper';
-                googleBtnContainer.appendChild(btnWrapper);
-
-                document.body.appendChild(googleBtnContainer);
-            }
-
-            // Close the main modal
-            closeSignInModal();
-
-            // Render Google's official sign-in button
-            google.accounts.id.renderButton(
-                document.getElementById('google-signin-wrapper'),
-                {
-                    theme: 'outline',
-                    size: 'large',
-                    type: 'standard',
-                    text: 'signin_with',
-                    shape: 'rectangular',
-                    logo_alignment: 'left',
-                    width: 280
-                }
-            );
         }
 
         // Handle OAuth message from popup
