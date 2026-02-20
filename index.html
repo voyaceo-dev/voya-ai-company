@@ -11490,9 +11490,25 @@
         }
 
         function downloadItineraryPDF() {
-            const element = document.getElementById('itinerary-fullpage-content');
+            // Try multiple content sources — pick the first one with actual text content
+            function findContentElement() {
+                const sources = [
+                    document.getElementById('itinerary-fullpage-content'),
+                    document.getElementById('unified-results-content'),
+                    document.querySelector('.itinerary-container'),
+                    document.getElementById('ai-results')
+                ];
+                for (const el of sources) {
+                    if (el && el.innerText && el.innerText.trim().length > 10) {
+                        return el;
+                    }
+                }
+                return null;
+            }
+
+            const element = findContentElement();
             if (!element) {
-                showToast('No itinerary to download', 'warning');
+                showToast('No itinerary to download. Please generate one first.', 'warning');
                 return;
             }
 
@@ -11547,7 +11563,7 @@
             // ===== CONTENT =====
             // Clone and clean
             const clone = element.cloneNode(true);
-            clone.querySelectorAll('button, .compact-search-bar, canvas, .mapboxgl-map, .map-container, nav, .itinerary-map').forEach(el => el.remove());
+            clone.querySelectorAll('button, .compact-search-bar, canvas, .mapboxgl-map, .map-container, nav, .itinerary-map, .map-container-wrapper, .itinerary-actions, .skeleton, .loading, script, style, .itinerary-header').forEach(el => el.remove());
 
             const rawText = clone.innerText || clone.textContent || '';
             const lines = rawText.split('\n');
