@@ -12472,133 +12472,82 @@
             const duration = document.getElementById('ai-days').value.trim() || '';
             const filename = `NexTravel-${destination.replace(/[^a-zA-Z0-9]/g, '-')}-Itinerary.pdf`;
 
-            // Create a complete standalone HTML document for PDF generation
-            const pdfContent = document.createElement('div');
-            pdfContent.id = 'pdf-export-container';
+            // Clone the container to process it without affecting the original
+            const contentClone = container.cloneNode(true);
 
-            // Build clean HTML content with all styles inline
-            let cleanHTML = `
-                <div style="font-family: Arial, sans-serif; padding: 25px; background: #ffffff; color: #333333; min-height: 100%;">
-                    <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #4F8FEA;">
-                        <h1 style="color: #4F8FEA; font-size: 24px; margin: 0 0 8px 0; font-weight: bold;">NexTravel Itinerary</h1>
+            // Remove action buttons and map from the clone
+            contentClone.querySelectorAll('.itinerary-actions, .map-container, .mapboxgl-map, canvas, .itinerary-map').forEach(el => el.remove());
+
+            // Remove the header from clone (we add our own branded header)
+            const headerClone = contentClone.querySelector('.itinerary-header');
+            if (headerClone) headerClone.remove();
+
+            // Build clean HTML string with fully inline styles
+            let htmlStr = `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: #ffffff; color: #333333;">
+                    <div style="text-align: center; margin-bottom: 30px; padding-bottom: 18px; border-bottom: 3px solid #4F8FEA;">
+                        <h1 style="color: #4F8FEA; font-size: 26px; margin: 0 0 8px 0; font-weight: 700;">✈️ NexTravel Itinerary</h1>
                         <p style="color: #666; font-size: 14px; margin: 0;">Your personalized travel plan for ${destination}${duration ? ' • ' + duration : ''}</p>
                     </div>
             `;
 
-            // Clone the container content and process it
-            const contentClone = container.cloneNode(true);
-
-            // Remove action buttons from the clone
-            const actions = contentClone.querySelector('.itinerary-actions');
-            if (actions) actions.remove();
-
-            // Remove the header from clone (we're adding our own)
-            const headerClone = contentClone.querySelector('.itinerary-header');
-            if (headerClone) headerClone.remove();
-
-            // Process day cards
+            // Process day cards if they exist
             const dayCards = contentClone.querySelectorAll('.day-card');
-            dayCards.forEach((card, index) => {
-                // Extract the day title
-                const h2 = card.querySelector('h2');
-                const dayTitle = h2 ? h2.textContent.replace('📅', '').trim() : `Day ${index + 1}`;
+            if (dayCards.length > 0) {
+                dayCards.forEach((card, index) => {
+                    const h2 = card.querySelector('h2');
+                    const dayTitle = h2 ? h2.textContent.replace('📅', '').trim() : `Day ${index + 1}`;
 
-                // Get all content except the h2
-                let cardContent = '';
-                Array.from(card.children).forEach(child => {
-                    if (child.tagName !== 'H2') {
-                        cardContent += child.outerHTML;
-                    }
+                    // Get all content except the h2
+                    let cardContent = '';
+                    Array.from(card.children).forEach(child => {
+                        if (child.tagName !== 'H2') {
+                            cardContent += child.outerHTML;
+                        }
+                    });
+
+                    htmlStr += `
+                        <div style="background: #f8f9fa; border-left: 4px solid #4F8FEA; padding: 16px 20px; margin: 16px 0; border-radius: 6px; page-break-inside: avoid;">
+                            <h2 style="color: #4F8FEA; font-size: 17px; margin: 0 0 12px 0; font-weight: 700; border-bottom: 1px solid #ddd; padding-bottom: 8px;">📅 ${dayTitle}</h2>
+                            <div style="font-size: 13px; line-height: 1.6; color: #444;">${cardContent}</div>
+                        </div>
+                    `;
                 });
-
-                cleanHTML += `
-                    <div style="background: #f8f9fa; border-left: 4px solid #4F8FEA; padding: 15px 20px; margin: 15px 0; border-radius: 6px; page-break-inside: avoid;">
-                        <h2 style="color: #4F8FEA; font-size: 16px; margin: 0 0 12px 0; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 8px;">📅 ${dayTitle}</h2>
-                        ${cardContent}
-                    </div>
-                `;
-            });
-
-            // If no day cards found, just use the raw content
-            if (dayCards.length === 0) {
-                cleanHTML += contentClone.innerHTML;
+            } else {
+                // No day cards — use the raw itinerary content
+                htmlStr += `<div style="font-size: 13px; line-height: 1.7; color: #444;">${contentClone.innerHTML}</div>`;
             }
 
-            cleanHTML += '</div>';
-            pdfContent.innerHTML = cleanHTML;
+            // Footer
+            htmlStr += `
+                    <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px solid #e0e0e0; color: #999; font-size: 11px;">
+                        Generated by NexTravel AI • ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                </div>
+            `;
 
-            // Apply inline styles to all elements for PDF compatibility
-            pdfContent.querySelectorAll('h3').forEach(h => {
-                h.style.cssText = 'color: #1a73e8; font-size: 14px; margin: 12px 0 8px 0; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('h4').forEach(h => {
-                h.style.cssText = 'color: #333; font-size: 13px; margin: 10px 0 6px 0; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('ul').forEach(ul => {
-                ul.style.cssText = 'margin: 8px 0; padding-left: 25px; list-style-type: disc;';
-            });
-            pdfContent.querySelectorAll('li').forEach(li => {
-                li.style.cssText = 'margin: 4px 0; color: #444; line-height: 1.5; font-size: 12px; background: none; border: none; padding: 2px 0;';
-            });
-            pdfContent.querySelectorAll('p').forEach(p => {
-                p.style.cssText = 'margin: 6px 0; color: #555; line-height: 1.5; font-size: 12px;';
-            });
-            pdfContent.querySelectorAll('.tip-card').forEach(tip => {
-                tip.style.cssText = 'background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 10px 0; border-radius: 4px; font-size: 12px;';
-            });
-            pdfContent.querySelectorAll('table').forEach(table => {
-                table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px;';
-            });
-            pdfContent.querySelectorAll('th').forEach(th => {
-                th.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left; background: #4F8FEA; color: white; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('td').forEach(td => {
-                td.style.cssText = 'border: 1px solid #ddd; padding: 8px; text-align: left;';
-            });
-            pdfContent.querySelectorAll('strong').forEach(s => {
-                s.style.cssText = 'color: #4F8FEA; font-weight: bold;';
-            });
-            pdfContent.querySelectorAll('em').forEach(e => {
-                e.style.cssText = 'color: #1a73e8; font-style: italic;';
-            });
+            // Use html2pdf with the HTML string directly — avoids all DOM positioning issues
+            const opt = {
+                margin: [12, 12, 12, 12],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
 
-            // Position the content off-screen but fully rendered (absolute, not fixed, so html2canvas can capture it)
-            pdfContent.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; background: white; visibility: visible; opacity: 1;';
-            document.body.appendChild(pdfContent);
-
-            // Wait for DOM layout to complete, then generate PDF
-            setTimeout(() => {
-                // PDF options — measure dimensions AFTER the element is in the DOM
-                const opt = {
-                    margin: [15, 15, 15, 15],
-                    filename: filename,
-                    image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff',
-                        windowWidth: Math.max(pdfContent.scrollWidth, 794),
-                        scrollX: 0,
-                        scrollY: 0
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-                };
-
-                html2pdf().set(opt).from(pdfContent).save().then(() => {
-                    document.body.removeChild(pdfContent);
-                    showToast('PDF downloaded successfully!', 'success');
-                }).catch(err => {
-                    if (document.body.contains(pdfContent)) {
-                        document.body.removeChild(pdfContent);
-                    }
-                    console.error('PDF generation error:', err);
-                    // Fallback: Try direct print
-                    alert('PDF generation encountered an issue. Opening print dialog instead.');
-                    printItinerary();
-                });
-            }, 300);
+            html2pdf().set(opt).from(htmlStr, 'string').save().then(() => {
+                showToast('PDF downloaded successfully!', 'success');
+            }).catch(err => {
+                console.error('PDF generation error:', err);
+                alert('PDF generation encountered an issue. Opening print dialog instead.');
+                printItinerary();
+            });
         }
 
         // ==================== GOOGLE OAUTH AUTHENTICATION ====================
