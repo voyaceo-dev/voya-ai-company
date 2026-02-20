@@ -6818,9 +6818,10 @@
         // Backend order for round-robin (both backends now have API keys configured)
         const BACKEND_ORDER = ['supabase', 'convex'];
 
-        // Mapbox token — fetched from backend on first use (not hardcoded for security)
+        // Mapbox token — fetched from backend on first use, with fallback
         let MAPBOX_TOKEN = '';
         let _mapboxTokenPromise = null;
+        const _MAPBOX_FALLBACK = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
         async function getMapboxToken() {
             if (MAPBOX_TOKEN) return MAPBOX_TOKEN;
             if (_mapboxTokenPromise) return _mapboxTokenPromise;
@@ -6828,12 +6829,13 @@
                 try {
                     const res = await fetch(`${API_BASE_URL}/api/config`);
                     const data = await res.json();
-                    MAPBOX_TOKEN = data.mapbox_token || '';
-                    if (MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
-                        mapboxgl.accessToken = MAPBOX_TOKEN;
-                    }
+                    MAPBOX_TOKEN = data.mapbox_token || _MAPBOX_FALLBACK;
                 } catch (e) {
-                    console.warn('Could not fetch Mapbox token from backend:', e.message);
+                    console.warn('Could not fetch Mapbox token from backend, using fallback:', e.message);
+                    MAPBOX_TOKEN = _MAPBOX_FALLBACK;
+                }
+                if (MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
+                    mapboxgl.accessToken = MAPBOX_TOKEN;
                 }
                 return MAPBOX_TOKEN;
             })();
