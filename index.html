@@ -6818,11 +6818,32 @@
         // Backend order for round-robin (both backends now have API keys configured)
         const BACKEND_ORDER = ['supabase', 'convex'];
 
-        // Mapbox token (single declaration for map rendering + geocoding)
-        const MAPBOX_TOKEN = 'pk.eyJ1Ijoidm95YTIzMiIsImEiOiJjbWw2amN0a2wwZHAyM2ZyMHR3bWthamt2In0.weBsgObWVo4j33JNKpSTCA';
+        // Mapbox token — fetched from backend on first use (not hardcoded for security)
+        let MAPBOX_TOKEN = '';
+        let _mapboxTokenPromise = null;
+        async function getMapboxToken() {
+            if (MAPBOX_TOKEN) return MAPBOX_TOKEN;
+            if (_mapboxTokenPromise) return _mapboxTokenPromise;
+            _mapboxTokenPromise = (async () => {
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/config`);
+                    const data = await res.json();
+                    MAPBOX_TOKEN = data.mapbox_token || '';
+                    if (MAPBOX_TOKEN && typeof mapboxgl !== 'undefined') {
+                        mapboxgl.accessToken = MAPBOX_TOKEN;
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch Mapbox token from backend:', e.message);
+                }
+                return MAPBOX_TOKEN;
+            })();
+            return _mapboxTokenPromise;
+        }
+        // Pre-fetch token on page load
+        document.addEventListener('DOMContentLoaded', () => getMapboxToken());
 
         // Track which backend to use next (persisted in localStorage)
-        let backendToggle = parseInt(localStorage.getItem('voya_backend_toggle') || '0');
+        let backendToggle = parseInt(localStorage.getItem('nextravel_backend_toggle') || '0');
 
         // Health cache to skip unhealthy backends
         const backendHealth = {
@@ -6840,7 +6861,7 @@
             const name = BACKEND_ORDER[backendToggle % BACKEND_ORDER.length];
             const url = BACKENDS[name];
             backendToggle++;
-            localStorage.setItem('voya_backend_toggle', backendToggle.toString());
+            localStorage.setItem('nextravel_backend_toggle', backendToggle.toString());
             console.log(`🔄 Backend #${backendToggle}: ${name.toUpperCase()} → ${url.split('//')[1].split('.')[0]}...`);
             return { name, url };
         }
@@ -6923,7 +6944,7 @@
             const errors = [];
 
             // 🔐 Auto-inject Authorization token if available
-            const token = localStorage.getItem('voya_token');
+            const token = localStorage.getItem('nextravel_token');
             if (token) {
                 options.headers = {
                     ...options.headers,
@@ -7094,7 +7115,11 @@
 
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+            // H3 FIX: Use safe DOM manipulation instead of interpolating message into innerHTML
+            const icon = document.createElement('i');
+            icon.className = `fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}`;
+            toast.appendChild(icon);
+            toast.appendChild(document.createTextNode(' ' + message));
             document.body.appendChild(toast);
 
             // Auto-remove after 4 seconds
@@ -7106,20 +7131,7 @@
             }, 4000);
         }
 
-        /**
-         * Escape HTML special characters to prevent XSS
-         */
-        function escapeHtml(text) {
-            if (!text) return '';
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return String(text).replace(/[&<>"']/g, m => map[m]);
-        }
+        // [SECURITY] Duplicate escapeHtml removed (M1 fix) — single definition at line ~6991
 
         /**
          * Redirect to Google Flights booking page
@@ -7706,13 +7718,7 @@
             }
         }
 
-        /**
-         * Escape HTML characters to prevent XSS
-         */
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
+        // [SECURITY] Duplicate escapeHtml removed (M1 fix) — single definition at line ~6991
 
         /**
          * Open Google Flights search for a specific airline/flight when no direct booking link is available
@@ -8526,7 +8532,8 @@
             container.style.cssText = 'min-height:450px;height:500px;width:100%;';
             container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e8f4f8;border-radius:16px;"><p style="color:#0369a1;"><i class="fas fa-spinner fa-spin"></i> Loading map...</p></div>';
 
-            // Set token
+            // Set token (fetched from backend)
+            await getMapboxToken();
             mapboxgl.accessToken = MAPBOX_TOKEN;
 
             try {
@@ -8695,7 +8702,7 @@
         /**
          * Initialize Mapbox map with GeoJSON feature collection
          */
-        function initializeMapboxWithGeoJSON(mapData, destinationName) {
+        async function initializeMapboxWithGeoJSON(mapData, destinationName) {
             console.log('initializeMapboxWithGeoJSON called with:', mapData, 'destination:', destinationName);
 
             const mapContainer = document.getElementById('itinerary-map');
@@ -8713,6 +8720,7 @@
 
             // Set access token
             if (!mapboxgl.accessToken) {
+                await getMapboxToken();
                 mapboxgl.accessToken = MAPBOX_TOKEN;
             }
 
@@ -9276,6 +9284,7 @@
             }
 
             // Set access token
+            await getMapboxToken();
             mapboxgl.accessToken = MAPBOX_TOKEN;
 
             try {
@@ -11813,6 +11822,7 @@
             const currentGenerationId = mapGenerationId;
 
             // mapbox token
+            await getMapboxToken();
             mapboxgl.accessToken = MAPBOX_TOKEN;
 
             // Default coordinates (will be geocoded based on destination)
@@ -12602,13 +12612,13 @@
         // Initialize auth state on page load
         document.addEventListener('DOMContentLoaded', () => {
             // Check for existing session
-            const savedUser = localStorage.getItem('voya_user');
+            const savedUser = localStorage.getItem('nextravel_user');
             if (savedUser) {
                 try {
                     currentUser = JSON.parse(savedUser);
                     updateUIForLoggedInUser();
                 } catch (e) {
-                    localStorage.removeItem('voya_user');
+                    localStorage.removeItem('nextravel_user');
                 }
             }
 
@@ -12743,7 +12753,7 @@
                     };
 
                     // Save to localStorage
-                    localStorage.setItem('voya_user', JSON.stringify(currentUser));
+                    localStorage.setItem('nextravel_user', JSON.stringify(currentUser));
 
                     // Update UI
                     updateUIForLoggedInUser();
@@ -12825,7 +12835,7 @@
             }
 
             currentUser = null;
-            localStorage.removeItem('voya_user');
+            localStorage.removeItem('nextravel_user');
 
             // Revoke Google session if available
             if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
@@ -12833,7 +12843,7 @@
             }
 
             // Also call Supabase logout if we have a token
-            const savedToken = localStorage.getItem('voya_token');
+            const savedToken = localStorage.getItem('nextravel_token');
             if (savedToken) {
                 fetch(`${API_BASE_URL}/api/auth/logout`, {
                     method: 'POST',
@@ -12841,8 +12851,8 @@
                 }).catch(() => { }); // Ignore errors
             }
 
-            localStorage.removeItem('voya_token');
-            localStorage.removeItem('voya_refresh_token');
+            localStorage.removeItem('nextravel_token');
+            localStorage.removeItem('nextravel_refresh_token');
 
             updateUIForLoggedOutUser();
             showToast('Signed out successfully', 'success');
@@ -12966,9 +12976,9 @@
                 if (data.session) {
                     // Immediate login (email already confirmed or confirmation disabled)
                     currentUser = data.user;
-                    localStorage.setItem('voya_user', JSON.stringify(currentUser));
-                    localStorage.setItem('voya_token', data.session.access_token);
-                    localStorage.setItem('voya_refresh_token', data.session.refresh_token);
+                    localStorage.setItem('nextravel_user', JSON.stringify(currentUser));
+                    localStorage.setItem('nextravel_token', data.session.access_token);
+                    localStorage.setItem('nextravel_refresh_token', data.session.refresh_token);
                     updateUIForLoggedInUser();
                     closeAuthOverlay();
                     showToast(`Welcome, ${currentUser.name}! 🎉`, 'success');
@@ -13015,9 +13025,9 @@
                 }
 
                 currentUser = data.user;
-                localStorage.setItem('voya_user', JSON.stringify(currentUser));
-                localStorage.setItem('voya_token', data.token);
-                localStorage.setItem('voya_refresh_token', data.refresh_token);
+                localStorage.setItem('nextravel_user', JSON.stringify(currentUser));
+                localStorage.setItem('nextravel_token', data.token);
+                localStorage.setItem('nextravel_refresh_token', data.refresh_token);
 
                 updateUIForLoggedInUser();
                 closeAuthOverlay();
@@ -13032,12 +13042,12 @@
 
         // Get auth token for API requests
         function getAuthToken() {
-            return localStorage.getItem('voya_token') || null;
+            return localStorage.getItem('nextravel_token') || null;
         }
 
         // Refresh auth token
         async function refreshAuthToken() {
-            const refreshToken = localStorage.getItem('voya_refresh_token');
+            const refreshToken = localStorage.getItem('nextravel_refresh_token');
             if (!refreshToken) return false;
 
             try {
@@ -13049,8 +13059,8 @@
 
                 const data = await response.json();
                 if (data.success && data.token) {
-                    localStorage.setItem('voya_token', data.token);
-                    localStorage.setItem('voya_refresh_token', data.refresh_token);
+                    localStorage.setItem('nextravel_token', data.token);
+                    localStorage.setItem('nextravel_refresh_token', data.refresh_token);
                     return true;
                 }
             } catch (err) {
