@@ -11490,254 +11490,156 @@
         }
 
         function downloadItineraryPDF() {
-            // Use stored data directly — never try to extract from DOM
             const data = window.currentItineraryData;
-            if (!data) {
-                showToast('No itinerary to download. Please generate one first.', 'warning');
-                return;
-            }
-
+            if (!data) { showToast('No itinerary to download. Please generate one first.', 'warning'); return; }
             const destination = window.currentDestination || 'Itinerary';
             const filename = `${destination.replace(/\s+/g, '_')}_itinerary.pdf`;
-
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const margin = 18;
-                const maxWidth = pageWidth - margin * 2;
-                let yPos = margin;
-
-                function checkPage(needed) {
-                    if (yPos + needed > pageHeight - 20) {
-                        doc.addPage();
-                        yPos = margin;
-                    }
+                const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+                const M = 16, MW = W - M * 2;
+                let y = 0, pg = 1;
+                const cc = { food: [231, 76, 60], culture: [155, 89, 182], nature: [39, 174, 96], shopping: [243, 156, 18], entertainment: [52, 152, 219], default: [255, 107, 53] };
+                function footer() { doc.setFontSize(7); doc.setFont('helvetica', 'italic'); doc.setTextColor(170, 170, 170); doc.text('NexTravel AI  •  Your Personal Travel Planner', W / 2, H - 8, { align: 'center' }); doc.text('Page ' + pg, W - M, H - 8, { align: 'right' }); }
+                function np() { footer(); doc.addPage(); pg++; y = M; }
+                function es(n) { if (y + n > H - 18) np(); }
+                function dt(text, fs, col, bold, indent) {
+                    if (!text) return; const x = M + (indent || 0), w = MW - (indent || 0);
+                    doc.setFontSize(fs); doc.setTextColor(col[0], col[1], col[2]); doc.setFont('helvetica', bold ? 'bold' : 'normal');
+                    const lines = doc.splitTextToSize(String(text), w), lh = fs * 0.5;
+                    lines.forEach(l => { es(lh + 1); doc.text(l, x, y); y += lh; });
                 }
-
-                function drawWrapped(text, fontSize, color, bold) {
-                    if (!text) return;
-                    doc.setFontSize(fontSize);
-                    doc.setTextColor(color[0], color[1], color[2]);
-                    doc.setFont('helvetica', bold ? 'bold' : 'normal');
-                    const wrapped = doc.splitTextToSize(String(text), maxWidth);
-                    const lh = fontSize * 0.5;
-                    wrapped.forEach(line => {
-                        checkPage(lh + 1);
-                        doc.text(line, margin, yPos);
-                        yPos += lh;
-                    });
-                }
-
                 // ===== HEADER =====
-                doc.setFillColor(79, 143, 234);
-                doc.rect(0, 0, pageWidth, 28, 'F');
-                doc.setFontSize(20);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(255, 255, 255);
-                doc.text('NexTravel Itinerary', pageWidth / 2, 13, { align: 'center' });
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(220, 230, 255);
-                doc.text(destination + '  |  ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), pageWidth / 2, 21, { align: 'center' });
-                yPos = 36;
-
-                // ===== PARSE ITINERARY DATA =====
-                let rawItinerary = data.itinerary || data.html || data;
-
-                // Parse JSON string if needed
-                if (typeof rawItinerary === 'string') {
-                    const trimmed = rawItinerary.trim();
-                    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-                        try {
-                            const jsonMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-                            rawItinerary = jsonMatch ? JSON.parse(jsonMatch[1].trim()) : JSON.parse(trimmed);
-                        } catch (e) { /* keep as string */ }
-                    }
-                }
-
-                // ===== STRUCTURED FORMAT (with map_data) =====
-                if (typeof rawItinerary === 'object' && rawItinerary !== null && (rawItinerary.map_data || rawItinerary.itinerary_summary)) {
-                    const { itinerary_summary, map_data, travel_advice, estimated_cost } = rawItinerary;
+                doc.setFillColor(30, 58, 138); doc.rect(0, 0, W, 50, 'F');
+                doc.setFillColor(59, 130, 246); doc.rect(0, 38, W, 12, 'F');
+                doc.setFillColor(255, 107, 53); doc.rect(0, 50, W, 3, 'F');
+                doc.setFontSize(26); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                doc.text(destination, W / 2, 20, { align: 'center' });
+                doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(200, 220, 255);
+                doc.text('Travel Itinerary  •  ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), W / 2, 30, { align: 'center' });
+                doc.setFontSize(9); doc.setTextColor(255, 255, 255);
+                doc.text('Powered by NexTravel AI', W / 2, 45, { align: 'center' });
+                y = 60;
+                // ===== DATA =====
+                let raw = data.itinerary || data.html || data;
+                if (typeof raw === 'string') { const t = raw.trim(); if (t.startsWith('{') || t.startsWith('[')) { try { const m = t.match(/```(?:json)?\s*([\s\S]*?)```/); raw = m ? JSON.parse(m[1].trim()) : JSON.parse(t); } catch (e) { } } }
+                if (typeof raw === 'object' && raw !== null && (raw.map_data || raw.itinerary_summary)) {
+                    const { itinerary_summary, map_data, travel_advice, estimated_cost } = raw;
                     const features = (map_data && map_data.features) || [];
-
-                    // Summary
+                    // Summary box
                     if (itinerary_summary) {
-                        drawWrapped(itinerary_summary, 10, [60, 60, 60], false);
-                        yPos += 6;
+                        es(20); const sl = doc.splitTextToSize(itinerary_summary, MW - 12); const sh = sl.length * 4.5 + 10;
+                        doc.setFillColor(248, 250, 252); doc.setDrawColor(200, 210, 230); doc.roundedRect(M, y, MW, sh, 3, 3, 'FD');
+                        y += 6; doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(71, 85, 105);
+                        sl.forEach(l => { doc.text(l, M + 6, y); y += 4.5; }); y += 6;
                     }
-
                     // Group by day
-                    const dayGroups = {};
-                    features.forEach(f => {
-                        const day = (f.properties && f.properties.day_number) || 1;
-                        if (!dayGroups[day]) dayGroups[day] = [];
-                        dayGroups[day].push(f);
-                    });
-
-                    // Render each day
-                    Object.keys(dayGroups).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dayNum => {
-                        const dayFeatures = dayGroups[dayNum];
-
-                        // Day header bar
-                        checkPage(16);
-                        yPos += 4;
-                        doc.setFillColor(255, 107, 53);
-                        doc.roundedRect(margin - 2, yPos - 6, maxWidth + 4, 12, 2, 2, 'F');
-                        doc.setFontSize(13);
-                        doc.setFont('helvetica', 'bold');
-                        doc.setTextColor(255, 255, 255);
-                        doc.text('Day ' + dayNum + '  —  ' + dayFeatures.length + ' activities', margin + 3, yPos + 1);
-                        yPos += 12;
-
+                    const days = {}; features.forEach(f => { const d = (f.properties && f.properties.day_number) || 1; if (!days[d]) days[d] = []; days[d].push(f); });
+                    Object.keys(days).sort((a, b) => +a - +b).forEach(dn => {
+                        const acts = days[dn]; es(22);
+                        // Day header with circle
+                        const cx = M + 8;
+                        doc.setFillColor(255, 107, 53); doc.circle(cx, y + 4, 6, 'F');
+                        doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                        doc.text(String(dn), cx, y + 5.5, { align: 'center' });
+                        doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 58, 138);
+                        doc.text('Day ' + dn, M + 18, y + 6);
+                        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(140, 140, 140);
+                        doc.text(acts.length + ' activities', M + 18 + doc.getTextWidth('Day ' + dn + '  '), y + 6);
+                        y += 11; doc.setDrawColor(230, 235, 245); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); y += 5;
                         // Activities
-                        dayFeatures.forEach((feature, idx) => {
-                            const p = feature.properties || {};
-                            checkPage(16);
-
-                            // Activity name + time
-                            doc.setFontSize(11);
-                            doc.setFont('helvetica', 'bold');
-                            doc.setTextColor(26, 26, 46);
-                            const actName = p.name || 'Activity';
-                            const actTime = p.arrival_time || 'Flexible';
-                            doc.text(actName, margin + 2, yPos);
-                            doc.setFontSize(8);
-                            doc.setFont('helvetica', 'normal');
-                            doc.setTextColor(120, 120, 120);
-                            doc.text(actTime, pageWidth - margin, yPos, { align: 'right' });
-                            yPos += 5;
-
+                        acts.forEach((feat, idx) => {
+                            const p = feat.properties || {};
+                            const cat = (p.category || 'default').toLowerCase();
+                            const c = cc[cat] || cc.default;
+                            const descLines = p.activity_description ? doc.splitTextToSize(p.activity_description, MW - 16) : [];
+                            const cardH = 12 + (descLines.length * 4.2) + (p.category ? 6 : 0) + 4;
+                            es(cardH + 6);
+                            // Card bg + left accent
+                            doc.setFillColor(252, 252, 255); doc.setDrawColor(235, 238, 245); doc.roundedRect(M + 1, y - 1, MW - 2, cardH, 2, 2, 'FD');
+                            doc.setFillColor(c[0], c[1], c[2]); doc.rect(M + 1, y - 1, 2.5, cardH, 'F');
+                            // Time badge
+                            const ts = p.arrival_time || 'Flexible';
+                            doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+                            const tw = doc.getTextWidth(ts) + 6;
+                            doc.setFillColor(c[0], c[1], c[2]); doc.roundedRect(W - M - tw - 3, y + 1, tw + 2, 5, 1.5, 1.5, 'F');
+                            doc.setTextColor(255, 255, 255); doc.text(ts, W - M - tw / 2 - 2, y + 4.5, { align: 'center' });
+                            // Name
+                            doc.setFontSize(10.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 60);
+                            doc.text(p.name || 'Activity', M + 7, y + 5); y += 9;
                             // Description
-                            if (p.activity_description) {
-                                drawWrapped(p.activity_description, 9, [90, 90, 90], false);
+                            if (descLines.length) {
+                                doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 100, 110);
+                                descLines.forEach(l => { doc.text(l, M + 7, y); y += 4.2; });
                             }
-
-                            // Category tag
+                            // Category badge
                             if (p.category) {
-                                doc.setFontSize(7.5);
-                                doc.setTextColor(79, 143, 234);
-                                doc.text('[' + (p.category || '').toUpperCase() + ']', margin + 2, yPos + 1);
-                                yPos += 4;
+                                const cl = p.category.charAt(0).toUpperCase() + p.category.slice(1);
+                                doc.setFontSize(6.5); const ctw = doc.getTextWidth(cl) + 5;
+                                doc.setFillColor(c[0], c[1], c[2]); doc.roundedRect(M + 7, y, ctw, 4, 1, 1, 'F');
+                                doc.setTextColor(255, 255, 255); doc.text(cl, M + 9.5, y + 2.8); y += 6;
                             }
-
-                            // Separator
-                            if (idx < dayFeatures.length - 1) {
-                                yPos += 2;
-                                doc.setDrawColor(230, 230, 230);
-                                doc.line(margin + 5, yPos, pageWidth - margin - 5, yPos);
-                                yPos += 4;
-                            } else {
-                                yPos += 4;
+                            y += 3;
+                            // Timeline dot
+                            if (idx < acts.length - 1) {
+                                doc.setFillColor(200, 210, 230); doc.circle(M + 2.25, y, 1, 'F');
+                                doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.3); doc.line(M + 2.25, y + 1.5, M + 2.25, y + 4);
+                                y += 5;
                             }
                         });
+                        y += 6;
                     });
-
-                    // Travel advice
+                    // Travel tips
                     if (travel_advice && travel_advice.length > 0) {
-                        checkPage(15);
-                        yPos += 5;
-                        doc.setFillColor(240, 249, 255);
-                        doc.roundedRect(margin - 2, yPos - 5, maxWidth + 4, 10, 2, 2, 'F');
-                        doc.setFontSize(12);
-                        doc.setFont('helvetica', 'bold');
-                        doc.setTextColor(3, 105, 161);
-                        doc.text('Travel Tips', margin + 3, yPos + 1);
-                        yPos += 10;
-
+                        es(20); y += 4;
+                        doc.setFillColor(236, 253, 245); doc.setDrawColor(167, 243, 208); doc.roundedRect(M, y - 1, MW, 10, 2, 2, 'FD');
+                        doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(5, 122, 85);
+                        doc.text('Travel Tips & Advice', M + 5, y + 5.5); y += 14;
                         travel_advice.forEach(tip => {
-                            checkPage(8);
-                            doc.setFontSize(9);
-                            doc.setFont('helvetica', 'normal');
-                            doc.setTextColor(55, 65, 81);
-                            const tipLines = doc.splitTextToSize('• ' + tip, maxWidth - 5);
-                            tipLines.forEach(line => {
-                                checkPage(5);
-                                doc.text(line, margin + 3, yPos);
-                                yPos += 4.5;
-                            });
-                            yPos += 1;
+                            const tl = doc.splitTextToSize(tip, MW - 14); es(tl.length * 4 + 4);
+                            doc.setFillColor(16, 185, 129); doc.circle(M + 3, y - 0.5, 1.2, 'F');
+                            doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(55, 65, 81);
+                            tl.forEach(l => { doc.text(l, M + 8, y); y += 4; }); y += 2;
                         });
                     }
-
-                    // Cost estimate
+                    // Cost
                     if (estimated_cost) {
-                        checkPage(20);
-                        yPos += 5;
-                        doc.setFillColor(5, 150, 105);
-                        doc.roundedRect(margin - 2, yPos - 5, maxWidth + 4, 10, 2, 2, 'F');
-                        doc.setFontSize(12);
-                        doc.setFont('helvetica', 'bold');
-                        doc.setTextColor(255, 255, 255);
-                        doc.text('Estimated Cost: ' + (estimated_cost.total || 'N/A'), margin + 3, yPos + 1);
-                        yPos += 10;
-
-                        if (estimated_cost.per_day) {
-                            drawWrapped('Per day: ' + estimated_cost.per_day, 9, [60, 60, 60], false);
-                        }
-                        const bd = estimated_cost.breakdown || {};
-                        const items = Object.entries(bd).filter(([k, v]) => v);
+                        es(35); y += 4;
+                        doc.setFillColor(5, 150, 105); doc.roundedRect(M, y - 1, MW, 18, 2, 2, 'F');
+                        doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                        doc.text('Estimated Trip Cost', M + 5, y + 5);
+                        doc.setFontSize(18); doc.text(estimated_cost.total || 'N/A', W - M - 5, y + 6, { align: 'right' });
+                        if (estimated_cost.per_day) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(200, 240, 220); doc.text('Per day: ' + estimated_cost.per_day, W - M - 5, y + 12, { align: 'right' }); }
+                        y += 22;
+                        const bd = estimated_cost.breakdown || {}; const items = Object.entries(bd).filter(([k, v]) => v);
                         if (items.length > 0) {
-                            items.forEach(([k, v]) => {
-                                drawWrapped('  ' + k.charAt(0).toUpperCase() + k.slice(1) + ': ' + v, 9, [80, 80, 80], false);
+                            const colW = MW / 2;
+                            items.forEach(([k, v], i) => {
+                                const col = i % 2; if (col === 0) es(7);
+                                const x = M + col * colW + 4;
+                                doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+                                doc.text(k.charAt(0).toUpperCase() + k.slice(1), x, y);
+                                doc.setFont('helvetica', 'bold'); doc.setTextColor(50, 50, 50); doc.text(String(v), x + 35, y);
+                                if (col === 1 || i === items.length - 1) y += 6;
                             });
                         }
                     }
-
-                } else if (typeof rawItinerary === 'string' && rawItinerary.trim().length > 0) {
-                    // ===== TEXT FORMAT =====
-                    const textLines = rawItinerary.split('\n');
-                    textLines.forEach(line => {
-                        const t = line.trim();
-                        if (!t) { yPos += 2; return; }
-
-                        const isDayHeader = /^(📅\s*)?(day\s*\d+)/i.test(t) || /^#{1,3}\s*day/i.test(t);
-                        if (isDayHeader) {
-                            checkPage(14);
-                            yPos += 4;
-                            doc.setFillColor(255, 107, 53);
-                            doc.roundedRect(margin - 2, yPos - 5, maxWidth + 4, 10, 2, 2, 'F');
-                            doc.setFontSize(13);
-                            doc.setFont('helvetica', 'bold');
-                            doc.setTextColor(255, 255, 255);
-                            doc.text(t.replace(/^#+\s*/, ''), margin + 3, yPos + 1);
-                            yPos += 10;
-                        } else if (t.startsWith('#')) {
-                            checkPage(8);
-                            yPos += 3;
-                            drawWrapped(t.replace(/^#+\s*/, ''), 11, [50, 50, 50], true);
-                            yPos += 2;
-                        } else if (t.startsWith('- ') || t.startsWith('* ')) {
-                            drawWrapped('• ' + t.substring(2), 9.5, [80, 80, 80], false);
-                            yPos += 1;
-                        } else {
-                            drawWrapped(t, 9.5, [80, 80, 80], false);
-                            yPos += 1;
-                        }
+                } else if (typeof raw === 'string' && raw.trim().length > 0) {
+                    raw.split('\n').forEach(line => {
+                        const t = line.trim(); if (!t) { y += 2; return; }
+                        if (/^(day\s*\d+)/i.test(t) || /^#{1,3}\s*day/i.test(t)) {
+                            es(14); y += 4; doc.setFillColor(255, 107, 53); doc.roundedRect(M, y - 5, MW, 10, 2, 2, 'F');
+                            doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                            doc.text(t.replace(/^#+\s*/, ''), M + 4, y + 1); y += 10;
+                        } else if (t.startsWith('#')) { es(8); y += 3; dt(t.replace(/^#+\s*/, ''), 11, [50, 50, 50], true); y += 2; }
+                        else { dt(t, 9, [80, 80, 80], false); y += 1; }
                     });
-                } else {
-                    drawWrapped('No itinerary content available.', 11, [150, 50, 50], false);
-                }
-
-                // ===== FOOTER =====
-                checkPage(15);
-                yPos += 8;
-                doc.setDrawColor(200, 200, 200);
-                doc.line(margin, yPos, pageWidth - margin, yPos);
-                yPos += 5;
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'italic');
-                doc.setTextColor(160, 160, 160);
-                doc.text('Generated by NexTravel AI', pageWidth / 2, yPos, { align: 'center' });
-
+                } else { dt('No itinerary content available.', 11, [150, 50, 50], false); }
+                footer();
                 doc.save(filename);
                 showToast('PDF downloaded successfully!', 'success');
-            } catch (err) {
-                console.error('PDF generation error:', err);
-                showToast('Error generating PDF: ' + err.message, 'error');
-            }
+            } catch (err) { console.error('PDF generation error:', err); showToast('Error generating PDF: ' + err.message, 'error'); }
         }
 
         function shareItinerary() {
