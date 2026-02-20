@@ -12562,31 +12562,30 @@
                 e.style.cssText = 'color: #1a73e8; font-style: italic;';
             });
 
-            // Position the content visibly but off-screen (visibility approach for better rendering)
-            pdfContent.style.cssText = 'position: fixed; top: 0; left: 0; width: 210mm; background: white; z-index: -9999; visibility: visible;';
+            // Position the content off-screen but fully rendered (absolute, not fixed, so html2canvas can capture it)
+            pdfContent.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; background: white; visibility: visible; opacity: 1;';
             document.body.appendChild(pdfContent);
 
-            // PDF options with better settings for capturing
-            const opt = {
-                margin: [15, 15, 15, 15],
-                filename: filename,
-                image: { type: 'jpeg', quality: 0.95 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff',
-                    windowWidth: pdfContent.scrollWidth,
-                    windowHeight: pdfContent.scrollHeight,
-                    x: 0,
-                    y: 0
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-
-            // Wait a moment for styles to apply, then generate PDF
+            // Wait for DOM layout to complete, then generate PDF
             setTimeout(() => {
+                // PDF options — measure dimensions AFTER the element is in the DOM
+                const opt = {
+                    margin: [15, 15, 15, 15],
+                    filename: filename,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff',
+                        windowWidth: Math.max(pdfContent.scrollWidth, 794),
+                        scrollX: 0,
+                        scrollY: 0
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
                 html2pdf().set(opt).from(pdfContent).save().then(() => {
                     document.body.removeChild(pdfContent);
                     showToast('PDF downloaded successfully!', 'success');
@@ -12599,7 +12598,7 @@
                     alert('PDF generation encountered an issue. Opening print dialog instead.');
                     printItinerary();
                 });
-            }, 100);
+            }, 300);
         }
 
         // ==================== GOOGLE OAUTH AUTHENTICATION ====================
