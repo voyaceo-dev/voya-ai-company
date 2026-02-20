@@ -11510,17 +11510,41 @@
                     const lines = doc.splitTextToSize(String(text), w), lh = fs * 0.5;
                     lines.forEach(l => { es(lh + 1); doc.text(l, x, y); y += lh; });
                 }
-                // ===== HEADER =====
-                doc.setFillColor(30, 58, 138); doc.rect(0, 0, W, 50, 'F');
-                doc.setFillColor(59, 130, 246); doc.rect(0, 38, W, 12, 'F');
-                doc.setFillColor(255, 107, 53); doc.rect(0, 50, W, 3, 'F');
-                doc.setFontSize(26); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
-                doc.text(destination, W / 2, 20, { align: 'center' });
-                doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(200, 220, 255);
-                doc.text('Travel Itinerary  •  ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), W / 2, 30, { align: 'center' });
-                doc.setFontSize(9); doc.setTextColor(255, 255, 255);
-                doc.text('Powered by NexTravel AI', W / 2, 45, { align: 'center' });
-                y = 60;
+                // ===== HEADER WITH LOGO =====
+                // Dark header background
+                doc.setFillColor(26, 26, 46); doc.rect(0, 0, W, 52, 'F');
+                // Subtle gradient band
+                doc.setFillColor(30, 58, 138); doc.rect(0, 40, W, 12, 'F');
+                // Orange accent stripe
+                doc.setFillColor(255, 107, 53); doc.rect(0, 52, W, 2.5, 'F');
+
+                // NexTravel logo text
+                doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                const logoText = 'NexTravel';
+                const logoW = doc.getTextWidth(logoText);
+                const logoX = (W - logoW - 18) / 2;  // center logo+badge together
+                doc.text(logoText, logoX, 18);
+
+                // AI badge
+                const badgeX = logoX + logoW + 3;
+                doc.setFillColor(16, 185, 129);
+                doc.roundedRect(badgeX, 10, 14, 7, 2, 2, 'F');
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                doc.text('AI', badgeX + 7, 15, { align: 'center' });
+
+                // Destination name (large)
+                doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+                doc.text(destination + ' Itinerary', W / 2, 30, { align: 'center' });
+
+                // Date
+                doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 200, 255);
+                doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), W / 2, 37, { align: 'center' });
+
+                // Tagline in band
+                doc.setFontSize(8); doc.setTextColor(200, 220, 255);
+                doc.text('Your AI-Powered Travel Companion', W / 2, 47, { align: 'center' });
+
+                y = 62;
                 // ===== DATA =====
                 let raw = data.itinerary || data.html || data;
                 if (typeof raw === 'string') { const t = raw.trim(); if (t.startsWith('{') || t.startsWith('[')) { try { const m = t.match(/```(?:json)?\s*([\s\S]*?)```/); raw = m ? JSON.parse(m[1].trim()) : JSON.parse(t); } catch (e) { } } }
