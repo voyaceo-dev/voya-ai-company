@@ -11545,9 +11545,10 @@
                         doc.text(String(dn), cx, y + 5.5, { align: 'center' });
                         doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 58, 138);
                         doc.text('Day ' + dn, M + 18, y + 6);
-                        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(140, 140, 140);
-                        doc.text(acts.length + ' activities', M + 18 + doc.getTextWidth('Day ' + dn + '  '), y + 6);
-                        y += 11; doc.setDrawColor(230, 235, 245); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); y += 5;
+                        const dayTxtW = doc.getTextWidth('Day ' + dn);
+                        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 160, 170);
+                        doc.text('  |  ' + acts.length + ' activities', M + 18 + dayTxtW, y + 6);
+                        y += 13; doc.setDrawColor(230, 235, 245); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); y += 6;
                         // Activities
                         acts.forEach((feat, idx) => {
                             const p = feat.properties || {};
@@ -11580,7 +11581,7 @@
                                 doc.setFillColor(c[0], c[1], c[2]); doc.roundedRect(M + 7, y, ctw, 4, 1, 1, 'F');
                                 doc.setTextColor(255, 255, 255); doc.text(cl, M + 9.5, y + 2.8); y += 6;
                             }
-                            y += 3;
+                            y += 5;
                             // Timeline dot
                             if (idx < acts.length - 1) {
                                 doc.setFillColor(200, 210, 230); doc.circle(M + 2.25, y, 1, 'F');
